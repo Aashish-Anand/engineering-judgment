@@ -1,1 +1,418 @@
 @import "tailwindcss";
+
+/* ── Doodle / Engineering Notebook Design Tokens (Tailwind v4) ─ */
+@theme {
+  --font-sans: "Plus Jakarta Sans", var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-hand: var(--font-hand), "Caveat", cursive, sans-serif;
+  --font-mono: "JetBrains Mono", var(--font-mono), ui-monospace, monospace;
+
+  /* ── Physical Paper & Ink Palette ───────────────────────────── */
+  --color-paper: #FAF9F5;
+  --color-paper-alt: #F4F1EA;
+  --color-paper-card: #FFFFFF;
+  --color-ink: #171717;
+  --color-ink-secondary: #374151;
+  --color-ink-muted: #6B7280;
+  --color-ink-faint: #9CA3AF;
+
+  --color-border: rgba(23, 23, 23, 0.12);
+  --color-border-strong: #171717;
+  --color-border-subtle: rgba(23, 23, 23, 0.08);
+
+  /* ── Pastel / Highlighter Markers ───────────────────────────── */
+  --color-pastel-blue: #DCEBFF;
+  --color-pastel-green: #DFF3DF;
+  --color-pastel-yellow: #FFF0B8;
+  --color-pastel-pink: #F9DDE5;
+  --color-pastel-lavender: #E7E1F8;
+
+  /* ── Backward-compatible Aliases for components ──────────────── */
+  --color-bg: #FAF9F5;
+  --color-bg-alt: #F4F1EA;
+  --color-bg-code: #F4F1EA;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FAF9F5;
+  --color-text: #171717;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6B7280;
+  --color-text-faint: #9CA3AF;
+
+  --color-accent: #171717;
+  --color-accent-hover: #374151;
+  --color-accent-light: #DCEBFF;
+
+  --color-warning: #D97706;
+  --color-warning-light: #FEF3C7;
+  --color-danger: #DC2626;
+  --color-danger-light: #FDE8E8;
+  --color-success: #16A34A;
+  --color-success-light: #DFF3DF;
+
+  --color-diagram-bg: #FAF9F5;
+  --color-diagram-border: #171717;
+  --color-diagram-node: #FFFFFF;
+  --color-diagram-text: #171717;
+  --color-diagram-arrow: #171717;
+  --color-diagram-label: #4B5563;
+}
+
+:root {
+  --width-prose: 820px;
+  --width-wide: 1200px;
+  --width-full: 1400px;
+}
+
+/* ── Base Styles ────────────────────────────────────────────── */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  letter-spacing: -0.005em;
+  background-image: radial-gradient(rgba(23, 23, 23, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Typography Helpers */
+.font-hand {
+  font-family: var(--font-hand);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-ink);
+  line-height: 1.25;
+}
+
+h1 { font-size: 2.25rem; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.25rem; }
+h4 { font-size: 1.1rem; }
+
+@media (min-width: 640px) {
+  h1 { font-size: 2.75rem; }
+  h2 { font-size: 1.85rem; }
+}
+
+p {
+  margin-bottom: 1rem;
+  color: var(--color-ink-secondary);
+  line-height: 1.75;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--color-paper-alt);
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+  color: #171717;
+  font-weight: 500;
+  border: 1px solid rgba(23, 23, 23, 0.15);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  background: var(--color-paper-alt);
+  border: 1.5px solid var(--color-ink);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  color: var(--color-ink);
+  box-shadow: 2px 2px 0px var(--color-ink);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  border: none;
+}
+
+/* ── Doodle Primitives & Notebook Card Styles ───────────────── */
+
+/* Organic hand-drawn border box */
+.doodle-box {
+  border: 1.5px solid var(--color-ink);
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+}
+
+/* Sketched notebook card with drop stamp shadow */
+.doodle-card {
+  background-color: var(--color-paper-card);
+  border: 1.5px solid var(--color-ink);
+  border-radius: 12px 14px 11px 15px/14px 11px 15px 12px;
+  box-shadow: 2px 3px 0px var(--color-ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doodle-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 4px 0px var(--color-ink);
+}
+
+/* Hand-drawn button */
+.doodle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-hand);
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 0.5rem 1.25rem;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+  box-shadow: 2px 2px 0px var(--color-ink);
+  transition: all 0.12s ease;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--color-ink);
+}
+
+.doodle-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--color-ink);
+}
+
+.doodle-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--color-ink);
+}
+
+/* Marker Highlights */
+.marker-blue {
+  background-color: var(--color-pastel-blue);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.1em 0.35em;
+  border-radius: 3px 5px 4px 6px/5px 3px 6px 4px;
+}
+
+.marker-yellow {
+  background-color: var(--color-pastel-yellow);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.1em 0.35em;
+  border-radius: 3px 5px 4px 6px/5px 3px 6px 4px;
+}
+
+.marker-green {
+  background-color: var(--color-pastel-green);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.1em 0.35em;
+  border-radius: 3px 5px 4px 6px/5px 3px 6px 4px;
+}
+
+.marker-pink {
+  background-color: var(--color-pastel-pink);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.1em 0.35em;
+  border-radius: 3px 5px 4px 6px/5px 3px 6px 4px;
+}
+
+.marker-lavender {
+  background-color: var(--color-pastel-lavender);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.1em 0.35em;
+  border-radius: 3px 5px 4px 6px/5px 3px 6px 4px;
+}
+
+/* Sticky note styling */
+.sticky-note {
+  background-color: var(--color-pastel-yellow);
+  border: 1.5px solid var(--color-ink);
+  box-shadow: 2px 3px 0px var(--color-ink);
+  border-radius: 2px 4px 3px 14px/4px 2px 14px 3px;
+  position: relative;
+}
+
+.sticky-note::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 30%;
+  width: 50px;
+  height: 16px;
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px dashed rgba(23, 23, 23, 0.2);
+  transform: rotate(-2deg);
+}
+
+/* Sketched pill badge */
+.doodle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-hand);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.15rem 0.65rem;
+  border: 1.2px solid var(--color-ink);
+  border-radius: 9999px;
+  color: var(--color-ink);
+}
+
+/* Circled section number */
+.circle-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  border: 1.8px solid var(--color-ink);
+  font-family: var(--font-hand);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-ink);
+  background-color: #FFFFFF;
+  box-shadow: 1px 1px 0px var(--color-ink);
+  flex-shrink: 0;
+}
+
+/* ── Clean Notebook Tables ───────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 10px;
+  box-shadow: 2px 3px 0px var(--color-ink);
+  overflow: hidden;
+}
+
+.data-table thead {
+  background-color: var(--color-pastel-blue);
+  border-bottom: 1.5px solid var(--color-ink);
+}
+
+.data-table th {
+  text-align: left;
+  font-family: var(--font-hand);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--color-ink);
+  padding: 0.65rem 1rem;
+  border-bottom: 1.5px solid var(--color-ink);
+}
+
+.data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px dashed rgba(23, 23, 23, 0.15);
+  color: var(--color-ink-secondary);
+  vertical-align: top;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(220, 235, 255, 0.15);
+}
+
+/* Compact variant */
+.data-table--compact th,
+.data-table--compact td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+/* ── Utility Layout ─────────────────────────────────────────── */
+.prose-width {
+  max-width: var(--width-prose);
+}
+
+.wide-width {
+  max-width: var(--width-wide);
+}
+
+.full-width {
+  max-width: var(--width-full);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) {
+  .table-scroll {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+/* ── Backward compatibility aliases for existing components ──── */
+.glass {
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--color-ink);
+  box-shadow: 2px 3px 0px var(--color-ink);
+}
+
+.glass-strong {
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--color-ink);
+  box-shadow: 2px 3px 0px var(--color-ink);
+}
+
+.glow-card {
+  border: 1.5px solid var(--color-ink);
+  box-shadow: 2px 3px 0px var(--color-ink);
+}
+
+.glow-card:hover {
+  box-shadow: 3px 4px 0px var(--color-ink);
+}
+
+.gradient-text, .gradient-text-animated {
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: var(--color-ink);
+  color: var(--color-ink);
+}
+
+/* Scroll reveal helpers */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal.revealed {
+  opacity: 1;
+  transform: none;
+}
