@@ -2,16 +2,16 @@ export function NaiveMigrationDiagram() {
   return (
     <div className="w-full max-w-lg mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
       <svg
-        viewBox="0 0 420 160"
+        viewBox="0 0 440 160"
         className="w-full h-auto"
         role="img"
         aria-label="Naive migration: DB A dumps to DB B while production writes continue"
       >
         {/* DB A (Production) */}
         <rect
-          x="20"
+          x="25"
           y="25"
-          width="120"
+          width="125"
           height="55"
           rx="10"
           fill="#FAF9F5"
@@ -19,7 +19,7 @@ export function NaiveMigrationDiagram() {
           strokeWidth="2"
         />
         <text
-          x="80"
+          x="87.5"
           y="48"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
@@ -30,7 +30,7 @@ export function NaiveMigrationDiagram() {
           DB A
         </text>
         <text
-          x="80"
+          x="87.5"
           y="66"
           textAnchor="middle"
           fontFamily="var(--font-sans)"
@@ -43,14 +43,14 @@ export function NaiveMigrationDiagram() {
 
         {/* Sketched Dump Arrow */}
         <path
-          d="M145 52 C200 48 220 48 268 52"
+          d="M152 52 C205 48 225 48 278 52"
           stroke="#171717"
           strokeWidth="2"
           strokeLinecap="round"
         />
-        <polygon points="274,52 264,47 266,57" fill="#171717" />
+        <polygon points="284,52 274,47 276,57" fill="#171717" />
         <text
-          x="208"
+          x="215"
           y="42"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
@@ -63,9 +63,9 @@ export function NaiveMigrationDiagram() {
 
         {/* DB B (New) */}
         <rect
-          x="280"
+          x="290"
           y="25"
-          width="120"
+          width="125"
           height="55"
           rx="10"
           fill="#FAF9F5"
@@ -73,7 +73,7 @@ export function NaiveMigrationDiagram() {
           strokeWidth="2"
         />
         <text
-          x="340"
+          x="352.5"
           y="48"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
@@ -84,7 +84,7 @@ export function NaiveMigrationDiagram() {
           DB B
         </text>
         <text
-          x="340"
+          x="352.5"
           y="66"
           textAnchor="middle"
           fontFamily="var(--font-sans)"
@@ -97,18 +97,18 @@ export function NaiveMigrationDiagram() {
 
         {/* Ongoing Writes Annotation */}
         <path
-          d="M80 83 L80 110"
+          d="M87.5 83 L87.5 110"
           stroke="#DC2626"
           strokeWidth="1.8"
           strokeDasharray="3 3"
         />
-        <polygon points="80,82 76,89 84,89" fill="#DC2626" />
+        <polygon points="87.5,82 83.5,89 91.5,89" fill="#DC2626" />
         <text
-          x="80"
+          x="95"
           y="126"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
-          fontSize="13"
+          fontSize="12.5"
           fontWeight="bold"
           fill="#DC2626"
         >
@@ -117,7 +117,7 @@ export function NaiveMigrationDiagram() {
 
         {/* "Wait..." annotation pointing to gap */}
         <text
-          x="208"
+          x="215"
           y="80"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
@@ -128,13 +128,13 @@ export function NaiveMigrationDiagram() {
           Wait...
         </text>
         <path
-          d="M208 86 C210 100 240 105 255 115"
+          d="M215 86 C217 100 245 105 260 115"
           stroke="#DC2626"
           strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"
         />
-        <polygon points="257,118 248,114 252,108" fill="#DC2626" />
+        <polygon points="262,118 253,114 257,108" fill="#DC2626" />
       </svg>
     </div>
   );

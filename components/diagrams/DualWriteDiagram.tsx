@@ -1,29 +1,29 @@
 export function DualWriteDiagram() {
   return (
-    <div className="w-full max-w-md mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
+    <div className="w-full max-w-xl mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
       <svg
-        viewBox="0 0 420 220"
+        viewBox="0 0 480 230"
         className="w-full h-auto"
         role="img"
         aria-label="Dual write failure: Application writes to DB A successfully, but write to DB B fails"
       >
         {/* Application Box */}
         <rect
-          x="145"
-          y="12"
-          width="130"
-          height="40"
+          x="170"
+          y="10"
+          width="140"
+          height="42"
           rx="8"
           fill="#FAF9F5"
           stroke="#171717"
           strokeWidth="2"
         />
         <text
-          x="210"
-          y="37"
+          x="240"
+          y="36"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
-          fontSize="17"
+          fontSize="16"
           fontWeight="bold"
           fill="#171717"
         >
@@ -32,17 +32,19 @@ export function DualWriteDiagram() {
 
         {/* Forking Arrows */}
         <path
-          d="M170 52 C150 70 110 75 90 98"
+          d="M195 52 C170 70 130 75 108 98"
           stroke="#171717"
           strokeWidth="2"
           strokeLinecap="round"
         />
-        <polygon points="87,103 97,97 91,92" fill="#171717" />
+        <polygon points="105,103 115,97 109,92" fill="#171717" />
+        <rect x="90" y="62" width="64" height="20" rx="4" fill="#FFFFFF" stroke="#16A34A" strokeWidth="1" />
         <text
-          x="95"
-          y="70"
+          x="122"
+          y="76"
+          textAnchor="middle"
           fontFamily="var(--font-hand)"
-          fontSize="13"
+          fontSize="12"
           fontWeight="bold"
           fill="#16A34A"
         >
@@ -50,17 +52,19 @@ export function DualWriteDiagram() {
         </text>
 
         <path
-          d="M250 52 C270 70 310 75 330 98"
+          d="M285 52 C310 70 350 75 372 98"
           stroke="#171717"
           strokeWidth="2"
           strokeLinecap="round"
         />
-        <polygon points="333,103 329,92 323,97" fill="#171717" />
+        <polygon points="375,103 371,92 365,97" fill="#171717" />
+        <rect x="326" y="62" width="64" height="20" rx="4" fill="#FFFFFF" stroke="#DC2626" strokeWidth="1" />
         <text
-          x="320"
-          y="70"
+          x="358"
+          y="76"
+          textAnchor="middle"
           fontFamily="var(--font-hand)"
-          fontSize="13"
+          fontSize="12"
           fontWeight="bold"
           fill="#DC2626"
         >
@@ -70,31 +74,31 @@ export function DualWriteDiagram() {
         {/* DB A */}
         <rect
           x="30"
-          y="108"
-          width="120"
-          height="50"
+          y="106"
+          width="155"
+          height="54"
           rx="10"
           fill="#DFF3DF"
           stroke="#171717"
           strokeWidth="2"
         />
         <text
-          x="90"
-          y="132"
+          x="107.5"
+          y="130"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
-          fontSize="17"
+          fontSize="15"
           fontWeight="bold"
           fill="#171717"
         >
           DB A (Source)
         </text>
         <text
-          x="90"
-          y="150"
+          x="107.5"
+          y="148"
           textAnchor="middle"
           fontFamily="var(--font-mono)"
-          fontSize="11"
+          fontSize="10.5"
           fontWeight="bold"
           fill="#16A34A"
         >
@@ -103,32 +107,32 @@ export function DualWriteDiagram() {
 
         {/* DB B */}
         <rect
-          x="270"
-          y="108"
-          width="120"
-          height="50"
+          x="295"
+          y="106"
+          width="155"
+          height="54"
           rx="10"
           fill="#F9DDE5"
           stroke="#DC2626"
           strokeWidth="2"
         />
         <text
-          x="330"
-          y="132"
+          x="372.5"
+          y="130"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
-          fontSize="17"
+          fontSize="15"
           fontWeight="bold"
           fill="#171717"
         >
           DB B (Target)
         </text>
         <text
-          x="330"
-          y="150"
+          x="372.5"
+          y="148"
           textAnchor="middle"
           fontFamily="var(--font-mono)"
-          fontSize="11"
+          fontSize="10.5"
           fontWeight="bold"
           fill="#DC2626"
         >
@@ -137,25 +141,36 @@ export function DualWriteDiagram() {
 
         {/* Divergence Warning Box */}
         <rect
-          x="50"
-          y="178"
-          width="320"
-          height="32"
-          rx="6"
+          x="25"
+          y="174"
+          width="430"
+          height="46"
+          rx="8"
           fill="#FDE8E8"
           stroke="#DC2626"
-          strokeWidth="1.2"
+          strokeWidth="1.4"
         />
         <text
-          x="210"
-          y="199"
+          x="240"
+          y="193"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
-          fontSize="14"
+          fontSize="13"
           fontWeight="bold"
           fill="#DC2626"
         >
-          ⚠ Silent divergence: partial write failure with no distributed rollback!
+          ⚠ Silent Divergence: Partial Write Failure
+        </text>
+        <text
+          x="240"
+          y="209"
+          textAnchor="middle"
+          fontFamily="var(--font-sans)"
+          fontSize="10"
+          fontWeight="600"
+          fill="#DC2626"
+        >
+          DB A commits while DB B drops write — no distributed 2PC rollback
         </text>
       </svg>
     </div>

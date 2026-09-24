@@ -8,15 +8,15 @@ export function CutoverDiagram() {
   ];
 
   return (
-    <div className="w-full max-w-lg mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
+    <div className="w-full max-w-xl mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
       <svg
-        viewBox="0 0 440 180"
+        viewBox="0 0 470 185"
         className="w-full h-auto"
         role="img"
         aria-label="Gradual cutover stages with hand-drawn progress bars"
       >
         {stages.map((stage, i) => {
-          const x = 20 + i * 82;
+          const x = 24 + i * 86;
           const totalH = 75;
           const aH = (stage.a / 100) * totalH;
           const bH = (stage.b / 100) * totalH;
@@ -83,13 +83,13 @@ export function CutoverDiagram() {
               {i < stages.length - 1 && (
                 <g>
                   <path
-                    d={`M${x + 60} 65 L${x + 76} 65`}
+                    d={`M${x + 60} 65 L${x + 80} 65`}
                     stroke="#171717"
                     strokeWidth="1.8"
                     strokeLinecap="round"
                   />
                   <polygon
-                    points={`${x + 78},65 ${x + 72},62 ${x + 72},68`}
+                    points={`${x + 82},65 ${x + 76},62 ${x + 76},68`}
                     fill="#171717"
                   />
                 </g>
@@ -99,25 +99,25 @@ export function CutoverDiagram() {
         })}
 
         {/* Legend */}
-        <g transform="translate(110, 140)">
+        <g transform="translate(120, 140)">
           <rect x="0" y="0" width="16" height="12" rx="3" fill="#DCEBFF" stroke="#171717" strokeWidth="1.2" />
-          <text x="22" y="10" fontFamily="var(--font-hand)" fontSize="14" fontWeight="bold" fill="#171717">
+          <text x="22" y="10" fontFamily="var(--font-hand)" fontSize="13.5" fontWeight="bold" fill="#171717">
             DB A (Primary)
           </text>
 
-          <rect x="120" y="0" width="16" height="12" rx="3" fill="#DFF3DF" stroke="#171717" strokeWidth="1.2" />
-          <text x="142" y="10" fontFamily="var(--font-hand)" fontSize="14" fontWeight="bold" fill="#171717">
+          <rect x="125" y="0" width="16" height="12" rx="3" fill="#DFF3DF" stroke="#171717" strokeWidth="1.2" />
+          <text x="147" y="10" fontFamily="var(--font-hand)" fontSize="13.5" fontWeight="bold" fill="#171717">
             DB B (Target)
           </text>
         </g>
 
         {/* Rollback note */}
         <text
-          x="220"
+          x="235"
           y="172"
           textAnchor="middle"
           fontFamily="var(--font-hand)"
-          fontSize="13"
+          fontSize="12.5"
           fontWeight="bold"
           fill="#DC2626"
         >

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono, Caveat } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono, Shantell_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600"],
 });
 
-const caveat = Caveat({
+const shantellSans = Shantell_Sans({
   subsets: ["latin"],
   variable: "--font-hand",
   display: "swap",
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${caveat.variable}`}
+      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${shantellSans.variable}`}
     >
       <body className="min-h-screen flex flex-col bg-paper text-ink font-sans antialiased" suppressHydrationWarning>
         <SiteHeader />

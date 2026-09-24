@@ -22,7 +22,7 @@ export function TopicCard({ category, question, href, available = false }: Topic
         <div className="flex items-center justify-between mb-3">
           <CategoryBadge category={category} size="sm" />
           {available && (
-            <span className="font-hand text-xs font-bold px-2 py-0.5 bg-[#DFF3DF] border border-[#171717] rounded-full shadow-xs">
+            <span className="font-sans font-bold text-[0.68rem] tracking-wide uppercase px-2 py-0.5 bg-[#DFF3DF] text-[#16A34A] border border-[#171717] rounded-full shadow-xs">
               Available
             </span>
           )}
@@ -42,7 +42,7 @@ export function TopicCard({ category, question, href, available = false }: Topic
             <DoodleArrow direction="straight-right" width={22} height={14} />
           </>
         ) : (
-          <span className="font-hand text-sm text-[#6B7280]">
+          <span className="font-hand font-medium text-sm text-[#4B5563]">
             Coming soon to notebook...
           </span>
         )}

@@ -37,7 +37,7 @@ export function LevelExpectation({ levels }: LevelExpectationProps) {
                 <span className={`font-hand text-lg font-bold px-2.5 py-0.5 border border-[#171717] rounded shadow-xs ${style.pastel}`}>
                   {style.badge}
                 </span>
-                <span className="font-hand text-xs text-[#6B7280]">
+                <span className="font-sans text-xs font-medium text-[#4B5563]">
                   Interviewer expectations
                 </span>
               </div>

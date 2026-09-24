@@ -91,7 +91,7 @@ export function Hero() {
                     <span className="text-base select-none" aria-hidden="true">
                       🔍
                     </span>
-                    <span className="font-hand font-bold text-base sm:text-lg text-[#171717]">
+                    <span className="font-hand font-semibold text-base sm:text-lg text-[#171717] tracking-tight">
                       What are you trying to solve?
                     </span>
                   </div>
@@ -107,17 +107,17 @@ export function Hero() {
 
                 <div
                   onClick={handleSearchSubmit}
-                  className="font-hand text-lg sm:text-xl text-[#4B5563] cursor-pointer hover:text-[#171717] flex items-center gap-1.5 py-0.5"
+                  className="font-hand text-lg sm:text-xl text-[#171717] cursor-pointer hover:text-[#DC2626] flex items-center gap-2 py-0.5 transition-colors"
                 >
-                  <span className="text-[#171717]/50 select-none">↳</span>
-                  <span className="text-[#171717] font-semibold">&ldquo;{displayed}&rdquo;</span>
+                  <span className="text-[#171717]/60 select-none font-sans font-bold">↳</span>
+                  <span className="text-[#171717] font-medium tracking-tight">&ldquo;{displayed}&rdquo;</span>
                   <span className="inline-block w-0.5 h-5 bg-[#171717] animate-pulse" />
                 </div>
               </div>
 
               {/* Scribbled suggested topics */}
-              <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs sm:text-sm">
-                <span className="font-hand font-bold text-sm sm:text-base text-[#6B7280]">
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                <span className="font-hand font-bold text-sm sm:text-base text-[#4B5563]">
                   Try:
                 </span>
                 {heroContent.suggestedQueries.map((q) => (
@@ -125,14 +125,17 @@ export function Hero() {
                     <Link
                       key={q.label}
                       href={q.href}
-                      className="font-hand text-sm sm:text-base font-semibold text-[#171717] bg-white border border-[#171717] px-2 py-0.5 rounded shadow-[1px_1px_0px_#171717] hover:bg-[#FFF0B8] transition-colors no-underline"
+                      className="font-hand text-xs sm:text-sm font-semibold text-[#171717] bg-white border border-[#171717] px-2.5 py-1 rounded-md shadow-[1px_1.5px_0px_#171717] hover:bg-[#FFF0B8] hover:-translate-y-0.5 transition-all no-underline inline-flex items-center gap-1.5"
                     >
-                      {q.label}
+                      <span>{q.label}</span>
+                      <span className="text-[0.62rem] font-sans font-bold bg-[#DFF3DF] border border-[#171717]/40 px-1 py-0.2 rounded text-[#16A34A] leading-tight">
+                        Read
+                      </span>
                     </Link>
                   ) : (
                     <span
                       key={q.label}
-                      className="font-hand text-sm sm:text-base font-medium text-[#6B7280] bg-[#FAF9F5] border border-[#171717]/40 px-2 py-0.5 rounded opacity-80"
+                      className="font-hand text-xs sm:text-sm font-semibold text-[#374151] bg-[#FAF9F5] border border-[#171717]/50 px-2.5 py-1 rounded-md shadow-2xs"
                     >
                       {q.label}
                     </span>
@@ -151,7 +154,7 @@ export function Hero() {
               </Link>
               <Link
                 href={heroContent.secondaryCta.href}
-                className="font-hand text-lg font-bold text-[#171717] underline decoration-2 underline-offset-4 hover:text-[#DC2626] transition-colors"
+                className="font-hand text-base sm:text-lg font-bold text-[#171717] underline decoration-2 underline-offset-4 hover:text-[#DC2626] transition-colors"
               >
                 {heroContent.secondaryCta.label}
               </Link>

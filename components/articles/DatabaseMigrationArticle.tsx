@@ -68,7 +68,7 @@ export function DatabaseMigrationArticle() {
                 </span>
               </div>
 
-              <h1 className="font-hand text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[#171717] leading-[1.12] tracking-tight mb-3">
+              <h1 className="font-hand text-2xl sm:text-3xl lg:text-[2.35rem] font-bold text-[#171717] leading-[1.2] tracking-tight mb-3">
                 {meta.title}
               </h1>
 

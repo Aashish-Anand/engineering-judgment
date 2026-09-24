@@ -23,12 +23,12 @@ export function CategoryBadge({ category, size = "sm" }: CategoryBadgeProps) {
 
   const sizeClasses =
     size === "sm"
-      ? "text-xs px-2 py-0.5"
-      : "text-sm px-2.5 py-1";
+      ? "text-[0.7rem] px-2 py-0.5"
+      : "text-xs px-2.5 py-0.5";
 
   return (
     <span
-      className={`inline-block font-hand font-bold tracking-wide uppercase rounded-md border-[1.2px] shadow-[1px_1px_0px_#171717] ${colors.bg} ${colors.text} ${colors.border} ${sizeClasses}`}
+      className={`inline-block font-sans font-bold tracking-wider uppercase rounded-md border-[1.2px] shadow-[1px_1px_0px_#171717] ${colors.bg} ${colors.text} ${colors.border} ${sizeClasses}`}
     >
       {category}
     </span>

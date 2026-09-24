@@ -13,8 +13,8 @@ export function MetricTable({
         <table className="data-table">
           <thead>
             <tr>
-              <th className="font-hand text-lg text-[#171717]">Metric</th>
-              <th className="font-hand text-lg text-[#171717] text-right">Current</th>
+              <th className="font-sans font-bold text-xs uppercase tracking-wider text-[#171717]">Metric</th>
+              <th className="font-sans font-bold text-xs uppercase tracking-wider text-[#171717] text-right">Current</th>
             </tr>
           </thead>
           <tbody>
