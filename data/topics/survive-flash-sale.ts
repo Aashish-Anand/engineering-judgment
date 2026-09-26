@@ -1,15 +1,7 @@
-import type { TopicMeta, TocItem, RelatedTopicData, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
+import type { TocItem, RelatedTopicData, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
+import { getTopicById } from "@/data/topics/catalog";
 
-export const meta: TopicMeta = {
-  slug: "survive-flash-sale",
-  category: "TRAFFIC",
-  categorySlug: "traffic",
-  difficulty: "Senior+",
-  title: "How to Survive a 10M-User Flash Sale for 10,000 iPhones",
-  subtitle: "Everyone clicks 'Buy Now' at the same second. Only 10,000 should succeed — and no one should be charged twice.",
-  tags: ["Rate Limiting", "Inventory Gating", "Async Orders", "Load Shedding", "Graceful Degradation"],
-  readingTime: "12 min read",
-};
+export const meta = getTopicById("flash-sale").meta;
 
 export const tocItems: TocItem[] = [
   { id: "the-problem",       label: "The Problem" },

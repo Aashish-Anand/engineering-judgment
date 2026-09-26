@@ -34,7 +34,7 @@ The site is styled like an experienced distributed systems engineer opened their
 
 - **Physical Paper & Ink**: Warm `#FAF9F5` paper with subtle graph dots, deep `#171717` ink typography, and pencil accents.
 - **Pastel Highlighters**: Blue (`#DCEBFF`), Green (`#DFF3DF`), Yellow (`#FFF0B8`), Pink (`#F9DDE5`), Lavender (`#E7E1F8`).
-- **Typography Pairing**: Hand-drawn headings and annotations via Google Font **`Caveat`** paired with clean, readable **`Plus Jakarta Sans`** for technical prose and **`JetBrains Mono`** for code.
+- **Typography Pairing**: Hand-drawn headings and annotations via Google Font **`Shantell Sans`** paired with clean, readable **`Plus Jakarta Sans`** for technical prose and **`JetBrains Mono`** for code.
 - **Hand-Drawn Vector SVG Diagrams**: Hand-drawn database cylinders, queues, CDC pipelines, and progressive funnels.
 - **Editorial Navigation**: Lightweight floating notebook header and natural notebook endings (*"Better systems start with better questions."*).
 
@@ -58,10 +58,12 @@ The site is styled like an experienced distributed systems engineer opened their
 
 ## 🛠️ Tech Stack
 
+The third live walkthrough is [One partition receives 70% of your traffic. How do you fix a hot partition?](/topics/traffic/fix-hot-partition). A hypothetical Taylor Swift post illustrates read caching, stable write buckets, celebrity fanout, ordering constraints, and safe routing migration.
+
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
 - **Library**: [React 19](https://react.dev/)
 - **Styling**: [TailwindCSS v4](https://tailwindcss.com/) (CSS-first design tokens)
-- **Typography**: [Next Font](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) (`Caveat`, `Plus Jakarta Sans`, `JetBrains Mono`)
+- **Typography**: [Next Font](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) (`Shantell Sans`, `Plus Jakarta Sans`, `JetBrains Mono`)
 - **Illustrations**: Handcrafted responsive SVG doodle components
 
 ---
@@ -70,7 +72,7 @@ The site is styled like an experienced distributed systems engineer opened their
 
 ### Prerequisites
 
-- Node.js 18.17+ or later
+- Node.js 20.9+ or later
 - npm, pnpm, or yarn
 
 ### Installation

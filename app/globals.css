@@ -76,7 +76,7 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.7;
-  letter-spacing: -0.005em;
+  letter-spacing: normal;
   background-image: radial-gradient(rgba(23, 23, 23, 0.05) 1px, transparent 1px);
   background-size: 28px 28px;
 }
@@ -113,6 +113,19 @@ p {
   margin-bottom: 1rem;
   color: var(--color-ink-secondary);
   line-height: 1.75;
+}
+
+/* Give technical prose clearer separation between words. */
+article p,
+article li,
+article td {
+  word-spacing: 0.08em;
+}
+
+article code,
+article pre {
+  word-spacing: normal;
+  letter-spacing: normal;
 }
 
 strong {

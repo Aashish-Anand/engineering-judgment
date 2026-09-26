@@ -1,15 +1,7 @@
-import type { TopicMeta, TocItem, RelatedTopicData, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
+import type { TocItem, RelatedTopicData, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
+import { getTopicById } from "@/data/topics/catalog";
 
-export const meta: TopicMeta = {
-  slug: "safely-migrate-production-database",
-  category: "DATA",
-  categorySlug: "database",
-  difficulty: "Senior+",
-  title: "How to Safely Migrate a 100M-Read / 10M-Write-per-Day Production Database",
-  subtitle: "Zero downtime sounds simple. Keeping writes correct during the migration is not.",
-  tags: ["Snapshot", "CDC", "Validation", "Cutover", "Rollback"],
-  readingTime: "10 min read",
-};
+export const meta = getTopicById("database-migration").meta;
 
 export const tocItems: TocItem[] = [
   { id: "the-problem",       label: "The Problem" },

@@ -1,12 +1,18 @@
+import { getTopicById } from "@/data/topics/catalog";
+
+const databaseMigrationTopic = getTopicById("database-migration");
+const flashSaleTopic = getTopicById("flash-sale");
+const hotPartitionTopic = getTopicById("hot-partition");
+
 export const heroContent = {
   eyebrow: "Real problems. Better decisions.",
   headline: "Engineering decisions under pressure.",
   subtitle:
     "Real-world bottlenecks, failure modes and architecture trade-offs — explained without the usual system-design fluff.",
-  searchPlaceholder: "Safely migrate a production database",
   suggestedQueries: [
-    { label: "Database migration", href: "/topics/database/safely-migrate-production-database" },
-    { label: "Flash sale", href: "/topics/traffic/survive-flash-sale" },
+    { label: "Database migration", href: databaseMigrationTopic.href },
+    { label: "Flash sale", href: flashSaleTopic.href },
+    { label: "Hot partition", href: hotPartitionTopic.href },
     { label: "Idempotency" },
     { label: "Backpressure" },
     { label: "Poison messages" },
@@ -14,7 +20,7 @@ export const heroContent = {
   primaryCta: { label: "Explore Topics →", href: "#problems" },
   secondaryCta: {
     label: "Start with a real problem →",
-    href: "/topics/database/safely-migrate-production-database",
+    href: databaseMigrationTopic.href,
   },
 };
 
@@ -39,7 +45,7 @@ export const exploreCategories: ExploreCategory[] = [
     icon: "🗄️",
     pastel: "blue",
     problems: [
-      { name: "Database migration", href: "/topics/database/safely-migrate-production-database", available: true },
+      { name: "Database migration", href: databaseMigrationTopic.href, available: true },
       { name: "Schema changes" },
       { name: "Replication & CDC" },
       { name: "Connection pools" },
@@ -75,8 +81,8 @@ export const exploreCategories: ExploreCategory[] = [
     icon: "⚡",
     pastel: "yellow",
     problems: [
-      { name: "Flash sales", href: "/topics/traffic/survive-flash-sale", available: true },
-      { name: "Hot keys" },
+      { name: "Flash sales", href: flashSaleTopic.href, available: true },
+      { name: "Hot partitions", href: hotPartitionTopic.href, available: true },
       { name: "Load shedding" },
       { name: "Graceful degradation" },
     ],
@@ -136,7 +142,7 @@ export const problemCards = [
   {
     category: "DATA",
     question: "How do you safely migrate a production database?",
-    href: "/topics/database/safely-migrate-production-database",
+    href: databaseMigrationTopic.href,
     available: true,
   },
   {
@@ -152,7 +158,7 @@ export const problemCards = [
   {
     category: "TRAFFIC",
     question: "How do you survive a 10M-user flash sale for 10,000 iPhones?",
-    href: "/topics/traffic/survive-flash-sale",
+    href: flashSaleTopic.href,
     available: true,
   },
   {
@@ -201,11 +207,6 @@ export const depthLevels = [
 ];
 
 export const featuredTopic = {
-  title: "How to safely migrate a 100M-read / 10M-write-per-day production database",
-  subtitle: "Zero downtime sounds simple. Keeping writes correct during the migration is not.",
-  category: "DATA",
-  difficulty: "Senior+",
-  readingTime: "10 min read",
-  tags: ["Snapshot", "CDC", "Validation", "Cutover", "Rollback"],
-  href: "/topics/database/safely-migrate-production-database",
+  ...databaseMigrationTopic.meta,
+  href: databaseMigrationTopic.href,
 };

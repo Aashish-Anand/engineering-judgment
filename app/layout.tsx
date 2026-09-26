@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono, Shantell_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { siteConfig } from "@/data/site";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -26,18 +27,22 @@ const shantellSans = Shantell_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
   title: {
-    default: "Engineering Judgment — Architecture Under Pressure",
+    default: siteConfig.title,
     template: "%s | Engineering Judgment",
   },
-  description:
-    "Real-world bottlenecks, failure modes, and architecture trade-offs for backend and distributed systems engineers — explained in an engineering notebook style.",
+  description: siteConfig.description,
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Engineering Judgment — Architecture Under Pressure",
+    title: siteConfig.title,
     description:
       "Real-world bottlenecks, failure modes, and architecture trade-offs — explained without the usual system-design fluff.",
     type: "website",
     locale: "en_US",
+    url: "/",
+    siteName: siteConfig.name,
   },
 };
 

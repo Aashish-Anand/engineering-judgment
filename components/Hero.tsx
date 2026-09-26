@@ -6,14 +6,9 @@ import { useRouter } from "next/navigation";
 import { HighlightStroke } from "./doodle/HighlightStroke";
 import { EngineerDoodle } from "./doodle/EngineerDoodle";
 import { heroContent } from "@/data/homepage";
+import { topicCatalog } from "@/data/topics/catalog";
 
-const placeholders = [
-  "Safely migrate a production database",
-  "Survive a 10M-user flash sale",
-  "Prevent poison messages from retrying",
-  "Make a payment API strictly idempotent",
-  "Handle database connection exhaustion",
-];
+const availableProblems = topicCatalog.map(({ href, prompt }) => ({ href, prompt }));
 
 export function Hero() {
   const router = useRouter();
@@ -22,7 +17,7 @@ export function Hero() {
   const [typing, setTyping] = useState(true);
 
   useEffect(() => {
-    const target = placeholders[placeholderIndex];
+    const target = availableProblems[placeholderIndex].prompt;
 
     if (typing) {
       if (displayed.length < target.length) {
@@ -42,7 +37,7 @@ export function Hero() {
         return () => clearTimeout(timer);
       } else {
         const timer = setTimeout(() => {
-          setPlaceholderIndex((i) => (i + 1) % placeholders.length);
+          setPlaceholderIndex((i) => (i + 1) % availableProblems.length);
           setTyping(true);
         }, 200);
         return () => clearTimeout(timer);
@@ -51,12 +46,7 @@ export function Hero() {
   }, [displayed, typing, placeholderIndex]);
 
   const handleSearchSubmit = () => {
-    // If the active placeholder is flash sale, go to flash sale, else go to database migration
-    if (displayed.toLowerCase().includes("flash")) {
-      router.push("/topics/traffic/survive-flash-sale");
-    } else {
-      router.push("/topics/database/safely-migrate-production-database");
-    }
+    router.push(availableProblems[placeholderIndex].href);
   };
 
   return (
@@ -92,14 +82,14 @@ export function Hero() {
                       🔍
                     </span>
                     <span className="font-hand font-semibold text-base sm:text-lg text-[#171717] tracking-tight">
-                      What are you trying to solve?
+                      Open an available problem
                     </span>
                   </div>
                   <button
                     onClick={handleSearchSubmit}
                     className="shrink-0 w-8 h-8 rounded-full bg-[#171717] text-white flex items-center justify-center font-bold text-sm hover:bg-[#374151] active:translate-y-0.5 transition-all shadow-xs"
-                    title="View topic"
-                    aria-label="Search"
+                    title="Open this problem"
+                    aria-label={`Open ${availableProblems[placeholderIndex].prompt}`}
                   >
                     →
                   </button>

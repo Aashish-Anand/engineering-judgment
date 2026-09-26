@@ -1,57 +1,44 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { DatabaseMigrationArticle } from "@/components/articles/DatabaseMigrationArticle";
-import { FlashSaleArticle } from "@/components/articles/FlashSaleArticle";
-
-import * as dbArticle from "@/data/topics/safely-migrate-production-database";
-import * as flashSaleArticle from "@/data/topics/survive-flash-sale";
-
-const VALID_TOPICS: Record<string, Record<string, boolean>> = {
-  database: { "safely-migrate-production-database": true },
-  traffic: { "survive-flash-sale": true },
-};
+import { articleComponents } from "@/components/articles/registry";
+import { getTopicByRoute, getTopicStaticParams } from "@/data/topics/catalog";
 
 type PageProps = {
   params: Promise<{ category: string; slug: string }>;
 };
 
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return getTopicStaticParams();
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category, slug } = await params;
-  if (!VALID_TOPICS[category]?.[slug]) return {};
-
-  if (slug === "survive-flash-sale") {
-    return {
-      title: `${flashSaleArticle.meta.title} | Architecture Under Pressure`,
-      description: flashSaleArticle.meta.subtitle,
-      openGraph: {
-        title: flashSaleArticle.meta.title,
-        description: flashSaleArticle.meta.subtitle,
-        type: "article",
-      },
-    };
-  }
+  const topic = getTopicByRoute(category, slug);
+  if (!topic) return {};
 
   return {
-    title: `${dbArticle.meta.title} | Architecture Under Pressure`,
-    description: dbArticle.meta.subtitle,
+    title: topic.meta.title,
+    description: topic.meta.subtitle,
+    alternates: { canonical: topic.href },
     openGraph: {
-      title: dbArticle.meta.title,
-      description: dbArticle.meta.subtitle,
+      title: topic.meta.title,
+      description: topic.meta.subtitle,
       type: "article",
+      url: topic.href,
     },
   };
 }
 
 export default async function TopicPage({ params }: PageProps) {
   const { category, slug } = await params;
+  const topic = getTopicByRoute(category, slug);
 
-  if (!VALID_TOPICS[category]?.[slug]) {
+  if (!topic) {
     notFound();
   }
 
-  if (slug === "survive-flash-sale") {
-    return <FlashSaleArticle />;
-  }
-
-  return <DatabaseMigrationArticle />;
+  const Article = articleComponents[topic.id];
+  return <Article />;
 }
