@@ -12,11 +12,12 @@ The recurring reasoning chain is:
 
 ## Current Scope
 
-Three complete topics are available:
+Four complete topics are available:
 
 1. Safely migrating a high-traffic production database
 2. Surviving a 10-million-user flash sale for 10,000 items
 3. Fixing a hot partition receiving 70% of traffic after a hypothetical Taylor Swift post
+4. Publishing an event only if the database transaction succeeds (transactional outbox)
 
 The homepage advertises several additional categories and problems, but those are currently placeholders.
 
@@ -100,6 +101,21 @@ The interface resembles an experienced engineer's notebook:
 - Production builds depend on downloading Google Fonts unless the fonts are self-hosted or already cached.
 
 ## Recommended Next Steps
+
+## Resume Tomorrow — Latest Handoff
+
+The user asked to save context and continue tomorrow. The latest completed task is the full hot-partition article rewrite, following the stronger explanatory structure of Database Migration and Flash Sale. Do not restart the rewrite or assume the user has reviewed and approved the new content yet.
+
+- Main article: `components/articles/HotPartitionArticle.tsx`.
+- Supporting content/TOC: `data/topics/fix-hot-partition.ts`; metadata: `data/topics/catalog.ts`.
+- Diagrams: `components/diagrams/HotPartitionDiagram.tsx`, `HotPartitionFlow.tsx`, and `HotPartitionWorkedExamples.tsx`.
+- Interactive experiment: `components/HotPartitionLab.tsx`; arithmetic: `data/hot-partition-model.ts`.
+- Latest checks passed: lint, eight tests, TypeScript, whitespace checks, and `npx next build --webpack`. Generated HTML verified 15 section IDs matching TOC data and ten figures.
+- Remaining verification: review desktop/mobile layout and verify simulator controls in a browser. Previous interaction checks were inconclusive, not a confirmed application defect.
+- Suggested first step: ask for the user's feedback on the revised article, or review the rendered page if requested. Keep the wording accessible and preserve the detailed reasoning and inline examples.
+- Work remains uncommitted; preserve existing tracked changes and untracked files. No commit, push, or scheduled reminder was requested.
+
+### Broader Project Options
 
 Suggested order when work resumes:
 

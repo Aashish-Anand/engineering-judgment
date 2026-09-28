@@ -1,6 +1,6 @@
 import type { TopicMeta } from "@/data/types";
 
-export type TopicId = "database-migration" | "flash-sale" | "hot-partition";
+export type TopicId = "database-migration" | "flash-sale" | "hot-partition" | "transactional-outbox";
 
 export type TopicCatalogEntry = {
   id: TopicId;
@@ -59,6 +59,22 @@ export const topicCatalog: readonly TopicCatalogEntry[] = [
         "Load Shedding",
         "Graceful Degradation",
       ],
+      readingTime: "12 min read",
+    },
+  },
+  {
+    id: "transactional-outbox",
+    href: "/topics/correctness/transactional-outbox",
+    prompt: "Publish an event only if the transaction succeeds",
+    meta: {
+      slug: "transactional-outbox",
+      category: "CORRECTNESS",
+      categorySlug: "correctness",
+      difficulty: "Senior+",
+      title: "How Do You Publish an Event Only If the Database Transaction Succeeds?",
+      subtitle:
+        "Two writes to two systems. One can fail without the other knowing. The transactional outbox turns this into a single atomic operation.",
+      tags: ["Outbox", "Dual Writes", "CDC", "Idempotency", "At-Least-Once"],
       readingTime: "12 min read",
     },
   },

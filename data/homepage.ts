@@ -3,6 +3,7 @@ import { getTopicById } from "@/data/topics/catalog";
 const databaseMigrationTopic = getTopicById("database-migration");
 const flashSaleTopic = getTopicById("flash-sale");
 const hotPartitionTopic = getTopicById("hot-partition");
+const transactionalOutboxTopic = getTopicById("transactional-outbox");
 
 export const heroContent = {
   eyebrow: "Real problems. Better decisions.",
@@ -13,6 +14,7 @@ export const heroContent = {
     { label: "Database migration", href: databaseMigrationTopic.href },
     { label: "Flash sale", href: flashSaleTopic.href },
     { label: "Hot partition", href: hotPartitionTopic.href },
+    { label: "Transactional outbox", href: transactionalOutboxTopic.href },
     { label: "Idempotency" },
     { label: "Backpressure" },
     { label: "Poison messages" },
@@ -58,7 +60,7 @@ export const exploreCategories: ExploreCategory[] = [
     pastel: "green",
     problems: [
       { name: "Idempotency" },
-      { name: "Deduplication" },
+      { name: "Transactional outbox", href: transactionalOutboxTopic.href, available: true },
       { name: "Concurrency" },
       { name: "Ordering" },
     ],
