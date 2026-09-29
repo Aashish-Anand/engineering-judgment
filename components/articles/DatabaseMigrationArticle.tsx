@@ -1,4 +1,6 @@
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { ArticleNav } from "@/components/ArticleNav";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
@@ -173,7 +175,7 @@ export function DatabaseMigrationArticle() {
               The first instinct is often: <strong>dump the database and restore it on the target</strong>. It sounds straightforward — export everything, import it on the new system, switch over.
             </p>
             <div className="my-6">
-              <NaiveMigrationDiagram />
+              <ScrollReveal><NaiveMigrationDiagram /></ScrollReveal>
             </div>
             <FailureCallout title="Wait... production writes are still happening.">
               This fails because production writes continue while the dump is happening. By the time the <TermTooltip termKey="snapshot">snapshot</TermTooltip> finishes, source and destination can diverge. Every write that arrived during the dump is missing from the target.
@@ -199,9 +201,9 @@ export function DatabaseMigrationArticle() {
               title="How should we think about this?"
               id="mental-model"
             />
-            <InsightCard title="The Mental Model">
+            <ScrollReveal><InsightCard title="The Mental Model">
               A production migration is a <strong>synchronization problem</strong> followed by a <strong>traffic-switching problem</strong>.
-            </InsightCard>
+            </InsightCard></ScrollReveal>
             <p>
               First, get the target to a state where it has the same data as the source. Then, move traffic to the target without losing writes or serving stale reads. These are <strong>two distinct engineering challenges</strong> — conflating them is where most migration plans go wrong.
             </p>
@@ -217,7 +219,7 @@ export function DatabaseMigrationArticle() {
               The diagram below shows the high-level data flow. The application keeps writing to the source while a parallel pipeline synchronizes the target:
             </p>
             <div className="my-6">
-              <MigrationArchitectureDiagram />
+              <ScrollReveal><MigrationArchitectureDiagram /></ScrollReveal>
             </div>
             <p>
               The application writes to <code>DB A</code> (the primary). A <TermTooltip termKey="snapshot">snapshot</TermTooltip> seeds <code>DB B</code> with existing data. <TermTooltip termKey="CDC">CDC</TermTooltip> captures ongoing changes from <code>DB A</code> and applies them to <code>DB B</code>. Once caught up and validated, traffic gradually shifts to <code>DB B</code>.
@@ -249,13 +251,13 @@ export function DatabaseMigrationArticle() {
             <p>
               A production migration is not a single action — it&apos;s a sequence of phases, each with its own success criteria and failure modes. Skipping a phase (or rushing through validation) is the most common source of production incidents during migrations.
             </p>
-            <Timeline phases={migrationPhases} />
+            <ScrollReveal><Timeline phases={migrationPhases} /></ScrollReveal>
 
             <h3 className="font-hand text-2xl font-bold text-[#171717] mt-8 mb-3">
               How does the cutover work?
             </h3>
             <div className="my-6">
-              <CutoverDiagram />
+              <ScrollReveal><CutoverDiagram /></ScrollReveal>
             </div>
             <p>
               Gradual cutover reduces blast radius. At each stage, you can observe metrics and roll back if something is wrong. The actual strategy depends on whether writes are going to one source or multiple destinations.
@@ -272,7 +274,7 @@ export function DatabaseMigrationArticle() {
               The idea is simple: write to both databases from the application layer. If both succeed, they stay synchronized. The problem is <strong>when they don&apos;t</strong>.
             </p>
             <div className="my-6">
-              <DualWriteDiagram />
+              <ScrollReveal><DualWriteDiagram /></ScrollReveal>
             </div>
             <p>
               When one write succeeds and the other fails, the systems diverge. You now have an inconsistency that&apos;s difficult to detect and expensive to repair. This is fundamentally a <strong>distributed transaction problem</strong> — and most applications don&apos;t treat it that way.
@@ -333,7 +335,7 @@ export function DatabaseMigrationArticle() {
             </ul>
 
             {/* Signature Recurring What Breaks Next Element */}
-            <WhatBreaksNext
+            <ScrollReveal><WhatBreaksNext
               solved="DB migration cutover completed with zero downtime"
               nextIssue="CDC Stream Lag & Target IOPS Saturation"
               steps={[
@@ -343,7 +345,7 @@ export function DatabaseMigrationArticle() {
                 "Replication Divergence Window",
               ]}
               explanation="At 10× scale (100M writes/day), the CDC consumer cannot ingest bulk writes as quickly as the primary WAL generates them. If write bursts exceed target disk IOPS, replication lag expands from seconds to hours, making rollback hazardous."
-            />
+            /></ScrollReveal>
 
             {/* ── 11 — What to avoid ───────────────────────────── */}
             <SectionHeader number="11" title="What would I avoid?" id="avoid" />
@@ -451,6 +453,7 @@ export function DatabaseMigrationArticle() {
               Database migration connects to many adjacent problems. Understanding these will deepen your reasoning about the decisions above.
             </p>
             <RelatedTopics topics={relatedTopics} />
+            <ArticleNav currentId="database-migration" />
           </div>
         </div>
       </div>

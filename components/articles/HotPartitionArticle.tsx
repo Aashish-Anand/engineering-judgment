@@ -1,4 +1,6 @@
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { ArticleNav } from "@/components/ArticleNav";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { TableOfContents } from "@/components/TableOfContents";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -48,13 +50,13 @@ export function HotPartitionArticle() {
               { label: "Other 15 partitions", value: "2,000/s each on average" },
               { label: "Required behavior", value: "Keep accepted reactions durable" },
             ]} sideNote="These are teaching numbers, not a database benchmark. A read, a large comment query, and a write do not necessarily cost the same." />
-            <HotPartitionDiagram />
+            <ScrollReveal><HotPartitionDiagram /></ScrollReveal>
             <p>Our goal is not simply to make the graph look balanced. Fans should be able to read the post, accepted user actions must not disappear, and ordinary posts should remain usable. We can allow the public post-like count to update a little later; we cannot silently discard a saved reaction.</p>
 
             <SectionHeader number="02" id="the-mistake" title="The first mistake: add servers without changing the work" />
             <p>Suppose we double the app servers. They can accept more requests, but they all still ask P7 for the same data. We have increased the number of callers, not the capacity of the bottleneck.</p>
             <p>Adding DB nodes can help when many busy keys share a node and the database can move them apart. It does not automatically divide one frequently updated record. Moving Taylor&apos;s post to a dedicated partition may protect its neighbors, but that new partition still receives all of the post&apos;s work.</p>
-            <InsightCard title="Hot partition is not always the same as hot key">If many different posts overload P7, rebalancing them may be enough. If one post dominates P7, we must avoid repeated work for that post or split work that can safely run independently.</InsightCard>
+            <ScrollReveal><InsightCard title="Hot partition is not always the same as hot key">If many different posts overload P7, rebalancing them may be enough. If one post dominates P7, we must avoid repeated work for that post or split work that can safely run independently.</InsightCard></ScrollReveal>
             <p>This is why “use more partitions” is not yet an answer. We need to explain <em>which records move, how requests find them, and whether those records still compete for the same physical capacity</em>.</p>
 
             <SectionHeader number="03" id="diagnosis" title="Find what is actually making P7 busy" />
@@ -71,11 +73,11 @@ export function HotPartitionArticle() {
 
             <SectionHeader number="04" id="mental-model" title="The mental model: reuse reads, distribute independent changes" />
             <p>A thousand fans reading the same public text do not require a thousand database reads. But a thousand fans submitting reactions are making a thousand distinct changes. Caching helps the first case; it cannot replace durable storage for the second.</p>
-            <InsightCard title="Split the problem before splitting the database">Public reads can share a copy. Alice&apos;s and Bob&apos;s reactions can be stored independently. Two changes from Alice still need a rule that preserves her latest intent.</InsightCard>
+            <ScrollReveal><InsightCard title="Split the problem before splitting the database">Public reads can share a copy. Alice&apos;s and Bob&apos;s reactions can be stored independently. Two changes from Alice still need a rule that preserves her latest intent.</InsightCard></ScrollReveal>
             <p>There is one more constraint: if every independent reaction still updates the same global counter synchronously, we have rebuilt the bottleneck. The design must separate saving a user&apos;s reaction from refreshing the number displayed on the post.</p>
 
             <SectionHeader number="05" id="architecture" title="The architecture: two paths with different guarantees" />
-            <HotPartitionDiagram resolved />
+            <ScrollReveal><HotPartitionDiagram resolved /></ScrollReveal>
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Path A: reading the public post</h3>
             <p>Keep reusable public content in an edge cache or app-local cache. A cache is simply a stored copy that avoids repeated database work. Keep viewer-specific state—such as “you liked this post”—separate. A private response must not accidentally become a shared public copy.</p>
             <p>The following read-only example sends all 70,000 hot requests through the read path. At a 99% cache hit rate, 69,300 reads use the copy and only 700 reach the database. This is a simplified experiment, not a claim that our mixed workload consists entirely of reads.</p>
@@ -96,7 +98,7 @@ export function HotPartitionArticle() {
 
             <SectionHeader number="06" id="incident" title="During the incident: stabilize first, redesign safely" />
             <p>Do not start an untested repartitioning job while P7 is already failing. First reduce pressure using controls you have already built and tested. The durable fix can then be rolled out without competing with emergency traffic.</p>
-            <Timeline phases={phases} />
+            <ScrollReveal><Timeline phases={phases} /></ScrollReveal>
             <p>Protect ordinary posts with real resource budgets: reserved workers, bounded database connections, and limits on celebrity-post jobs. Two queue names do not provide isolation if one queue can consume every worker and connection.</p>
             <p>For reaction writes, report success only after durable acceptance—either the committed reaction or a durable command with an explicit “pending” contract. An in-memory queue is not durable acceptance. A full queue should lead to a clear retryable rejection, not a success message for work we may lose.</p>
             <p>Watch recovery in both directions: user-visible errors and latency should fall, while the age of waiting work should shrink. A growing backlog with a green API success-rate graph is not recovery.</p>
@@ -145,7 +147,7 @@ export function HotPartitionArticle() {
             <p>A queue buys time; it does not create capacity. If 12,000 actions arrive each second and workers complete 8,000, the backlog grows by 4,000 every second. Increase processing capacity, reduce the admitted workload, or change the work being done.</p>
 
             <SectionHeader number="10" id="ten-x" title="What breaks next—and can you predict it?" />
-            <WhatBreaksNext solved="Repeated DB reads and one shared reaction counter" nextIssue="Aggregation, comment reads, and follower-feed work" steps={["Save reactions", "Combine counts", "Serve feeds"]} explanation="Follow the work after the first bottleneck. Parallel writes do not help if every accepted action immediately converges on another single overloaded record or worker." />
+            <ScrollReveal><WhatBreaksNext solved="Repeated DB reads and one shared reaction counter" nextIssue="Aggregation, comment reads, and follower-feed work" steps={["Save reactions", "Combine counts", "Serve feeds"]} explanation="Follow the work after the first bottleneck. Parallel writes do not help if every accepted action immediately converges on another single overloaded record or worker." /></ScrollReveal>
             <p>Publishing to millions of follower feeds is called <strong>fanout</strong>. Even with the post cached, copying it into every follower&apos;s feed can overload background workers. A hybrid feed design can push ordinary posts ahead of time while fetching celebrity posts when followers open their feeds. This trades publishing work for read-time merging; it needs its own capacity and latency budget.</p>
             <p>Now test the first two fixes in isolation. This lab uses a deliberately simplified 70,000-request/s workload: either all reads or all post-like writes. Each simulated partition has an assumed 10,000-request/s capacity. It does not model mixed operation costs, replication, or real database placement.</p>
             <HotPartitionLab />
@@ -189,6 +191,7 @@ export function HotPartitionArticle() {
                 <li><a className="underline" href="https://builder.aws.com/content/3EuxuD6bWtQ6gEp9FaKQfd3Z2AM/using-dependency-isolation-to-contain-concurrency-overload">AWS: isolating workloads with concurrency budgets</a></li>
               </ul>
             </details>
+            <ArticleNav currentId="hot-partition" />
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@ import { ExpandableQuestion } from "@/components/ExpandableQuestion";
 import { RelatedTopics } from "@/components/RelatedTopics";
 import { WhatBreaksNext } from "@/components/doodle/WhatBreaksNext";
 import { ArticleNav } from "@/components/ArticleNav";
+import { CodeBlock } from "@/components/CodeBlock";
 import { OutboxDiagram, OutboxRelayFlow } from "@/components/diagrams/OutboxDiagram";
 import {
   OutboxRowLifecycle,
@@ -84,6 +85,25 @@ export function TransactionalOutboxArticle() {
             <p>If the transaction commits, both the order and the event record exist. If it rolls back, neither exists. There is no gap, no crash window, and no ghost event. This is the atomicity guarantee that the dual-write approach lacks.</p>
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">What the application code looks like</h3>
             <p>The change is small but structurally important. Instead of <code>save(order); publish(event);</code> the code becomes <code>save(order); saveOutboxRow(event); commit();</code> — all within the same transaction. The publish call disappears from the request path entirely.</p>
+            <CodeBlock
+              language="sql"
+              filename="atomic-order-creation.sql"
+              code={`-- Single atomic transaction: write business data AND outbox event
+BEGIN;
+
+INSERT INTO orders (id, user_id, amount, status)
+VALUES ('order-7842', 'user-19', 42.50, 'PENDING');
+
+INSERT INTO outbox (aggregate_type, aggregate_id, event_type, payload)
+VALUES (
+  'Order',
+  'order-7842',
+  'OrderCreated',
+  '{"order_id": "order-7842", "amount": 42.50, "user_id": "user-19"}'::jsonb
+);
+
+COMMIT;`}
+            />
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Adopting the outbox: a phased rollout</h3>
             <p>Do not rewrite every producer at once. Audit the dual-write boundaries, add the outbox to one service, verify event delivery, and expand.</p>
             <ScrollReveal><Timeline phases={phases} /></ScrollReveal>
@@ -94,6 +114,22 @@ export function TransactionalOutboxArticle() {
             <ScrollReveal delay={100}><OutboxRelayFlow cdc /></ScrollReveal>
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Polling is simpler, CDC is faster</h3>
             <p>A polling relay queries <code>WHERE published_at IS NULL ORDER BY id</code> on a timer. It is simple to build, easy to reason about, and needs no additional infrastructure. The trade-off is latency: events wait up to the polling interval. For most applications, a 1-second poll is fast enough.</p>
+            <CodeBlock
+              language="sql"
+              filename="polling-relay-worker.sql"
+              code={`-- Polling query with concurrency protection (prevents worker contention)
+SELECT id, aggregate_type, aggregate_id, event_type, payload
+FROM outbox
+WHERE published_at IS NULL
+ORDER BY id ASC
+LIMIT 100
+FOR UPDATE SKIP LOCKED;
+
+-- After publishing batch to broker:
+UPDATE outbox
+SET published_at = NOW()
+WHERE id = ANY($1::bigint[]);`}
+            />
             <p>A CDC relay (e.g., Debezium tailing the PostgreSQL WAL) detects new outbox rows in near-real-time. It avoids polling overhead and delivers events with sub-second latency. The trade-off is operational complexity: WAL retention, connector failures, schema evolution, and monitoring.</p>
             <DecisionTable headers={["Relay strategy", "Delivery latency", "Operational cost"]} rows={[
               ["Polling (1s interval)", "Up to 1 second", "Low — a SQL query on a timer"],

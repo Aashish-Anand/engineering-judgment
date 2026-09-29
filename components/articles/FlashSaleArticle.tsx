@@ -1,4 +1,7 @@
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { ArticleNav } from "@/components/ArticleNav";
+import { CodeBlock } from "@/components/CodeBlock";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
@@ -175,20 +178,18 @@ export function FlashSaleArticle() {
             <p>
               The most intuitive approach is writing directly to the relational database with an ACID transaction and row-level locking:
             </p>
-            <div className="my-4">
-              <pre>
-                <code>
-{`BEGIN TRANSACTION;
+            <CodeBlock
+              language="sql"
+              filename="naive-transaction.sql"
+              code={`BEGIN TRANSACTION;
 SELECT stock FROM items WHERE id = ? FOR UPDATE;
 -- if stock > 0:
 UPDATE items SET stock = stock - 1 WHERE id = ?;
 INSERT INTO orders (user_id, item_id) VALUES (?, ?);
 COMMIT;`}
-                </code>
-              </pre>
-            </div>
+            />
             <div className="my-6">
-              <NaiveFlashSaleDiagram />
+              <ScrollReveal><NaiveFlashSaleDiagram /></ScrollReveal>
             </div>
             <FailureCallout title="Wait... lock contention and connection pool exhaustion occur in milliseconds!">
               Under 2,000,000 incoming requests per second, every single database connection attempts to acquire an exclusive lock on the exact same row. Database connection pools (typically 50–200 connections) are saturated within 5 milliseconds, causing cascading 504 timeouts across every other service sharing the database.
@@ -214,9 +215,9 @@ COMMIT;`}
               title="How should we think about this?"
               id="mental-model"
             />
-            <InsightCard title="The Mental Model">
+            <ScrollReveal><InsightCard title="The Mental Model">
               A flash sale is an <strong>admission control problem</strong> followed by a <strong>reservation reconciliation problem</strong>.
-            </InsightCard>
+            </InsightCard></ScrollReveal>
             <p>
               Do not let 10 million buyers touch your transaction layer. First, shed 99.9% of traffic at the edge and queue layers using cryptographically signed admissions. Second, serialize the final 10,000 item allocations in memory using an atomic Lua script in Redis. Third, confirm orders asynchronously via decoupled queues.
             </p>
@@ -232,7 +233,7 @@ COMMIT;`}
               The diagram below illustrates the progressive filtering funnel. Each layer sheds an order of magnitude of pressure before requests ever touch relational storage:
             </p>
             <div className="my-6">
-              <FlashSaleArchitectureDiagram />
+              <ScrollReveal><FlashSaleArchitectureDiagram /></ScrollReveal>
             </div>
             <p>
               Traffic is funneled through 5 distinct protection barriers: Edge WAF, Virtual Waiting Room, In-memory Lua stock reservation, Kafka ordering buffer, and batched background Postgres settlement.
@@ -261,13 +262,13 @@ COMMIT;`}
             <p>
               A flash sale execution spans multiple hours before and after the 30-second buying window:
             </p>
-            <Timeline phases={flashSalePhases} />
+            <ScrollReveal><Timeline phases={flashSalePhases} /></ScrollReveal>
 
             <h3 className="font-hand text-2xl font-bold text-[#171717] mt-8 mb-3">
               How does the 10-Minute Reservation Lifecycle work?
             </h3>
             <div className="my-6">
-              <ReservationFlowDiagram />
+              <ScrollReveal><ReservationFlowDiagram /></ScrollReveal>
             </div>
             <p>
               When a user successfully decrements the Redis counter, their stock is <strong>temporarily reserved with a 10-minute TTL</strong>. If the user completes payment within 10 minutes, the order is permanently confirmed. If the user abandons or payment fails, background reconciliation restores the item to the stock pool.
@@ -284,7 +285,7 @@ COMMIT;`}
               When multiple requests arrive concurrently, thread interleaving in naive implementations creates race conditions that result in negative stock. The comparison below illustrates why atomic Redis Lua script execution is mandatory:
             </p>
             <div className="my-6">
-              <InventoryRaceDiagram />
+              <ScrollReveal><InventoryRaceDiagram /></ScrollReveal>
             </div>
             <DecisionTable
               headers={["Approach", "Advantage", "Trade-off / Risk"]}
@@ -342,7 +343,7 @@ COMMIT;`}
             </ul>
 
             {/* Signature Recurring What Breaks Next Element */}
-            <WhatBreaksNext
+            <ScrollReveal><WhatBreaksNext
               solved="Zero overselling achieved via single-cluster Redis Lua & Kafka"
               nextIssue="Multi-Region Split-Brain & Global Inventory Partitioning"
               steps={[
@@ -352,7 +353,7 @@ COMMIT;`}
                 "Stranded Unsold Units in Secondary Regions",
               ]}
               explanation="Partitioning 10,000 units across US, EU, and APAC (e.g. 5K/3K/2K) solves the single Redis NIC limit, but causes units to sit unsold in one region while another region sells out in 200ms. Dynamic cross-region stock stealing introduces distributed locking latency."
-            />
+            /></ScrollReveal>
 
             {/* ── 11 — What to avoid ───────────────────────────── */}
             <SectionHeader number="11" title="What would I avoid?" id="avoid" />
@@ -457,6 +458,7 @@ COMMIT;`}
               High-concurrency flash sales connect closely to idempotency, distributed <TermTooltip termKey="rate limiting">rate limiting</TermTooltip>, and backpressure:
             </p>
             <RelatedTopics topics={relatedTopics} />
+            <ArticleNav currentId="flash-sale" />
           </div>
         </div>
       </div>

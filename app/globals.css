@@ -483,3 +483,74 @@ article figure .border.border-ink.rounded-xl:hover {
   box-shadow: 3px 5px 0px var(--color-ink);
 }
 
+/* ── Print Stylesheet ────────────────────────────────────────── */
+@media print {
+  /* Reset backgrounds and ink */
+  html, body, main, article {
+    background-color: #FFFFFF !important;
+    background-image: none !important;
+    color: #111111 !important;
+  }
+
+  /* Hide interactive/navigation UI */
+  header,
+  nav,
+  footer,
+  aside,
+  button,
+  [aria-label="Back to top"],
+  [aria-label="Notebook Table of Contents"],
+  [aria-label="Open Table of Contents"],
+  [aria-label="Toggle navigation menu"] {
+    display: none !important;
+  }
+
+  /* Unclutter shadow effects */
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure diagrams, tables, callouts, and code blocks don't split awkwardly across page breaks */
+  figure,
+  article figure,
+  svg,
+  table,
+  .data-table,
+  pre,
+  .doodle-card,
+  .sticky-note {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Keep headings with their subsequent content */
+  h1, h2, h3, h4, h5, h6,
+  .circle-num {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Automatically expand details sections (e.g. Sources & further reading) */
+  details {
+    display: block !important;
+  }
+
+  details > *:not(summary) {
+    display: block !important;
+  }
+
+  details summary {
+    font-weight: bold;
+    list-style: none;
+  }
+
+  /* Clean readable links */
+  a {
+    color: #111111 !important;
+    text-decoration: underline !important;
+  }
+}
+
