@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CommandPalette } from "@/components/CommandPalette";
 
 const navItems = [
   { label: "Problems", href: "/#problems" },
@@ -14,9 +15,9 @@ export function SiteHeader() {
 
   return (
     <header className="relative z-40 w-full pt-3 pb-2 px-4 sm:px-8">
-      <div className="wide-width mx-auto flex items-center justify-between">
+      <div className="wide-width mx-auto flex items-center justify-between gap-3">
         {/* Top-left: Small handwritten logo/wordmark with doodle lightbulb */}
-        <Link href="/" className="flex items-center gap-2.5 no-underline group select-none">
+        <Link href="/" className="flex items-center gap-2.5 no-underline group select-none shrink-0">
           <span className="text-2xl select-none transform -rotate-6 group-hover:rotate-0 transition-transform" aria-hidden="true">
             💡
           </span>
@@ -30,30 +31,34 @@ export function SiteHeader() {
           </div>
         </Link>
 
-        {/* Desktop: Small hand-drawn navigation annotations */}
-        <nav className="hidden md:flex items-center gap-1 bg-white/80 border-[1.5px] border-[#171717] rounded-full px-4 py-1 shadow-[2px_2px_0px_#171717]">
-          {navItems.map((item, index) => (
-            <span key={item.label} className="inline-flex items-center">
-              <Link
-                href={item.href}
-                className="font-hand text-lg font-bold text-[#171717] hover:text-[#DC2626] px-2 py-0.5 rounded transition-colors no-underline"
-              >
-                {item.label}
-              </Link>
-              {index < navItems.length - 1 && (
-                <span className="font-hand text-[#171717]/40 select-none px-1">·</span>
-              )}
-            </span>
-          ))}
-        </nav>
+        {/* Right side: Search + Nav */}
+        <div className="flex items-center gap-2.5">
+          <CommandPalette />
 
-        {/* Mobile: Tiny logo + hamburger */}
-        <div className="md:hidden">
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-1.5 bg-white border-[1.5px] border-[#171717] rounded-md shadow-[1px_2px_0px_#171717] text-[#171717]"
-            aria-label="Toggle navigation menu"
-          >
+          {/* Desktop: Small hand-drawn navigation annotations */}
+          <nav className="hidden md:flex items-center gap-1 bg-white/80 border-[1.5px] border-[#171717] rounded-full px-4 py-1 shadow-[2px_2px_0px_#171717]">
+            {navItems.map((item, index) => (
+              <span key={item.label} className="inline-flex items-center">
+                <Link
+                  href={item.href}
+                  className="font-hand text-lg font-bold text-[#171717] hover:text-[#DC2626] px-2 py-0.5 rounded transition-colors no-underline"
+                >
+                  {item.label}
+                </Link>
+                {index < navItems.length - 1 && (
+                  <span className="font-hand text-[#171717]/40 select-none px-1">·</span>
+                )}
+              </span>
+            ))}
+          </nav>
+
+          {/* Mobile: Tiny logo + hamburger */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="p-1.5 bg-white border-[1.5px] border-[#171717] rounded-md shadow-[1px_2px_0px_#171717] text-[#171717]"
+              aria-label="Toggle navigation menu"
+            >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               {mobileOpen ? (
                 <path
@@ -73,6 +78,7 @@ export function SiteHeader() {
           </button>
         </div>
       </div>
+    </div>
 
       {/* Mobile drop menu */}
       {mobileOpen && (

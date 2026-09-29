@@ -343,3 +343,47 @@ export const saleStrategies = [
     description: "Dynamically disables secondary features (recommendations, reviews, order history search, loyalty points) during the sale window. Conserves 60%+ of compute capacity exclusively for the mission-critical purchase path.",
   },
 ];
+
+export const judgmentQuiz = [
+  {
+    scenario: "During a flash sale with 10,000 items and 2,000,000 concurrent shoppers, why does `SELECT stock FROM items WHERE id = ? FOR UPDATE` crash the database within milliseconds?",
+    options: [
+      {
+        text: "Relational databases cannot store more than 10,000 rows in memory simultaneously.",
+        isCorrect: false,
+        explanation: "Relational databases can easily store millions of rows. The issue is write lock contention on one single row.",
+      },
+      {
+        text: "All incoming requests compete for an exclusive lock on the exact same row, saturating connection pools within 5ms and triggering cascading timeouts.",
+        isCorrect: true,
+        explanation: "Correct! Row-level locking serializes writes. Connection pools (50–200 connections) immediately saturate waiting for the single row lock, causing cascading 504 timeouts across all database consumers.",
+      },
+      {
+        text: "The database query optimizer refuses to use the primary key index under high read volumes.",
+        isCorrect: false,
+        explanation: "The index is used correctly; the physical bottleneck is lock contention and connection pool exhaustion.",
+      },
+    ],
+  },
+  {
+    scenario: "A user successfully reserves an item in Redis with a 10-minute hold TTL, but navigates away and closes their browser. How should inventory be returned?",
+    options: [
+      {
+        text: "Immediately decrement the user's bank account via an automated debit charge.",
+        isCorrect: false,
+        explanation: "You cannot charge users without explicit authorization and payment confirmation.",
+      },
+      {
+        text: "A background expiry listener or delayed reconciliation worker detects expired unconfirmed reservations and atomically increments Redis stock back up.",
+        isCorrect: true,
+        explanation: "Correct! Temporary inventory holds with TTLs ensure items aren't leaked forever if customers abandon their cart. Background workers safely return expired stock.",
+      },
+      {
+        text: "Restart the Redis cluster to purge expired in-memory cache entries.",
+        isCorrect: false,
+        explanation: "Restarting Redis would drop all other active reservations and destabilize the ongoing flash sale.",
+      },
+    ],
+  },
+];
+

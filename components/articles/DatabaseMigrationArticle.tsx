@@ -1,6 +1,7 @@
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArticleNav } from "@/components/ArticleNav";
+import { JudgmentQuiz } from "@/components/JudgmentQuiz";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
@@ -442,6 +443,15 @@ export function DatabaseMigrationArticle() {
                 />
               ))}
             </div>
+
+            {article.judgmentQuiz && (
+              <ScrollReveal>
+                <JudgmentQuiz
+                  title="Test Your Judgment: Zero-Downtime Migration"
+                  questions={article.judgmentQuiz}
+                />
+              </ScrollReveal>
+            )}
 
             {/* ── 15 — Related Problems ────────────────────────── */}
             <SectionHeader

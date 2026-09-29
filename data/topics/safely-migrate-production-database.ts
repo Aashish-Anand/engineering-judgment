@@ -271,3 +271,47 @@ export const migrationStrategies = [
     description: "Replay production traffic against the target without serving the results. Useful for performance validation and catching regressions. Increases infrastructure cost during migration.",
   },
 ];
+
+export const judgmentQuiz = [
+  {
+    scenario: "During a zero-downtime database migration, an engineer proposes having application servers execute dual writes to both DB A and DB B synchronously. What is the fundamental danger?",
+    options: [
+      {
+        text: "Dual writes require purchasing double the cloud CPU licenses.",
+        isCorrect: false,
+        explanation: "Infrastructure cost is secondary. The fundamental danger is silent data corruption.",
+      },
+      {
+        text: "Network hiccups or partial failures will cause one write to succeed and the other to fail, leading to divergent datasets with undefined state.",
+        isCorrect: true,
+        explanation: "Correct! Two separate network writes cannot be made atomic without distributed transactions. Partial failures leave DB A and DB B permanently divergent.",
+      },
+      {
+        text: "Application servers cannot open connections to two databases simultaneously.",
+        isCorrect: false,
+        explanation: "App servers can easily connect to multiple databases; the constraint is distributed consistency.",
+      },
+    ],
+  },
+  {
+    scenario: "After a 10-hour snapshot copy finishes, you start the CDC pipeline. How does the CDC pipeline catch up on writes that occurred during the snapshot?",
+    options: [
+      {
+        text: "It asks DB A to re-execute all client HTTP requests from application memory.",
+        isCorrect: false,
+        explanation: "Database engines do not store or replay external HTTP requests.",
+      },
+      {
+        text: "It replays change events from the Write-Ahead Log (WAL) starting from the exact log position (LSN/Binlog offset) where the snapshot began.",
+        isCorrect: true,
+        explanation: "Correct! By recording the exact WAL offset (LSN) at the start of the snapshot, the CDC pipeline replays every subsequent mutation to bring the target up to real-time.",
+      },
+      {
+        text: "It ignores writes made during the snapshot and relies on user bug reports.",
+        isCorrect: false,
+        explanation: "Ignoring mutations made during a multi-hour snapshot causes immediate data loss.",
+      },
+    ],
+  },
+];
+

@@ -68,3 +68,66 @@ export const followUps: ExpandableQA[] = [
   { question: "Can we use the outbox pattern with a NoSQL database?", answer: "Yes, if the database supports atomic writes to multiple items in the same transaction — for example, DynamoDB transactions or MongoDB multi-document transactions. If it does not, you need a single-document design where the event is embedded in the same document as the business data, or an alternative consistency mechanism." },
   { question: "How does this relate to Change Data Capture (CDC)?", answer: "CDC tails the database transaction log to detect committed changes, including outbox inserts. It replaces polling with a real-time stream. The outbox table still exists — CDC is a relay strategy, not a replacement for the atomicity guarantee. CDC adds operational complexity: WAL retention, connector failures, and schema evolution must all be managed." },
 ];
+
+export const judgmentQuiz = [
+  {
+    scenario: "An e-commerce service commits an order to PostgreSQL, but the relay worker process crashes before publishing the event to Kafka. When the relay restarts, what happens?",
+    options: [
+      {
+        text: "The event is lost permanently because the in-memory publisher process terminated.",
+        isCorrect: false,
+        explanation: "In the outbox pattern, events are durably persisted in the database table, not held in volatile worker memory. Unmarked rows survive any process crash.",
+      },
+      {
+        text: "The outbox row still has published_at = NULL, so the restarted relay reads and publishes it to Kafka.",
+        isCorrect: true,
+        explanation: "Correct! The database row is the durable source of truth. The relay queries WHERE published_at IS NULL, providing guaranteed at-least-once delivery.",
+      },
+      {
+        text: "PostgreSQL automatically rolls back the committed order when the relay crashes.",
+        isCorrect: false,
+        explanation: "The database transaction already completed and committed during the HTTP request. It cannot retroactively roll back after commit.",
+      },
+    ],
+  },
+  {
+    scenario: "The relay worker successfully publishes an OrderCreated event to Kafka, but crashes just before updating published_at = NOW() in PostgreSQL. What must downstream consumers do?",
+    options: [
+      {
+        text: "Rely on Kafka to automatically erase unconfirmed messages from the broker partition.",
+        isCorrect: false,
+        explanation: "Kafka already accepted and appended the message to the partition log; it has no insight into Postgres' internal row state.",
+      },
+      {
+        text: "Implement idempotent processing using the event ID to detect and discard duplicate deliveries.",
+        isCorrect: true,
+        explanation: "Correct! Because the unmarked row will be re-published upon relay restart, at-least-once delivery requires consumer-side idempotency keys.",
+      },
+      {
+        text: "Reject all incoming events until the Postgres relay database recovers and completes the timestamp update.",
+        isCorrect: false,
+        explanation: "Downstream consumers should not couple their availability to the producer's internal database state.",
+      },
+    ],
+  },
+  {
+    scenario: "Under a 10× traffic spike, your single-threaded polling relay falls behind, creating a 15-minute event lag. How should you scale the relay without corrupting per-order event ordering?",
+    options: [
+      {
+        text: "Run 10 relay threads that all poll ORDER BY id LIMIT 100 concurrently without partitioning.",
+        isCorrect: false,
+        explanation: "Multiple workers polling the same rows can publish events for the same order out-of-order, violating event causality.",
+      },
+      {
+        text: "Partition relay instances by hash(aggregate_id) so all events for any given order are processed by the same worker.",
+        isCorrect: true,
+        explanation: "Correct! Per-entity ordering is preserved when all events for the same aggregate_id flow through the same relay instance into the same Kafka partition.",
+      },
+      {
+        text: "Switch to asynchronous dual writes directly from the web application servers.",
+        isCorrect: false,
+        explanation: "Dual writes reintroduce the exact silent failure and ghost event bugs that the outbox pattern was chosen to eliminate.",
+      },
+    ],
+  },
+];

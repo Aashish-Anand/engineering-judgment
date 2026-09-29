@@ -23,7 +23,8 @@ import {
   CommentReadExample,
 } from "@/components/diagrams/HotPartitionWorkedExamples";
 import { getTopicById } from "@/data/topics/catalog";
-import { meta, tocItems, phases, expectations, followUps } from "@/data/topics/fix-hot-partition";
+import { JudgmentQuiz } from "@/components/JudgmentQuiz";
+import { meta, tocItems, phases, expectations, followUps, judgmentQuiz } from "@/data/topics/fix-hot-partition";
 
 export function HotPartitionArticle() {
   return (
@@ -175,6 +176,13 @@ export function HotPartitionArticle() {
 
             <SectionHeader number="14" id="follow-ups" title="Follow-up questions" />
             {followUps.map((item) => <ExpandableQuestion key={item.question} question={item.question} answer={item.answer} />)}
+
+            <ScrollReveal>
+              <JudgmentQuiz
+                title="Test Your Judgment: The Hot Partition"
+                questions={judgmentQuiz}
+              />
+            </ScrollReveal>
 
             <SectionHeader number="15" id="related" title="Related problems" />
             <p>The same principles appear in flash sales and database migrations: control admitted work before overload spreads, and change ownership without losing accepted writes.</p>

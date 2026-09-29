@@ -2,6 +2,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArticleNav } from "@/components/ArticleNav";
 import { CodeBlock } from "@/components/CodeBlock";
+import { JudgmentQuiz } from "@/components/JudgmentQuiz";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
@@ -447,6 +448,15 @@ COMMIT;`}
                 />
               ))}
             </div>
+
+            {article.judgmentQuiz && (
+              <ScrollReveal>
+                <JudgmentQuiz
+                  title="Test Your Judgment: The 10M-User Flash Sale"
+                  questions={article.judgmentQuiz}
+                />
+              </ScrollReveal>
+            )}
 
             {/* ── 15 — Related Problems ────────────────────────── */}
             <SectionHeader

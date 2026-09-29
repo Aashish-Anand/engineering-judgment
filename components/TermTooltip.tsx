@@ -2,13 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 
-type TermDef = {
+export type TermDef = {
   term: string;
   definition: string;
   tools?: string[];
 };
 
-const TERM_GLOSSARY: Record<string, TermDef> = {
+export const TERM_GLOSSARY: Record<string, TermDef> = {
   CDC: {
     term: "CDC — Change Data Capture",
     definition:

@@ -15,6 +15,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showFloatingBtn, setShowFloatingBtn] = useState(false);
+  const [maxVisitedIndex, setMaxVisitedIndex] = useState<number>(-1);
 
   // Track active section with IntersectionObserver
   useEffect(() => {
@@ -22,7 +23,12 @@ export function TableOfContents({ items }: TableOfContentsProps) {
       (entries) => {
         const visible = entries.filter((e) => e.isIntersecting);
         if (visible.length > 0) {
-          setActiveId(visible[0].target.id);
+          const id = visible[0].target.id;
+          setActiveId(id);
+          const idx = items.findIndex((i) => i.id === id);
+          if (idx >= 0) {
+            setMaxVisitedIndex((prev) => Math.max(prev, idx));
+          }
         }
       },
       { rootMargin: "-80px 0px -70% 0px", threshold: 0 }
@@ -66,7 +72,6 @@ export function TableOfContents({ items }: TableOfContentsProps) {
     setDrawerOpen(false);
     const el = document.getElementById(id);
     if (el) {
-      // Account for header offset
       const yOffset = -70;
       const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: "smooth" });
@@ -77,6 +82,11 @@ export function TableOfContents({ items }: TableOfContentsProps) {
   const activeIndex = items.findIndex((i) => i.id === activeId);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : items[0];
 
+  const progressPercent = Math.min(
+    100,
+    Math.round(((maxVisitedIndex + 1) / items.length) * 100)
+  );
+
   return (
     <>
       {/* ── Desktop: compact notebook index sidebar ────────────────── */}
@@ -84,7 +94,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
         className="hidden lg:block sticky top-8 self-start w-56 max-w-56 shrink-0 p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]"
         aria-label="Notebook Table of Contents"
       >
-        <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#171717]/20">
+        <div className="flex items-center justify-between pb-2 mb-1.5 border-b border-[#171717]/20">
           <div className="flex items-center gap-1.5">
             <span className="text-sm select-none" aria-hidden="true">
               📑
@@ -93,16 +103,24 @@ export function TableOfContents({ items }: TableOfContentsProps) {
               On this page
             </span>
           </div>
-          {activeIndex >= 0 && (
-            <span className="text-[11px] font-mono text-[#6B7280]">
-              {activeIndex + 1}/{items.length}
-            </span>
-          )}
+          <span className="text-[11px] font-mono text-[#6B7280]">
+            {maxVisitedIndex >= 0 ? `${progressPercent}%` : `${items.length} sects`}
+          </span>
+        </div>
+
+        {/* Notebook progress meter */}
+        <div className="w-full bg-[#FAF9F5] border border-[#171717]/20 rounded-full h-1.5 mb-3 overflow-hidden">
+          <div
+            className="bg-[#171717] h-full transition-all duration-300 rounded-full"
+            style={{ width: `${Math.max(4, progressPercent)}%` }}
+          />
         </div>
 
         <ul className="space-y-1">
           {items.map((item, index) => {
             const isActive = activeId === item.id;
+            const isCompleted = index <= maxVisitedIndex && !isActive;
+
             return (
               <li key={item.id}>
                 <button
@@ -114,8 +132,16 @@ export function TableOfContents({ items }: TableOfContentsProps) {
                       : "text-[#4B5563] hover:text-[#171717] hover:bg-[#FAF9F5]"
                   }`}
                 >
-                  <span className="font-hand font-bold text-xs shrink-0 w-4 h-4 rounded-full border border-[#171717] flex items-center justify-center bg-white text-[#171717]">
-                    {index + 1}
+                  <span
+                    className={`font-hand font-bold text-xs shrink-0 w-4 h-4 rounded-full border flex items-center justify-center ${
+                      isActive
+                        ? "border-[#171717] bg-white text-[#171717]"
+                        : isCompleted
+                        ? "border-[#16A34A] bg-[#DFF3DF] text-[#16A34A]"
+                        : "border-[#171717]/40 bg-white text-[#6B7280]"
+                    }`}
+                  >
+                    {isCompleted ? "✓" : index + 1}
                   </span>
                   <span className="truncate leading-tight">{item.label}</span>
                 </button>
@@ -177,7 +203,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#171717]/20">
+            <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#171717]/20">
               <div className="flex items-center gap-2">
                 <span className="text-lg">📑</span>
                 <h3 className="font-hand font-bold text-xl text-[#171717] m-0">
@@ -197,10 +223,20 @@ export function TableOfContents({ items }: TableOfContentsProps) {
               </button>
             </div>
 
+            {/* Mobile drawer progress bar */}
+            <div className="w-full bg-[#E5E0D5] rounded-full h-1.5 mb-3 overflow-hidden">
+              <div
+                className="bg-[#171717] h-full transition-all duration-300 rounded-full"
+                style={{ width: `${Math.max(4, progressPercent)}%` }}
+              />
+            </div>
+
             {/* Section links list */}
             <ul className="space-y-1.5 overflow-y-auto pr-1">
               {items.map((item, index) => {
                 const isActive = activeId === item.id;
+                const isCompleted = index <= maxVisitedIndex && !isActive;
+
                 return (
                   <li key={item.id}>
                     <button
@@ -212,8 +248,16 @@ export function TableOfContents({ items }: TableOfContentsProps) {
                           : "text-[#374151] hover:text-[#171717] hover:bg-white/80"
                       }`}
                     >
-                      <span className="font-hand font-bold text-xs shrink-0 w-6 h-6 rounded-full border border-[#171717] flex items-center justify-center bg-white">
-                        {index + 1}
+                      <span
+                        className={`font-hand font-bold text-xs shrink-0 w-6 h-6 rounded-full border flex items-center justify-center ${
+                          isActive
+                            ? "border-[#171717] bg-white text-[#171717]"
+                            : isCompleted
+                            ? "border-[#16A34A] bg-[#DFF3DF] text-[#16A34A]"
+                            : "border-[#171717]/40 bg-white text-[#6B7280]"
+                        }`}
+                      >
+                        {isCompleted ? "✓" : index + 1}
                       </span>
                       <span className="leading-snug">{item.label}</span>
                     </button>

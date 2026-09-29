@@ -13,6 +13,7 @@ import { RelatedTopics } from "@/components/RelatedTopics";
 import { WhatBreaksNext } from "@/components/doodle/WhatBreaksNext";
 import { ArticleNav } from "@/components/ArticleNav";
 import { CodeBlock } from "@/components/CodeBlock";
+import { JudgmentQuiz } from "@/components/JudgmentQuiz";
 import { OutboxDiagram, OutboxRelayFlow } from "@/components/diagrams/OutboxDiagram";
 import {
   OutboxRowLifecycle,
@@ -21,7 +22,7 @@ import {
   OutboxSchemaExample,
 } from "@/components/diagrams/OutboxWorkedExamples";
 import { getTopicById } from "@/data/topics/catalog";
-import { meta, tocItems, phases, expectations, followUps } from "@/data/topics/transactional-outbox";
+import { meta, tocItems, phases, expectations, followUps, judgmentQuiz } from "@/data/topics/transactional-outbox";
 
 export function TransactionalOutboxArticle() {
   return (
@@ -200,6 +201,13 @@ WHERE id = ANY($1::bigint[]);`}
 
             <SectionHeader number="14" id="follow-ups" title="Follow-up questions" />
             {followUps.map((item) => <ExpandableQuestion key={item.question} question={item.question} answer={item.answer} />)}
+
+            <ScrollReveal>
+              <JudgmentQuiz
+                title="Test Your Judgment: The Transactional Outbox"
+                questions={judgmentQuiz}
+              />
+            </ScrollReveal>
 
             <SectionHeader number="15" id="related" title="Related problems" />
             <p>The outbox pattern connects to several other architecture problems: hot partitions need the same &ldquo;write locally, propagate later&rdquo; principle, flash sales need durable reservation events, and database migrations must preserve event consistency during the transition.</p>

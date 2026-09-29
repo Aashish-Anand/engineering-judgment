@@ -69,3 +69,46 @@ export const followUps: ExpandableQA[] = [
   { question: "What changes if it is a Kafka partition?", answer: "Find which event key is producing the busiest partition and measure how far consumers are falling behind. Spread independent users across event keys only if their required ordering allows it. In an ordinary consumer group, adding consumers does not let several consumers independently own the same partition. Database caching does not fix this event-processing bottleneck." },
   { question: "Does a timestamp bucket solve a sudden spike?", answer: "Not by itself: every new comment can land in the same current time bucket. A stable hash within each time window can spread writes, but reading the comments then needs a plan to fetch and merge those buckets." },
 ];
+
+export const judgmentQuiz = [
+  {
+    scenario: "A celebrity posts an announcement. Partition P7 hits 99% CPU while all other partitions sit idle at 5%. An engineer suggests doubling database partitions from 16 to 32. What will happen?",
+    options: [
+      {
+        text: "P7's load will immediately drop by 50% across the new partition boundaries.",
+        isCorrect: false,
+        explanation: "Adding partitions only helps when multiple distinct hot keys share a partition. If a single key (e.g. post-42) receives all traffic, it still routes to exactly one partition unless the key or access pattern itself is sharded.",
+      },
+      {
+        text: "The celebrity post's partition remains 99% pegged because the entire workload shares the exact same post_id key.",
+        isCorrect: true,
+        explanation: "Correct! Partition key routing maps the single post_id to a single node. You cannot divide a single hot key simply by adding nodes without write-sharding or read caching.",
+      },
+      {
+        text: "Database auto-rebalancing will automatically split the single post record into multiple physical fragments.",
+        isCorrect: false,
+        explanation: "Standard distributed databases partition at the record or partition-key level; they do not transparently split a single record without schema-level write sharding.",
+      },
+    ],
+  },
+  {
+    scenario: "To distribute reaction writes, you shard the post counter into 16 random buckets. When showing the post's total like count to a user, how do you read the count?",
+    options: [
+      {
+        text: "Read a single random bucket and multiply by 16.",
+        isCorrect: false,
+        explanation: "Random multiplication creates massive jitter and inaccurate counts for user displays.",
+      },
+      {
+        text: "Read all 16 buckets asynchronously or use a background aggregator that periodically combines them into a cached total.",
+        isCorrect: true,
+        explanation: "Correct! Sharding writes trades cheap writes for scatter-gather reads. Combining them asynchronously into a cache avoids running 16 DB queries on every public read.",
+      },
+      {
+        text: "Require an ACID distributed transaction across all 16 partitions for every page view.",
+        isCorrect: false,
+        explanation: "Running a distributed transaction across 16 partitions for public reads recreates an even worse system-wide bottleneck.",
+      },
+    ],
+  },
+];
