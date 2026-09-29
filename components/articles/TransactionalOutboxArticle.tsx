@@ -1,4 +1,5 @@
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { TableOfContents } from "@/components/TableOfContents";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -10,6 +11,7 @@ import { LevelExpectation } from "@/components/LevelExpectation";
 import { ExpandableQuestion } from "@/components/ExpandableQuestion";
 import { RelatedTopics } from "@/components/RelatedTopics";
 import { WhatBreaksNext } from "@/components/doodle/WhatBreaksNext";
+import { ArticleNav } from "@/components/ArticleNav";
 import { OutboxDiagram, OutboxRelayFlow } from "@/components/diagrams/OutboxDiagram";
 import {
   OutboxRowLifecycle,
@@ -44,14 +46,14 @@ export function TransactionalOutboxArticle() {
               { label: "Impact of a lost event", value: "Payment never charged, inventory never reserved" },
               { label: "Impact of a ghost event", value: "Downstream acts on an order the DB rolled back" },
             ]} sideNote="The dual-write problem exists in any system that needs to update two independent stores atomically. The order service is one concrete example." />
-            <OutboxDiagram />
+            <ScrollReveal><OutboxDiagram /></ScrollReveal>
             <p>The question is not whether this gap exists. It does. The question is how often a failure lands in that gap — and what the consequences are when it does. For a service processing 5,000 orders per second, even a one-in-a-million failure rate means five lost events per hour during sustained peak.</p>
 
             <SectionHeader number="02" id="the-mistake" title="The first mistake: assume the publish will succeed" />
             <p>The simplest code writes the order and then publishes the event. It looks correct. The database commit succeeds. The publish call succeeds. It works — until a process crash, a deployment, or a broker timeout lands between them.</p>
-            <DualWriteCrashTimeline />
+            <ScrollReveal><DualWriteCrashTimeline /></ScrollReveal>
             <p>The reverse order — publish first, then commit — creates the opposite problem. Downstream services receive an event for an order that was never saved. A payment service charges the customer for a non-existent order. This is a <strong>ghost event</strong>.</p>
-            <InsightCard title="Neither ordering is safe">Publish-then-commit creates ghost events. Commit-then-publish creates lost events. The fundamental issue is that two independent systems cannot be updated atomically without a coordination mechanism. &ldquo;It usually works&rdquo; is not a correctness argument.</InsightCard>
+            <ScrollReveal><InsightCard title="Neither ordering is safe">Publish-then-commit creates ghost events. Commit-then-publish creates lost events. The fundamental issue is that two independent systems cannot be updated atomically without a coordination mechanism. &ldquo;It usually works&rdquo; is not a correctness argument.</InsightCard></ScrollReveal>
             <p>Some teams try to fix this by wrapping the publish call inside the database transaction. This avoids lost events if the publish fails (the transaction rolls back), but it couples database availability to broker availability. A slow broker holds the transaction open, consuming a database connection until the timeout. Under load, this exhausts the connection pool and blocks all database work — not just event publishing.</p>
 
             <SectionHeader number="03" id="diagnosis" title="Find every place your system does a dual write" />
@@ -67,12 +69,12 @@ export function TransactionalOutboxArticle() {
 
             <SectionHeader number="04" id="mental-model" title="The mental model: make the event part of the data" />
             <p>If the event must exist whenever the business data exists, they must be written together. Not &ldquo;close together&rdquo; or &ldquo;right after&rdquo; — in the same atomic transaction. The database already provides this guarantee for its own rows. Use it.</p>
-            <InsightCard title="Write the event to the database, not to the broker">Save the order and an event record in the same transaction. A separate process reads committed event records and publishes them to the broker. The application never calls the broker directly during a user request.</InsightCard>
+            <ScrollReveal><InsightCard title="Write the event to the database, not to the broker">Save the order and an event record in the same transaction. A separate process reads committed event records and publishes them to the broker. The application never calls the broker directly during a user request.</InsightCard></ScrollReveal>
             <p>This introduces a new table — the <strong>outbox</strong> — that holds event records until they are safely published. The word &ldquo;outbox&rdquo; comes from postal mail: a tray where outgoing letters wait until the mail carrier picks them up. The letter (event) exists the moment you put it in the tray (commit). Delivery happens separately.</p>
             <p>The critical shift: the application&apos;s responsibility ends at writing the outbox row. A separate <strong>relay</strong> process handles delivery. If the broker is down, orders still succeed. Events queue in the outbox table and drain when the broker recovers.</p>
 
             <SectionHeader number="05" id="architecture" title="The architecture: one transaction, one table, one relay" />
-            <OutboxDiagram resolved />
+            <ScrollReveal><OutboxDiagram resolved /></ScrollReveal>
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">The outbox table</h3>
             <p>The outbox table lives in the same database as the business data. Each row represents one event that must be published. The table is append-only on the write path: the application only INSERTs, never UPDATEs, during a business transaction.</p>
             <OutboxSchemaExample />
@@ -84,12 +86,12 @@ export function TransactionalOutboxArticle() {
             <p>The change is small but structurally important. Instead of <code>save(order); publish(event);</code> the code becomes <code>save(order); saveOutboxRow(event); commit();</code> — all within the same transaction. The publish call disappears from the request path entirely.</p>
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Adopting the outbox: a phased rollout</h3>
             <p>Do not rewrite every producer at once. Audit the dual-write boundaries, add the outbox to one service, verify event delivery, and expand.</p>
-            <Timeline phases={phases} />
+            <ScrollReveal><Timeline phases={phases} /></ScrollReveal>
 
             <SectionHeader number="06" id="relay" title="The relay: get the event from the table to the broker" />
             <p>The relay is a separate process — a background worker or a CDC connector — that reads unpublished outbox rows and publishes them to the broker. It runs independently of the application. Two common strategies:</p>
-            <OutboxRelayFlow />
-            <OutboxRelayFlow cdc />
+            <ScrollReveal><OutboxRelayFlow /></ScrollReveal>
+            <ScrollReveal delay={100}><OutboxRelayFlow cdc /></ScrollReveal>
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Polling is simpler, CDC is faster</h3>
             <p>A polling relay queries <code>WHERE published_at IS NULL ORDER BY id</code> on a timer. It is simple to build, easy to reason about, and needs no additional infrastructure. The trade-off is latency: events wait up to the polling interval. For most applications, a 1-second poll is fast enough.</p>
             <p>A CDC relay (e.g., Debezium tailing the PostgreSQL WAL) detects new outbox rows in near-real-time. It avoids polling overhead and delivers events with sub-second latency. The trade-off is operational complexity: WAL retention, connector failures, schema evolution, and monitoring.</p>
@@ -104,11 +106,11 @@ export function TransactionalOutboxArticle() {
             <SectionHeader number="07" id="guarantees" title="Ordering, delivery guarantees, and deduplication" />
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">1. At-least-once delivery, not exactly-once</h3>
             <p>The relay publishes events and then marks the outbox row. If it crashes after publishing but before marking, the row remains unmarked. On restart, the relay re-publishes it. This is <strong>at-least-once delivery</strong>: every event reaches the broker at least once, but some may arrive more than once.</p>
-            <OutboxRowLifecycle />
+            <ScrollReveal><OutboxRowLifecycle /></ScrollReveal>
             <p>Exactly-once delivery between two independent systems (database and broker) requires distributed transactions (2PC) or a single system that owns both storage and messaging. The outbox pattern deliberately avoids this complexity by pushing deduplication to the consumer.</p>
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">2. Consumers must be idempotent</h3>
             <p>Since the relay delivers at-least-once, every consumer must handle receiving the same event twice. Use the outbox row <code>id</code> as a deduplication key. Before processing, check whether that ID has already been handled.</p>
-            <IdempotentConsumerExample />
+            <ScrollReveal><IdempotentConsumerExample /></ScrollReveal>
             <p>The deduplication check and the business operation should happen in the same transaction on the consumer side. Otherwise, a crash between processing and recording creates the same gap we are trying to solve — just on the consumer instead of the producer.</p>
             <h3 className="font-hand text-2xl font-bold mt-6 mb-3">3. Per-entity ordering is achievable</h3>
             <p>Use <code>aggregate_id</code> (e.g., <code>order-7842</code>) as the Kafka partition key. All events for the same order land in the same partition, preserving their committed order. Different orders can be processed in parallel across partitions.</p>
@@ -136,7 +138,7 @@ export function TransactionalOutboxArticle() {
             <p>The most common operational issue is outbox table growth. Without cleanup, the table accumulates every event the system has ever produced. Partition the table by <code>created_at</code> and drop old partitions. A weekly partition with a 30-day retention is a reasonable starting point.</p>
 
             <SectionHeader number="10" id="ten-x" title="What breaks next — and can you predict it?" />
-            <WhatBreaksNext solved="Lost and ghost events from dual writes" nextIssue="Relay throughput, consumer idempotency at scale, schema evolution" steps={["Write outbox row", "Relay publishes", "Consumer deduplicates"]} explanation="The outbox solves producer-side atomicity. It moves the complexity to the relay (throughput, ordering) and the consumer (deduplication, idempotency). Follow the work downstream." />
+            <ScrollReveal><WhatBreaksNext solved="Lost and ghost events from dual writes" nextIssue="Relay throughput, consumer idempotency at scale, schema evolution" steps={["Write outbox row", "Relay publishes", "Consumer deduplicates"]} explanation="The outbox solves producer-side atomicity. It moves the complexity to the relay (throughput, ordering) and the consumer (deduplication, idempotency). Follow the work downstream." /></ScrollReveal>
             <p>At 10× write volume, the relay becomes a throughput bottleneck if it runs as a single thread. Partition outbox reads by <code>aggregate_id</code> ranges and run multiple relay instances — each owning a subset. Ensure that events for the same aggregate always go through the same relay instance to preserve ordering.</p>
             <p>Event schema evolution is the next challenge. When the outbox payload format changes, in-flight events in the old format may already be queued. Consumers must handle multiple schema versions, or the relay must translate. Define an event versioning strategy before you need it.</p>
 
@@ -178,6 +180,7 @@ export function TransactionalOutboxArticle() {
                 <li><a className="underline" href="https://brandur.org/idempotency-keys">Brandur Leach: Implementing Stripe-like idempotency keys</a></li>
               </ul>
             </details>
+            <ArticleNav currentId="transactional-outbox" />
           </div>
         </div>
       </div>

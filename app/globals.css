@@ -422,11 +422,64 @@ pre code {
 
 /* Scroll reveal helpers */
 .reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.reveal.revealed,
+.reveal-left.revealed {
   opacity: 1;
   transform: none;
 }
 
-.reveal.revealed {
-  opacity: 1;
-  transform: none;
+/* Prefer reduced motion — disable all scroll animations */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-left {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
+
+/* ── Smooth Scrolling ───────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Diagram & Flow-Node Hover Interactions ──────────────────── */
+article figure {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+article figure:hover {
+  box-shadow: 0 4px 16px rgba(23, 23, 23, 0.08);
+}
+
+/* PartitionFlowNode hover lift — subtle tactile feedback */
+article figure .border.border-ink.rounded-xl {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+article figure .border.border-ink.rounded-xl:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(23, 23, 23, 0.1);
+}
+
+/* ── Homepage Category Card Lift ─────────────────────────────── */
+.category-card-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.category-card-lift:hover {
+  transform: translate(-1px, -2px);
+  box-shadow: 3px 5px 0px var(--color-ink);
+}
+
