@@ -24,6 +24,7 @@ import { NaiveMigrationDiagram } from "@/components/diagrams/NaiveMigrationDiagr
 import { MigrationArchitectureDiagram } from "@/components/diagrams/MigrationArchitectureDiagram";
 import { DualWriteDiagram } from "@/components/diagrams/DualWriteDiagram";
 import { CutoverDiagram } from "@/components/diagrams/CutoverDiagram";
+import { DatabaseCutoverLab } from "@/components/DatabaseCutoverLab";
 
 import * as article from "@/data/topics/safely-migrate-production-database";
 
@@ -319,6 +320,8 @@ LIMIT 1000;
             <p>
               Gradual cutover reduces blast radius. At each stage, you can observe metrics and roll back if something is wrong. The actual strategy depends on whether writes are going to one source or multiple destinations.
             </p>
+
+            <DatabaseCutoverLab />
 
             {/* ── 07 — Dual Write ──────────────────────────────── */}
             <SectionHeader
