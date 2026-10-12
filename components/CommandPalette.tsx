@@ -117,12 +117,27 @@ export function CommandPalette() {
       <button
         onClick={openPalette}
         type="button"
-        className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full shadow-xs hover:border-slate-300 hover:bg-slate-50 transition-all text-xs font-sans font-semibold text-slate-700 cursor-pointer"
+        className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 bg-slate-100/80 hover:bg-slate-100 border border-slate-200/90 rounded-lg transition-colors text-xs font-sans font-medium text-slate-600 cursor-pointer shadow-2xs"
         aria-label="Search topics and concepts"
       >
-        <span aria-hidden="true" className="text-xs">🔍</span>
-        <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden md:inline-block px-1.5 py-0.2 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-500">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-slate-400 shrink-0"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <span className="hidden sm:inline text-slate-500">Search architecture...</span>
+        <span className="sm:hidden text-slate-500">Search</span>
+        <kbd className="hidden md:inline-flex items-center px-1.5 py-0.2 bg-white border border-slate-200 rounded text-[10px] font-mono font-semibold text-slate-400 shadow-2xs">
           ⌘K
         </kbd>
       </button>
