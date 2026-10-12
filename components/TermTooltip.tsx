@@ -189,7 +189,7 @@ export function TermTooltip({ termKey, children }: TermTooltipProps) {
             className="absolute top-full left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 -mt-[5px] bg-white border-r-[1.5px] border-b-[1.5px] border-[#171717]"
           />
 
-          <p className="font-hand font-bold text-base text-[#171717] mb-1">
+          <p className="font-sans font-bold text-xs sm:text-sm text-slate-900 mb-1">
             {def.term}
           </p>
           <p className="text-xs text-[#374151] leading-relaxed mb-0 font-sans">

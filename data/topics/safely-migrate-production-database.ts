@@ -4,21 +4,14 @@ import { getTopicById } from "@/data/topics/catalog";
 export const meta = getTopicById("database-migration").meta;
 
 export const tocItems: TocItem[] = [
-  { id: "the-problem",       label: "The Problem" },
-  { id: "the-mistake",       label: "The First Mistake" },
-  { id: "why-hard",          label: "Why It's Hard" },
-  { id: "mental-model",      label: "Mental Model" },
-  { id: "migration-shape",   label: "Migration Shape" },
-  { id: "phases",            label: "Migration Phases" },
-  { id: "dual-write",        label: "The Dual Write" },
-  { id: "trade-offs",        label: "Key Trade-offs" },
-  { id: "failure-modes",     label: "What Can Go Wrong" },
-  { id: "ten-x",             label: "What Happens at 10×" },
-  { id: "avoid",             label: "What to Avoid" },
-  { id: "interview",         label: "Interview Answer" },
-  { id: "expectations",      label: "Level Expectations" },
-  { id: "follow-ups",        label: "Interviewer Follow-ups" },
-  { id: "related",           label: "Related Problems" },
+  { id: "the-problem",       label: "Problem & Capacity Sizing" },
+  { id: "the-mistake",       label: "The Naive Snapshot Trap" },
+  { id: "mental-model",      label: "The Core Mental Model" },
+  { id: "workbench",         label: "Interactive Workbench" },
+  { id: "tradeoffs-hub",     label: "Trade-offs & Runbook" },
+  { id: "career-rubric",     label: "Interview & Career Rubric" },
+  { id: "judgment-quiz",     label: "Test Your Judgment" },
+  { id: "related",           label: "Related Architectures" },
 ];
 
 export const scenarioMetrics = [

@@ -21,56 +21,56 @@ type LevelConfig = {
 const levelConfigs: Record<string, LevelConfig> = {
   "Mid-level": {
     badge: "MID",
-    badgeBg: "bg-[#DCEBFF]",
+    badgeBg: "bg-blue-50 text-blue-700 border-blue-200",
     cardBg: "bg-white",
-    borderColor: "border-[#171717]",
-    shadow: "shadow-[2px_3px_0px_#171717]",
+    borderColor: "border-slate-200",
+    shadow: "shadow-xs",
     subtitle: "Execution & Mechanism",
     tier: "Tier 1 · Foundational",
   },
   MID: {
     badge: "MID",
-    badgeBg: "bg-[#DCEBFF]",
+    badgeBg: "bg-blue-50 text-blue-700 border-blue-200",
     cardBg: "bg-white",
-    borderColor: "border-[#171717]",
-    shadow: "shadow-[2px_3px_0px_#171717]",
+    borderColor: "border-slate-200",
+    shadow: "shadow-xs",
     subtitle: "Execution & Mechanism",
     tier: "Tier 1 · Foundational",
   },
   Senior: {
     badge: "SENIOR",
-    badgeBg: "bg-[#FFF0B8]",
-    cardBg: "bg-gradient-to-b from-white to-[#FAF9F5]",
-    borderColor: "border-[#171717]",
-    shadow: "shadow-[3px_4px_0px_#171717]",
+    badgeBg: "bg-amber-50 text-amber-800 border-amber-200",
+    cardBg: "bg-white",
+    borderColor: "border-slate-200",
+    shadow: "shadow-xs",
     subtitle: "Trade-offs & Failure Modes",
     tier: "Tier 2 · Systems-level",
   },
   SENIOR: {
     badge: "SENIOR",
-    badgeBg: "bg-[#FFF0B8]",
-    cardBg: "bg-gradient-to-b from-white to-[#FAF9F5]",
-    borderColor: "border-[#171717]",
-    shadow: "shadow-[3px_4px_0px_#171717]",
+    badgeBg: "bg-amber-50 text-amber-800 border-amber-200",
+    cardBg: "bg-white",
+    borderColor: "border-slate-200",
+    shadow: "shadow-xs",
     subtitle: "Trade-offs & Failure Modes",
     tier: "Tier 2 · Systems-level",
   },
   Staff: {
     badge: "STAFF+",
-    badgeBg: "bg-[#E7E1F8]",
-    cardBg: "bg-gradient-to-b from-white via-white to-[#F6F2FC]",
-    borderColor: "border-[#171717]",
-    shadow: "shadow-[3px_4.5px_0px_#171717]",
-    subtitle: "Architecture & Organizational Blast Radius",
+    badgeBg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    cardBg: "bg-white",
+    borderColor: "border-slate-200",
+    shadow: "shadow-xs",
+    subtitle: "Architecture & Org Blast Radius",
     tier: "Tier 3 · Strategic Impact",
   },
   STAFF: {
     badge: "STAFF+",
-    badgeBg: "bg-[#E7E1F8]",
-    cardBg: "bg-gradient-to-b from-white via-white to-[#F6F2FC]",
-    borderColor: "border-[#171717]",
-    shadow: "shadow-[3px_4.5px_0px_#171717]",
-    subtitle: "Architecture & Organizational Blast Radius",
+    badgeBg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    cardBg: "bg-white",
+    borderColor: "border-slate-200",
+    shadow: "shadow-xs",
+    subtitle: "Architecture & Org Blast Radius",
     tier: "Tier 3 · Strategic Impact",
   },
 };
@@ -81,10 +81,10 @@ export function LevelExpectation({ levels }: LevelExpectationProps) {
       {levels.map((level) => {
         const config = levelConfigs[level.title] || {
           badge: level.title.toUpperCase(),
-          badgeBg: "bg-[#FAF9F5]",
+          badgeBg: "bg-slate-50 text-slate-700 border-slate-200",
           cardBg: "bg-white",
-          borderColor: "border-[#171717]",
-          shadow: "shadow-[2px_3px_0px_#171717]",
+          borderColor: "border-slate-200",
+          shadow: "shadow-xs",
           subtitle: "Target Capability",
           tier: `Evaluation · ${level.title}`,
         };
@@ -92,23 +92,23 @@ export function LevelExpectation({ levels }: LevelExpectationProps) {
         return (
           <div
             key={level.title}
-            className={`flex flex-col justify-between p-5 ${config.cardBg} border-[1.5px] ${config.borderColor} rounded-[14px_16px_13px_15px/15px_13px_16px_14px] ${config.shadow} hover:-translate-y-1 transition-all duration-150`}
+            className={`flex flex-col justify-between p-5 ${config.cardBg} border ${config.borderColor} rounded-xl ${config.shadow}`}
           >
             <div>
-              {/* Header: Badge + Label with flex-wrap to prevent collision */}
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-[#171717]/20">
+              {/* Header: Badge + Label */}
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-100">
                 <span
-                  className={`font-hand text-lg font-bold px-2.5 py-0.5 border border-[#171717] rounded shadow-[1px_1px_0px_#171717] text-[#171717] ${config.badgeBg}`}
+                  className={`font-mono text-xs font-bold px-2.5 py-0.5 border rounded-md ${config.badgeBg}`}
                 >
                   {config.badge}
                 </span>
-                <span className="font-hand font-semibold text-xs text-[#6B7280]">
+                <span className="font-sans font-medium text-xs text-slate-400">
                   {config.subtitle}
                 </span>
               </div>
 
               {/* Description */}
-              <p className="font-sans font-semibold text-sm text-[#171717] mb-3 leading-snug">
+              <p className="font-sans font-semibold text-sm text-slate-900 mb-3 leading-snug">
                 {level.description}
               </p>
 
@@ -117,10 +117,10 @@ export function LevelExpectation({ levels }: LevelExpectationProps) {
                 {level.items.map((item, i) => (
                   <li
                     key={i}
-                    className="text-xs sm:text-[0.84rem] text-[#374151] flex items-start gap-2"
+                    className="text-xs sm:text-[0.84rem] text-slate-600 flex items-start gap-2"
                   >
-                    <span className="font-hand text-base text-[#171717] shrink-0 select-none">
-                      ▸
+                    <span className="text-blue-500 shrink-0 select-none">
+                      •
                     </span>
                     <span className="leading-snug">{item}</span>
                   </li>
@@ -129,9 +129,9 @@ export function LevelExpectation({ levels }: LevelExpectationProps) {
             </div>
 
             {/* Bottom evaluation tier stamp */}
-            <div className="mt-5 pt-2.5 border-t border-dashed border-[#171717]/20 flex items-center justify-between text-[0.7rem] font-mono text-[#6B7280]">
+            <div className="mt-5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[0.7rem] font-mono text-slate-400">
               <span>{config.tier}</span>
-              <span className="font-hand font-bold text-xs text-[#171717]">
+              <span className="font-sans font-bold text-xs text-slate-600">
                 Level {config.badge}
               </span>
             </div>

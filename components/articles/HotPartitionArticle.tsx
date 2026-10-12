@@ -27,7 +27,6 @@ import {
 } from "@/components/diagrams/HotPartitionWorkedExamples";
 import { getTopicById } from "@/data/topics/catalog";
 import { JudgmentQuiz } from "@/components/JudgmentQuiz";
-import { DoodleArrow } from "@/components/doodle/DoodleArrow";
 import { meta, tocItems, phases, expectations, followUps, judgmentQuiz } from "@/data/topics/fix-hot-partition";
 
 export function HotPartitionArticle() {
@@ -35,87 +34,82 @@ export function HotPartitionArticle() {
     <article className="pt-4 pb-16 px-6">
       <div className="wide-width mx-auto">
         <Breadcrumb items={[{ label: "Problems", href: "/" }, { label: "Traffic", href: "/#problems" }, { label: "Hot Partition" }]} />
-        {/* Article header — 2-column notebook layout */}
-        <header className="mb-10 pb-8 border-b-[1.5px] border-[#171717]/20">
+        {/* Article header — 2-column clean layout */}
+        <header className="mb-10 pb-8 border-b border-slate-200">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left side: Metadata, Title, Subtitle, Tags, Annotation */}
             <div className="lg:col-span-8">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
+              <div className="flex flex-wrap items-center gap-2.5 mb-3">
                 <CategoryBadge category={meta.category} size="md" />
-                <span className="font-hand font-bold text-sm px-2.5 py-0.5 bg-[#FFF0B8] border border-[#171717] rounded shadow-xs">
+                <span className="font-sans font-semibold text-xs px-2.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-full">
                   {meta.difficulty}
                 </span>
-                <span className="text-xs text-[#9CA3AF]">·</span>
-                <span className="font-hand font-bold text-sm text-[#4B5563]">
+                <span className="text-xs text-slate-400">·</span>
+                <span className="font-sans font-medium text-xs text-slate-500">
                   ⏱️ {meta.readingTime}
                 </span>
               </div>
 
-              <h1 className="font-hand text-2xl sm:text-3xl lg:text-[2.35rem] font-bold text-[#171717] leading-[1.2] tracking-tight mb-3">
+              <h1 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight mb-3">
                 {meta.title}
               </h1>
 
-              <p className="font-sans text-base sm:text-lg text-[#374151] leading-relaxed mb-4">
+              <p className="font-sans text-base sm:text-lg text-slate-600 leading-relaxed mb-4">
                 &ldquo;{meta.subtitle}&rdquo;
               </p>
 
-              {/* Side / Subtitle Hand-drawn annotation */}
-              <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 bg-[#FFF0B8] border border-[#171717] rounded-lg shadow-xs transform -rotate-1">
-                <span className="font-hand font-bold text-sm sm:text-base text-[#171717]">
+              {/* Side / Subtitle Architectural takeaway banner */}
+              <div className="mb-4 inline-flex items-center gap-2 px-3.5 py-2 bg-blue-50/80 border border-blue-200/80 rounded-lg text-xs sm:text-sm text-blue-950 font-medium">
+                <span>
                   Adding DB nodes doesn&apos;t divide a hot key. You must split writes &amp; coalesce reads.
                 </span>
-                <DoodleArrow direction="curved-down-right" width={22} height={16} />
               </div>
 
               <div className="flex flex-wrap gap-1.5">
                 {meta.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="font-hand text-xs sm:text-sm font-bold px-2 py-0.5 bg-white rounded border border-[#171717] text-[#171717] shadow-xs"
+                    className="font-sans text-xs font-semibold px-2.5 py-1 bg-white rounded border border-slate-200 text-slate-600 shadow-2xs"
                   >
-                    {tag}
+                    #{tag}
                   </span>
                 ))}
               </div>
             </div>
 
-            {/* Right side: Architecture Context Notebook Card */}
+            {/* Right side: Architecture Context Card */}
             <div className="lg:col-span-4">
-              <div className="bg-white border-[1.5px] border-[#171717] rounded-xl p-5 shadow-[2px_3px_0px_#171717]">
-                <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#171717]/20">
-                  <span className="font-hand font-bold text-base text-[#171717] uppercase tracking-wider">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
+                  <span className="font-sans font-bold text-xs text-slate-500 uppercase tracking-wider">
                     Architecture Context
                   </span>
-                  <span className="font-hand font-bold text-xs px-2 py-0.5 bg-[#FDE8E8] text-[#DC2626] border border-[#DC2626] rounded shadow-2xs">
+                  <span className="font-sans font-bold text-xs px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded">
                     Hot Key Skew
                   </span>
                 </div>
 
                 <div className="space-y-2.5 text-xs font-sans">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[#6B7280] font-medium">Daily Scale</span>
-                    <span className="font-bold text-[#171717]">100,000 req/s Peak</span>
+                    <span className="text-slate-500 font-medium">Daily Scale</span>
+                    <span className="font-bold text-slate-900">100,000 req/s Peak</span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[#6B7280] font-medium">Traffic Skew</span>
-                    <span className="font-semibold text-[#DC2626]">70% Concentrated on P7</span>
+                    <span className="text-slate-500 font-medium">Traffic Skew</span>
+                    <span className="font-semibold text-red-600">70% Concentrated on P7</span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[#6B7280] font-medium">Idle Capacity</span>
-                    <span className="font-semibold text-[#171717]">15 Nodes at ~2,000 req/s</span>
+                    <span className="text-slate-500 font-medium">Idle Capacity</span>
+                    <span className="font-semibold text-slate-900">15 Nodes at ~2,000 req/s</span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[#6B7280] font-medium">Primary Strategy</span>
-                    <span className="font-semibold text-[#171717]">Singleflight + Write Salting</span>
+                    <span className="text-slate-500 font-medium">Primary Strategy</span>
+                    <span className="font-semibold text-slate-900">Singleflight + Write Salting</span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[#6B7280] font-medium">Target SLA</span>
-                    <span className="font-semibold text-[#16A34A]">Zero Lost Reactions</span>
+                    <span className="text-slate-500 font-medium">Target SLA</span>
+                    <span className="font-semibold text-emerald-600">Zero Lost Reactions</span>
                   </div>
-                </div>
-
-                <div className="mt-3 pt-2.5 border-t border-dashed border-[#171717]/20 flex items-center gap-1.5 text-xs font-hand font-bold text-[#4B5563]">
-                  <span>✏️ Notebook design walkthrough below</span>
                 </div>
               </div>
             </div>

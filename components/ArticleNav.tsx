@@ -21,14 +21,14 @@ export function ArticleNav({ currentId }: ArticleNavProps) {
   if (!prev && !next) return null;
 
   return (
-    <nav className="mt-12 pt-6 border-t border-dashed border-[#171717]/20 flex flex-col sm:flex-row items-stretch gap-3" aria-label="Article navigation">
+    <nav className="mt-12 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-stretch gap-3" aria-label="Article navigation">
       {prev ? (
         <Link
           href={prev.href}
-          className="flex-1 group p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_2px_0px_#171717] hover:shadow-[3px_3px_0px_#171717] hover:-translate-y-0.5 transition-all duration-150 no-underline"
+          className="flex-1 group p-4 bg-white border border-slate-200 rounded-xl shadow-xs hover:border-blue-200 hover:shadow-sm transition-all duration-150 no-underline"
         >
-          <span className="text-xs font-sans text-[#6B7280]">← Previous</span>
-          <span className="block font-hand text-base font-bold text-[#171717] mt-1 group-hover:text-[#DC2626] transition-colors leading-tight">
+          <span className="text-xs font-sans font-medium text-slate-400">← Previous Article</span>
+          <span className="block font-sans text-sm sm:text-base font-bold text-slate-900 mt-1 group-hover:text-blue-600 transition-colors leading-snug">
             {prev.meta.title}
           </span>
         </Link>
@@ -38,10 +38,10 @@ export function ArticleNav({ currentId }: ArticleNavProps) {
       {next ? (
         <Link
           href={next.href}
-          className="flex-1 group p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_2px_0px_#171717] hover:shadow-[3px_3px_0px_#171717] hover:-translate-y-0.5 transition-all duration-150 no-underline text-right"
+          className="flex-1 group p-4 bg-white border border-slate-200 rounded-xl shadow-xs hover:border-blue-200 hover:shadow-sm transition-all duration-150 no-underline text-right"
         >
-          <span className="text-xs font-sans text-[#6B7280]">Next →</span>
-          <span className="block font-hand text-base font-bold text-[#171717] mt-1 group-hover:text-[#DC2626] transition-colors leading-tight">
+          <span className="text-xs font-sans font-medium text-slate-400">Next Article →</span>
+          <span className="block font-sans text-sm sm:text-base font-bold text-slate-900 mt-1 group-hover:text-blue-600 transition-colors leading-snug">
             {next.meta.title}
           </span>
         </Link>

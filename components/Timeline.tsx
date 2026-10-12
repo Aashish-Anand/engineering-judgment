@@ -12,37 +12,37 @@ type TimelineProps = {
 export function Timeline({ phases }: TimelineProps) {
   return (
     <div className="my-8 relative pl-2">
-      {/* Sketched dashed connector line */}
-      <div className="absolute left-[20px] top-4 bottom-4 w-px border-l-2 border-dashed border-[#171717]/30" />
+      {/* Clean connector line */}
+      <div className="absolute left-[12px] top-4 bottom-4 w-px bg-slate-200" />
 
       <div className="space-y-6">
         {phases.map((phase) => (
-          <div key={phase.number} className="relative pl-12">
-            {/* Hand-drawn circled phase node */}
-            <div className="absolute left-0 top-0.5 w-[26px] h-[26px] rounded-full bg-[#FFF0B8] border-[1.5px] border-[#171717] flex items-center justify-center font-hand font-bold text-sm text-[#171717] shadow-[1px_1px_0px_#171717]">
+          <div key={phase.number} className="relative pl-10">
+            {/* Clean numbered node */}
+            <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center font-mono font-bold text-xs text-blue-700 shadow-2xs">
               {phase.number}
             </div>
 
-            <div className="bg-white border-[1.5px] border-[#171717] rounded-xl p-4 sm:p-5 shadow-[2px_2px_0px_#171717]">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs">
               <div className="flex flex-wrap items-baseline gap-2 mb-1.5">
-                <span className="font-hand font-bold text-xs uppercase px-2 py-0.5 bg-[#FAF9F5] border border-[#171717] rounded">
+                <span className="font-mono text-[11px] font-bold uppercase px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded">
                   Phase {phase.number}
                 </span>
-                <h4 className="font-hand text-xl font-bold text-[#171717]">
+                <h4 className="font-sans text-base sm:text-lg font-bold text-slate-900">
                   {phase.title}
                 </h4>
               </div>
 
-              <p className="font-sans text-sm text-[#374151] mb-0 leading-relaxed">
+              <p className="font-sans text-sm text-slate-600 mb-0 leading-relaxed">
                 {phase.description}
               </p>
 
               {phase.details && phase.details.length > 0 && (
-                <ul className="mt-3 pt-3 border-t border-dashed border-[#171717]/15 space-y-1.5">
+                <ul className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
                   {phase.details.map((d, j) => (
-                    <li key={j} className="text-xs sm:text-sm text-[#4B5563] flex items-start gap-2">
-                      <span className="font-hand text-sm text-[#171717] mt-0.5 shrink-0 select-none">
-                        ▸
+                    <li key={j} className="text-xs sm:text-sm text-slate-600 flex items-start gap-2">
+                      <span className="text-blue-500 shrink-0 select-none">
+                        •
                       </span>
                       <span>{d}</span>
                     </li>

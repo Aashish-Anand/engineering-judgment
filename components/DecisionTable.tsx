@@ -50,14 +50,14 @@ export function DecisionTable({ headers, rows, title }: DecisionTableProps) {
           {rows.map((row, i) => (
             <div
               key={i}
-              className="p-3.5 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_2px_0px_#171717] text-xs space-y-2"
+              className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs space-y-2"
             >
               {/* First column as headline */}
-              <div className="pb-1.5 border-b border-[#171717]/15 flex items-start justify-between gap-2">
-                <span className="font-bold text-sm text-[#171717] font-hand">
+              <div className="pb-1.5 border-b border-slate-100 flex items-start justify-between gap-2">
+                <span className="font-semibold text-sm text-slate-900 font-sans">
                   {row[0]}
                 </span>
-                <span className="shrink-0 text-[10px] font-mono uppercase bg-[#FFF0B8] border border-[#171717]/30 px-1.5 py-0.5 rounded">
+                <span className="shrink-0 text-[10px] font-mono uppercase bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded">
                   {headers[0]}
                 </span>
               </div>
@@ -68,10 +68,10 @@ export function DecisionTable({ headers, rows, title }: DecisionTableProps) {
                   const headerIndex = j + 1;
                   return (
                     <div key={headerIndex} className="flex flex-col">
-                      <span className="font-hand font-bold text-[11px] text-[#6B7280]">
+                      <span className="font-mono text-[10px] uppercase font-bold text-slate-400">
                         {headers[headerIndex]}
                       </span>
-                      <span className="text-[#171717] text-xs leading-relaxed">
+                      <span className="text-slate-700 text-xs leading-relaxed">
                         {cell}
                       </span>
                     </div>

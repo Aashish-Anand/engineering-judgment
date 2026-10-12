@@ -15,16 +15,16 @@ export function FailureCallout({
 }: FailureCalloutProps) {
   return (
     <div
-      className={`my-5 p-4 sm:p-5 bg-[#F9DDE5] border-[1.5px] border-[#DC2626] rounded-[14px_16px_13px_15px/15px_13px_16px_14px] shadow-[2px_3px_0px_#DC2626] ${className}`}
+      className={`my-5 p-4 sm:p-5 bg-red-50/80 border border-red-200 rounded-xl shadow-xs ${className}`}
     >
       <div className="flex items-start gap-3">
         <div className="shrink-0 mt-0.5">
           {icon === "cross" ? (
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#DC2626] text-white font-bold text-xs shadow-sm">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-red-600 text-white font-bold text-xs shadow-2xs">
               ✕
             </span>
           ) : (
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#DC2626] text-white font-bold text-xs shadow-sm">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-amber-600 text-white font-bold text-xs shadow-2xs">
               ⚠
             </span>
           )}
@@ -32,11 +32,11 @@ export function FailureCallout({
 
         <div className="flex-1">
           {title && (
-            <h4 className="font-hand font-bold text-lg text-[#DC2626] mb-1">
+            <h4 className="font-sans font-bold text-sm sm:text-base text-red-900 mb-1">
               {title}
             </h4>
           )}
-          <div className="text-sm sm:text-[0.92rem] text-[#171717] font-medium leading-relaxed">
+          <div className="text-xs sm:text-sm text-red-950 leading-relaxed font-sans">
             {children}
           </div>
         </div>

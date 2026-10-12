@@ -26,13 +26,13 @@ export function HandwrittenHeading({
               {number}
             </span>
           )}
-          <h2 className="font-hand text-2xl sm:text-3xl font-bold text-[#171717] tracking-tight">
+          <h2 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             {title}
           </h2>
         </div>
 
         {annotation && (
-          <span className="font-hand font-semibold text-sm sm:text-base text-[#4B5563] bg-[#FFF0B8] border border-[#171717] px-2.5 py-0.5 rounded shadow-[1px_1px_0px_#171717] transform -rotate-1">
+          <span className="font-sans font-medium text-xs sm:text-sm text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
             {annotation}
           </span>
         )}

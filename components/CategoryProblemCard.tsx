@@ -1,52 +1,41 @@
 import Link from "next/link";
 import type { ExploreCategory } from "@/data/homepage";
-import { DoodleArrow } from "./doodle/DoodleArrow";
 
-const pastelBgs = {
-  blue: "bg-[#DCEBFF]",
-  green: "bg-[#DFF3DF]",
-  pink: "bg-[#F9DDE5]",
-  yellow: "bg-[#FFF0B8]",
-  lavender: "bg-[#E7E1F8]",
-};
-
-export function CategoryProblemCard({ category, icon, pastel, problems }: ExploreCategory) {
-  const bgClass = pastelBgs[pastel] || "bg-[#FAF9F5]";
-
+export function CategoryProblemCard({ category, icon, problems }: ExploreCategory) {
   return (
     <div
-      className={`h-full flex flex-col justify-between p-5 border-[1.5px] border-[#171717] rounded-[16px_14px_18px_12px/14px_16px_12px_18px] shadow-[2px_3px_0px_#171717] hover:shadow-[3px_5px_0px_#171717] hover:-translate-y-0.5 transition-all duration-150 ${bgClass}`}
+      className="h-full flex flex-col justify-between p-5 bg-white border border-slate-200 rounded-xl shadow-xs hover:border-blue-200 hover:shadow-sm transition-all duration-150"
     >
       <div>
-        {/* Header: Icon + Handwritten Category Title */}
-        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#171717]/20">
+        {/* Header: Icon + Category Title */}
+        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
           <span className="text-xl select-none" aria-hidden="true">
             {icon}
           </span>
-          <h3 className="font-hand text-xl sm:text-2xl font-bold tracking-tight text-[#171717]">
+          <h3 className="font-sans text-base sm:text-lg font-bold tracking-tight text-slate-900">
             {category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}
           </h3>
         </div>
 
         {/* Problems list */}
-        <ul className="space-y-1.5 text-xs sm:text-[0.85rem] font-sans">
+        <ul className="space-y-1.5 text-xs sm:text-sm font-sans">
           {problems.map((prob, idx) => (
             <li key={prob.name} className="flex items-start gap-1.5">
-              <span className="font-hand text-sm text-[#171717]/60 shrink-0 select-none">
+              <span className="text-slate-400 shrink-0 select-none text-xs mt-0.5">
                 {idx === 0 ? "•" : "↳"}
               </span>
               {prob.available && prob.href ? (
                 <Link
                   href={prob.href}
-                  className="font-bold text-[#171717] underline decoration-[#171717] decoration-1 underline-offset-2 hover:bg-white/80 px-1 py-0.2 rounded transition-colors"
+                  className="font-semibold text-slate-900 hover:text-blue-600 transition-colors inline-flex items-center gap-1.5"
                 >
-                  {prob.name}
-                  <span className="ml-1 text-[0.65rem] font-hand font-bold bg-white border border-[#171717] px-1 rounded-sm shadow-xs">
+                  <span>{prob.name}</span>
+                  <span className="text-[10px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.2 rounded">
                     Read
                   </span>
                 </Link>
               ) : (
-                <span className="text-[#374151] font-medium">
+                <span className="text-slate-500 font-medium">
                   {prob.name}
                 </span>
               )}
@@ -55,9 +44,9 @@ export function CategoryProblemCard({ category, icon, pastel, problems }: Explor
         </ul>
       </div>
 
-      {/* Footer / Sketched Arrow */}
-      <div className="mt-4 pt-2 flex items-center justify-end">
-        <DoodleArrow direction="straight-right" width={24} height={14} />
+      {/* Footer / Clean Arrow */}
+      <div className="mt-4 pt-2 flex items-center justify-end text-slate-400 hover:text-slate-600 text-sm font-sans">
+        <span>Explore →</span>
       </div>
     </div>
   );

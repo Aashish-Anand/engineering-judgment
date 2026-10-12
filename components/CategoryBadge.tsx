@@ -4,31 +4,31 @@ type CategoryBadgeProps = {
 };
 
 const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
-  DATA:        { bg: "bg-[#DCEBFF]", text: "text-[#171717]", border: "border-[#171717]" },
-  CORRECTNESS: { bg: "bg-[#DFF3DF]", text: "text-[#171717]", border: "border-[#171717]" },
-  MESSAGING:   { bg: "bg-[#F9DDE5]", text: "text-[#171717]", border: "border-[#171717]" },
-  TRAFFIC:     { bg: "bg-[#FFF0B8]", text: "text-[#171717]", border: "border-[#171717]" },
-  PERFORMANCE: { bg: "bg-[#E7E1F8]", text: "text-[#171717]", border: "border-[#171717]" },
-  RELIABILITY: { bg: "bg-[#DCEBFF]", text: "text-[#171717]", border: "border-[#171717]" },
-  DEPLOYMENT:  { bg: "bg-[#F9DDE5]", text: "text-[#171717]", border: "border-[#171717]" },
-  COST:        { bg: "bg-[#DCEBFF]", text: "text-[#171717]", border: "border-[#171717]" },
+  DATA:        { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  CORRECTNESS: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  MESSAGING:   { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
+  TRAFFIC:     { bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200" },
+  PERFORMANCE: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  RELIABILITY: { bg: "bg-teal-50", text: "text-teal-700", border: "border-teal-200" },
+  DEPLOYMENT:  { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
+  COST:        { bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200" },
 };
 
 export function CategoryBadge({ category, size = "sm" }: CategoryBadgeProps) {
   const colors = categoryColors[category.toUpperCase()] ?? {
-    bg: "bg-[#FAF9F5]",
-    text: "text-[#171717]",
-    border: "border-[#171717]",
+    bg: "bg-slate-100",
+    text: "text-slate-700",
+    border: "border-slate-200",
   };
 
   const sizeClasses =
     size === "sm"
-      ? "text-[0.7rem] px-2 py-0.5"
+      ? "text-[0.675rem] px-2 py-0.5"
       : "text-xs px-2.5 py-0.5";
 
   return (
     <span
-      className={`inline-block font-sans font-bold tracking-wider uppercase rounded-md border-[1.2px] shadow-[1px_1px_0px_#171717] ${colors.bg} ${colors.text} ${colors.border} ${sizeClasses}`}
+      className={`inline-block font-mono font-semibold tracking-wider uppercase rounded-md border ${colors.bg} ${colors.text} ${colors.border} ${sizeClasses}`}
     >
       {category}
     </span>

@@ -29,11 +29,11 @@ export function MetricTable({
       </div>
 
       {sideNote && (
-        <div className="lg:col-span-4 bg-[#FFF0B8] border-[1.5px] border-[#171717] rounded-xl p-4 shadow-[2px_2px_0px_#171717] transform rotate-1">
-          <div className="flex items-center gap-1.5 mb-1 text-xs font-mono font-bold text-[#171717] uppercase tracking-wider">
-            <span>📌 Note</span>
+        <div className="lg:col-span-4 bg-amber-50/70 border border-amber-200 rounded-xl p-4 shadow-xs">
+          <div className="flex items-center gap-1.5 mb-1 text-[11px] font-mono font-bold text-amber-800 uppercase tracking-wider">
+            <span>📌 Production Note</span>
           </div>
-          <p className="font-hand text-base sm:text-lg font-bold text-[#171717] leading-snug mb-0">
+          <p className="font-sans text-xs sm:text-sm font-semibold text-amber-950 leading-relaxed mb-0">
             &ldquo;{sideNote}&rdquo;
           </p>
         </div>

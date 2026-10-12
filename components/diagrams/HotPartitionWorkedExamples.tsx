@@ -2,7 +2,7 @@ import { PartitionFlowNode as Node, PartitionFlowArrow as Arrow } from "./Partit
 
 export function DatabaseRequestGate() {
   return <figure className="my-6 rounded-xl border border-ink bg-white p-4 sm:p-6">
-    <figcaption className="font-hand text-xl font-bold mb-4">Put the limit before every database call</figcaption>
+    <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">Put the limit before every database call</figcaption>
     <Node title="Cache miss or refresh">The request needs to read partition P7.</Node>
     <Arrow>Check P7&apos;s shared rate budget and active-query limit</Arrow>
     <div className="grid sm:grid-cols-2 gap-3">
@@ -15,7 +15,7 @@ export function DatabaseRequestGate() {
 
 export function ReactionKeyExample() {
   return <figure className="my-6 rounded-xl border border-ink bg-white p-4 sm:p-6">
-    <figcaption className="font-hand text-xl font-bold mb-4">Same post, different partition keys</figcaption>
+    <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">Same post, different partition keys</figcaption>
     <Node title="Post: taylor-post-42">Use a stable hash of the user ID to choose one of four buckets. The bucket numbers below are illustrative.</Node>
     <Arrow>bucket = stable_hash(user_id) % 4</Arrow>
     <div className="grid sm:grid-cols-2 gap-3">
@@ -28,7 +28,7 @@ export function ReactionKeyExample() {
 
 export function ReactionRetryExample() {
   return <figure className="my-6 rounded-xl border border-ink bg-white p-4 sm:p-6">
-    <figcaption className="font-hand text-xl font-bold mb-4">A retry is not a second post like</figcaption>
+    <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">A retry is not a second post like</figcaption>
     <ol className="space-y-3 list-decimal pl-5">
       <li><strong>Alice taps Like.</strong> Operation <code>op-17</code> changes her stored state from unliked to liked. Its accepted count delta is +1.</li>
       <li><strong>The response is lost.</strong> Her phone retries <code>op-17</code>. The service recognizes that it already applied this operation. Count change: 0.</li>
@@ -41,7 +41,7 @@ export function ReactionRetryExample() {
 
 export function ReactionMigrationExample() {
   return <figure className="my-6 rounded-xl border border-ink bg-white p-4 sm:p-6">
-    <figcaption className="font-hand text-xl font-bold mb-4">Why switching from 4 to 8 buckets needs a plan</figcaption>
+    <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">Why switching from 4 to 8 buckets needs a plan</figcaption>
     <Node title="Example user hash: 6">Old rule: 6 % 4 = bucket 2. New rule: 6 % 8 = bucket 6. The same user now routes to a different key.</Node>
     <Arrow>A new routing rule does not move the saved record</Arrow>
     <div className="grid sm:grid-cols-3 gap-3">
@@ -55,7 +55,7 @@ export function ReactionMigrationExample() {
 
 export function CommentReadExample() {
   return <figure className="my-6 rounded-xl border border-ink bg-white p-4 sm:p-6">
-    <figcaption className="font-hand text-xl font-bold mb-4">Reading comments costs more after splitting writes</figcaption>
+    <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">Reading comments costs more after splitting writes</figcaption>
     <div className="grid sm:grid-cols-2 gap-3">
       <Node title="Bucket 0">Comment A · 10:03<br />Comment C · 10:01</Node>
       <Node title="Bucket 1" tone="green">Comment B · 10:02<br />Comment D · 10:00</Node>

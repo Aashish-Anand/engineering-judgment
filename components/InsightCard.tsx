@@ -14,29 +14,26 @@ export function InsightCard({
   const isWarning = variant === "warning";
   const isDanger = variant === "danger";
 
-  const bg = isDanger
-    ? "bg-[#F9DDE5]"
+  const containerClasses = isDanger
+    ? "bg-rose-50/70 border-rose-200 text-rose-950"
     : isWarning
-    ? "bg-[#FFF0B8]"
-    : "bg-[#FFF0B8]";
-
-  const borderColor = isDanger ? "border-[#DC2626]" : "border-[#171717]";
-  const shadowColor = isDanger ? "shadow-[2px_3px_0px_#DC2626]" : "shadow-[2px_3px_0px_#171717]";
+    ? "bg-amber-50/70 border-amber-200 text-amber-950"
+    : "bg-blue-50/60 border-blue-200 text-slate-900";
 
   return (
     <div
-      className={`my-6 p-5 sm:p-6 ${bg} border-[1.5px] ${borderColor} ${shadowColor} rounded-[14px_16px_13px_15px/15px_13px_16px_14px] relative`}
+      className={`my-6 p-5 sm:p-6 border rounded-xl shadow-xs relative ${containerClasses}`}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl select-none" aria-hidden="true">
-          {isDanger ? "⚠️" : "💡"}
+        <span className="text-base select-none" aria-hidden="true">
+          {isDanger ? "⚠️" : isWarning ? "⚡" : "💡"}
         </span>
-        <span className="font-hand font-bold text-lg sm:text-xl text-[#171717] tracking-tight">
+        <span className="font-sans font-bold text-base sm:text-lg tracking-tight text-slate-900">
           {title}
         </span>
       </div>
 
-      <div className="font-hand text-lg sm:text-xl font-bold text-[#171717] leading-relaxed [&>p]:mb-0">
+      <div className="font-sans text-sm sm:text-base font-medium text-slate-800 leading-relaxed [&>p]:mb-0">
         {children}
       </div>
     </div>
