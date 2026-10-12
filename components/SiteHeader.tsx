@@ -23,11 +23,11 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all shadow-2xs">
-      <div className="wide-width mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-        {/* Left: Brand Identity with Layered System Mark */}
+      <div className="max-w-7xl mx-auto h-15 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+        {/* Left: Clean Brand Identity */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 no-underline group select-none shrink-0"
+          className="flex items-center gap-2.5 no-underline group select-none shrink-0 whitespace-nowrap"
         >
           {/* Custom Architectural Layer Emblem */}
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-2xs group-hover:scale-105 transition-transform shrink-0">
@@ -48,7 +48,7 @@ export function SiteHeader() {
             </svg>
           </div>
 
-          <div className="flex items-baseline">
+          <div className="flex items-baseline whitespace-nowrap">
             <span className="font-sans font-extrabold text-base sm:text-lg text-slate-900 tracking-tight leading-none">
               Engineering
             </span>
@@ -56,36 +56,24 @@ export function SiteHeader() {
               Judgment
             </span>
           </div>
-
-          <span className="hidden xl:inline-flex items-center text-[10px] font-mono font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200/80 rounded-md ml-1.5">
-            Architecture Under Pressure
-          </span>
         </Link>
 
         {/* Center: Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1 sm:gap-2">
           {navItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-colors no-underline"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-colors no-underline whitespace-nowrap shrink-0"
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* Right: Search & Action Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Right: Search & Mobile Toggle */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <CommandPalette />
-
-          <Link
-            href="/#problems"
-            className="hidden lg:inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 rounded-lg shadow-2xs transition-colors no-underline"
-          >
-            <span>Explore Blueprints</span>
-            <span className="font-mono text-xs">→</span>
-          </Link>
 
           {/* Mobile Menu Button */}
           <button
