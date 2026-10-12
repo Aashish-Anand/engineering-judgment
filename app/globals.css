@@ -279,13 +279,18 @@ pre code {
   font-weight: 700;
   letter-spacing: -0.01em;
   padding: 0.55rem 1.35rem;
-  border: 1.5px solid var(--color-ink);
+  border-width: 1.5px;
+  border-style: solid;
   border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
   box-shadow: 2px 2.5px 0px var(--color-ink);
   transition: all 0.12s ease;
   cursor: pointer;
   text-decoration: none;
+}
+
+:where(.doodle-btn) {
   color: var(--color-ink);
+  border-color: var(--color-ink);
 }
 
 .doodle-btn:hover {

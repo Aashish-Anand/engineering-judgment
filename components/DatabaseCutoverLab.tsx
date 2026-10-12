@@ -296,8 +296,11 @@ export function DatabaseCutoverLab() {
           <button
             type="button"
             onClick={() => setInjectLag((prev) => !prev)}
-            className={`doodle-btn text-xs py-1 px-3 ${
-              injectLag ? "bg-[#FDE8E8] text-[#DC2626]" : "bg-white"
+            aria-pressed={injectLag}
+            className={`doodle-btn text-xs py-1.5 px-3 transition-colors ${
+              injectLag
+                ? "bg-[#FEE2E2] text-[#991B1B] border-[#DC2626]"
+                : "bg-white text-[#171717] hover:bg-[#FAF9F5]"
             }`}
           >
             {injectLag ? "✓ Lag Spike Injected (3,400ms)" : "Simulate CDC Lag Spike"}
@@ -306,8 +309,11 @@ export function DatabaseCutoverLab() {
           <button
             type="button"
             onClick={() => setInjectDivergence((prev) => !prev)}
-            className={`doodle-btn text-xs py-1 px-3 ${
-              injectDivergence ? "bg-[#FDE8E8] text-[#DC2626]" : "bg-white"
+            aria-pressed={injectDivergence}
+            className={`doodle-btn text-xs py-1.5 px-3 transition-colors ${
+              injectDivergence
+                ? "bg-[#FEE2E2] text-[#991B1B] border-[#DC2626]"
+                : "bg-white text-[#171717] hover:bg-[#FAF9F5]"
             }`}
           >
             {injectDivergence ? "✓ Divergence Injected (0.42%)" : "Simulate Checksum Mismatch"}
@@ -316,11 +322,16 @@ export function DatabaseCutoverLab() {
           <button
             type="button"
             onClick={handleRollbackToggle}
-            className={`doodle-btn text-xs py-1 px-3 ml-auto ${
-              isRolledBack ? "bg-[#171717] text-white" : "bg-[#FFF0B8] text-[#171717]"
+            aria-pressed={isRolledBack}
+            className={`doodle-btn text-xs py-1.5 px-3 ml-auto transition-colors ${
+              isRolledBack
+                ? "bg-[#FEE2E2] text-[#991B1B] border-[#DC2626] shadow-[2px_2.5px_0px_#DC2626]"
+                : "bg-[#FFF0B8] text-[#171717] border-[#171717] hover:bg-[#FFE894]"
             }`}
           >
-            {isRolledBack ? "Undo Rollback" : "🚨 Trigger Emergency Rollback (0% B)"}
+            {isRolledBack
+              ? "↺ Reverse CDC Active · Click to Resume Cutover"
+              : "🚨 Trigger Emergency Rollback (0% B)"}
           </button>
         </div>
       </div>
