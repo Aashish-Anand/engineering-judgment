@@ -3,6 +3,8 @@ import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArticleNav } from "@/components/ArticleNav";
 import { CodeBlock } from "@/components/CodeBlock";
 import { JudgmentQuiz } from "@/components/JudgmentQuiz";
+import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
+import { InlineCheck } from "@/components/InlineCheck";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
@@ -143,6 +145,18 @@ export function FlashSaleArticle() {
           </div>
         </header>
 
+        <ExecutiveBlueprint
+          timeToRead="30-Second Architecture Blueprint"
+          bottleneck="10M users hit 1 inventory row at 12:00:00 PM (~2M RPS). Relational row locks (SELECT FOR UPDATE) serialize, starving connection pools in 5ms."
+          solution="Multi-Tier Admission Funnel: Edge Virtual Waiting Room sheds 99% ➔ In-memory atomic Redis Lua script decrements stock with 10m TTL ➔ Kafka buffers DB settlement."
+          goldenRule="Never allow user requests to touch relational storage during the sale; decouple in-memory reservation from asynchronous payment settlement."
+          keyMetrics={[
+            { label: "Available Stock", value: "Strictly 10,000 units (0 overselling)" },
+            { label: "Edge Admission Drip", value: "10,000 req/s to backend" },
+            { label: "Reservation TTL", value: "10 minutes before auto-restock" },
+          ]}
+        />
+
         {/* Main content area with sticky TOC */}
         <div className="flex gap-10">
           {/* Sticky TOC - desktop only */}
@@ -196,6 +210,27 @@ COMMIT;`}
               Under 2,000,000 incoming requests per second, every single database connection attempts to acquire an exclusive lock on the exact same row. Database connection pools (typically 50–200 connections) are saturated within 5 milliseconds, causing cascading 504 timeouts across every other service sharing the database.
             </FailureCallout>
 
+            <InlineCheck
+              question="Architectural Gut Check · The Read Replica Illusion: Why can't we just scale read replicas to absorb the 2,000,000 RPS surge during the flash sale launch?"
+              options={[
+                {
+                  label: "Read replicas solve it, provided you balance incoming requests with round-robin DNS.",
+                  isCorrect: false,
+                  explanation: "Purchasing is fundamentally a WRITE operation! Every buy attempt decrements a shared inventory counter. Read replicas cannot process writes; all 2,000,000 RPS funnel straight to the single primary database writer.",
+                },
+                {
+                  label: "Replicas only scale reads; purchasing is write contention on a single shared row.",
+                  isCorrect: true,
+                  explanation: "Spot on! Ten million buyers are competing to update the exact same row. Read replicas do nothing for write locks. The primary database connection pool exhausts in 5 milliseconds, causing cascading 504 gateway timeouts.",
+                },
+                {
+                  label: "Read replicas cannot execute ACID transactions in PostgreSQL.",
+                  isCorrect: false,
+                  explanation: "Replicas can execute read-only transactions, but they are prohibited from executing row updates.",
+                },
+              ]}
+            />
+
             {/* ── 03 — Why it's hard ───────────────────────────── */}
             <SectionHeader
               number="03"
@@ -240,7 +275,7 @@ COMMIT;`}
               Traffic is funneled through 5 distinct protection barriers: Edge WAF, Virtual Waiting Room, In-memory Lua stock reservation, Kafka ordering buffer, and batched background Postgres settlement.
             </p>
 
-            <h3 className="font-hand text-2xl font-bold text-[#171717] mt-8 mb-2">
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">
               Key Architectural Strategies
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
@@ -251,7 +286,7 @@ COMMIT;`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <span className="w-2 h-2 rounded-full bg-[#171717] shrink-0" />
-                    <h4 className="font-hand text-xl font-bold text-[#171717]">{s.name}</h4>
+                    <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717]">{s.name}</h4>
                   </div>
                   <p className="text-sm text-[#374151] leading-relaxed mb-0 font-sans">{s.description}</p>
                 </div>
@@ -265,7 +300,7 @@ COMMIT;`}
             </p>
             <ScrollReveal><Timeline phases={flashSalePhases} /></ScrollReveal>
 
-            <h3 className="font-hand text-2xl font-bold text-[#171717] mt-8 mb-3">
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">
               How does the 10-Minute Reservation Lifecycle work?
             </h3>
             <div className="my-6">
@@ -288,9 +323,61 @@ COMMIT;`}
             <div className="my-6">
               <ScrollReveal><InventoryRaceDiagram /></ScrollReveal>
             </div>
+
+            <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717] mt-6 mb-2">
+              The Atomic Lua Script: Zero Interleaving, Zero Overselling
+            </h4>
+            <p>
+              Because Redis runs a single-threaded event loop, an entire Lua script executes as an indivisible atomic instruction. No other command can read or modify the counter mid-script:
+            </p>
+            <CodeBlock
+              language="lua"
+              filename="redis-atomic-gate.lua"
+              code={`-- KEYS[1]: 'stock:iphone_16'
+-- KEYS[2]: 'reservation:user:' .. user_id
+-- ARGV[1]: user_id
+-- ARGV[2]: ttl_seconds (600 = 10 minutes)
+
+-- 1. Idempotency: Prevent the same user from clicking Buy twice
+if redis.call('exists', KEYS[2]) == 1 then
+    return 2 -- Already reserved
+end
+
+-- 2. Atomically verify and decrement available stock
+local current_stock = tonumber(redis.call('get', KEYS[1]))
+if current_stock and current_stock > 0 then
+    redis.call('decr', KEYS[1])
+    redis.call('set', KEYS[2], 'HELD', 'EX', ARGV[2])
+    return 1 -- Success: 1 unit held
+else
+    return 0 -- Sold out: shed request immediately
+end`}
+            />
+
             <DecisionTable
               headers={["Approach", "Advantage", "Trade-off / Risk"]}
               rows={inventoryApproaches}
+            />
+
+            <InlineCheck
+              question="Architectural Gut Check · The Redis Failover Trap: Redis handles the 10,000 decrements in memory. If your Redis Primary crashes and Sentinel promotes a replica, what risk emerges?"
+              options={[
+                {
+                  label: "No risk — Redis replication is synchronous and guarantees zero data loss.",
+                  isCorrect: false,
+                  explanation: "Standard Redis replication is asynchronous for maximum write speed. If the primary crashes before in-flight replication packets reach the replica, the promoted replica will still show available stock, leading to duplicate allocations and overselling.",
+                },
+                {
+                  label: "Asynchronous replication lag between master and replica can resurrect sold stock, causing overselling.",
+                  isCorrect: true,
+                  explanation: "Spot on! If the primary decrements from 1 to 0 and crashes before replicating to the standby, the replica is promoted with stock = 1. A new buyer claims that unit, resulting in 10,001 sold units. Real production systems maintain a safety buffer (e.g. allocate only 9,800 units) or use Redis WAIT.",
+                },
+                {
+                  label: "Redis Sentinel locks all client connections until the primary reboots.",
+                  isCorrect: false,
+                  explanation: "Sentinel promotes the replica to become the new primary immediately, without waiting for the crashed node to reboot.",
+                },
+              ]}
             />
 
             {/* ── 08 — Trade-offs ──────────────────────────────── */}
@@ -357,7 +444,33 @@ COMMIT;`}
             /></ScrollReveal>
 
             {/* ── 11 — What to avoid ───────────────────────────── */}
-            <SectionHeader number="11" title="What would I avoid?" id="avoid" />
+            <SectionHeader number="11" title="What would I avoid: the 3 classic flash sale traps" id="avoid" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 01</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not rely on Kubernetes HPA?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  Kubernetes HPA takes 45–90 seconds to observe CPU metrics and spin up new pod containers. The 10,000 iPhones sell out in 3 seconds. The spike is completely over before the first new pod reaches ready status.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 02</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not process payments first?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  External payment gateways (Stripe, Adyen) take 1,500–3,000ms per transaction. Subjecting payment gateways to 2,000,000 concurrent API calls triggers rate limits and causes thousands of cards to be billed for out-of-stock items.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 03</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not let stock go negative?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  Selling 10,500 items when you only have 10,000 units requires canceling 500 orders post-sale. This creates credit card chargeback fees, social media outrage, and severe reputational damage. Zero overselling must be an inviolable invariant.
+                </p>
+              </div>
+            </div>
+
             <div className="my-4 p-5 bg-[#FDE8E8] border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
               <p className="font-hand font-bold text-xl text-[#DC2626] mb-3 flex items-center gap-2">
                 <span>⚠️ Anti-patterns that guarantee production outages:</span>
@@ -388,7 +501,7 @@ COMMIT;`}
                   🎙️ Candidate 30–60 Second Synthesis:
                 </span>
               </div>
-              <div className="text-[0.92rem] text-[#374151] leading-relaxed whitespace-pre-line font-sans">
+              <div className="text-sm sm:text-base text-[#374151] leading-relaxed whitespace-pre-line font-sans">
                 {interviewAnswer}
               </div>
             </div>

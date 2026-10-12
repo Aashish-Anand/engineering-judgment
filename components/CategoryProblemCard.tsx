@@ -23,7 +23,7 @@ export function CategoryProblemCard({ category, icon, pastel, problems }: Explor
           <span className="text-xl select-none" aria-hidden="true">
             {icon}
           </span>
-          <h3 className="font-hand text-2xl font-bold tracking-tight text-[#171717]">
+          <h3 className="font-hand text-xl sm:text-2xl font-bold tracking-tight text-[#171717]">
             {category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}
           </h3>
         </div>

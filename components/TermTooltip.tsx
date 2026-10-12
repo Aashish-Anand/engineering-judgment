@@ -91,6 +91,42 @@ export const TERM_GLOSSARY: Record<string, TermDef> = {
       "A temporary hold placed on inventory with a strict expiration window. If the buyer does not complete checkout within the TTL, the hold expires and inventory is automatically returned to the available pool.",
     tools: ["Redis keyspace notifications", "Kafka delayed topics", "Scheduled sweepers"],
   },
+  "SKIP LOCKED": {
+    term: "SELECT ... FOR UPDATE SKIP LOCKED",
+    definition:
+      "A concurrency control clause that locks pending rows while skipping rows currently held by other workers. Allows outbox relay workers or queue processors to scale horizontally without deadlocking or duplicate processing.",
+    tools: ["PostgreSQL", "MySQL 8.0+", "Oracle"],
+  },
+  "keyset pagination": {
+    term: "Keyset (Cursor) Pagination",
+    definition:
+      "Paginating large tables using an indexed condition (e.g. WHERE id > last_seen LIMIT 1000) instead of OFFSET. Prevents O(N) database scans that degrade performance during large-scale data backfills.",
+    tools: ["B-Tree Indexes", "Cursor Queries"],
+  },
+  "shadow reads": {
+    term: "Shadow (Dark) Reads",
+    definition:
+      "A migration verification pattern where the application reads from both the legacy and target databases, serves the legacy result to the user, and asynchronously diffs the target result to detect data divergence with zero user impact.",
+    tools: ["Scientist (GitHub)", "Diffy (Twitter)", "Custom Async Comparators"],
+  },
+  "write salting": {
+    term: "Write Salting (Key Sharding)",
+    definition:
+      "Appending a calculated or random shard ID (e.g. key_shard_0 through key_shard_9) to a single logical partition key, distributing high-concurrency writes across multiple physical storage partitions.",
+    tools: ["DynamoDB Partition Salting", "Cassandra / ScyllaDB", "Redis Sharded Counters"],
+  },
+  singleflight: {
+    term: "Request Coalescing (Singleflight)",
+    definition:
+      "A concurrency mechanism where multiple simultaneous requests for the same uncached key share a single origin query execution, preventing cache stampedes and thundering herds.",
+    tools: ["Go singleflight", "nginx proxy_cache_use_stale", "Node memoizee"],
+  },
+  "transactional outbox": {
+    term: "Transactional Outbox Pattern",
+    definition:
+      "Persisting domain events into an outbox table within the same ACID database transaction as the business entity changes, then asynchronously streaming those events to a message broker with guaranteed at-least-once delivery.",
+    tools: ["Debezium", "Kafka Connect", "Postgres SKIP LOCKED relay"],
+  },
 };
 
 type TermTooltipProps = {

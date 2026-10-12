@@ -17,6 +17,9 @@ import { TermTooltip } from "@/components/TermTooltip";
 import { DoodleArrow } from "@/components/doodle/DoodleArrow";
 import { FailureCallout } from "@/components/doodle/FailureCallout";
 import { WhatBreaksNext } from "@/components/doodle/WhatBreaksNext";
+import { CodeBlock } from "@/components/CodeBlock";
+import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
+import { InlineCheck } from "@/components/InlineCheck";
 import { NaiveMigrationDiagram } from "@/components/diagrams/NaiveMigrationDiagram";
 import { MigrationArchitectureDiagram } from "@/components/diagrams/MigrationArchitectureDiagram";
 import { DualWriteDiagram } from "@/components/diagrams/DualWriteDiagram";
@@ -142,6 +145,18 @@ export function DatabaseMigrationArticle() {
           </div>
         </header>
 
+        <ExecutiveBlueprint
+          timeToRead="30-Second Architecture Blueprint"
+          bottleneck="Production writes never stop (~115 WPS). A database dump takes 6 hours and is instantly missing 2.5M concurrent writes."
+          solution="Snapshot + CDC Stream + Keyset Cursor Backfill + Stripe-style Shadow Reads + Zero-downtime Cutover with Reverse Replication."
+          goldenRule="Never switch live writes to the target database until Reverse CDC is actively replicating back to the legacy primary."
+          keyMetrics={[
+            { label: "Target Replication Lag", value: "< 1.0 second" },
+            { label: "Backfill Batch Size", value: "1,000 rows (Keyset cursor)" },
+            { label: "Rollback Recovery Window", value: "< 30s zero-data-loss" },
+          ]}
+        />
+
         {/* Main content area with sticky TOC */}
         <div className="flex gap-10">
           {/* Sticky TOC - desktop only */}
@@ -181,6 +196,27 @@ export function DatabaseMigrationArticle() {
             <FailureCallout title="Wait... production writes are still happening.">
               This fails because production writes continue while the dump is happening. By the time the <TermTooltip termKey="snapshot">snapshot</TermTooltip> finishes, source and destination can diverge. Every write that arrived during the dump is missing from the target.
             </FailureCallout>
+
+            <InlineCheck
+              question="Architectural Gut Check: Your database is 2 TB. You take a pg_dump starting at 2:00 AM, which finishes at 6:00 AM. Can you flip production DNS to DB B at 6:01 AM?"
+              options={[
+                {
+                  label: "Yes, because pg_dump runs in a single transaction snapshot.",
+                  isCorrect: false,
+                  explanation: "pg_dump is consistent with 2:00 AM! All 4 hours of live production mutations (writes, updates, deletes) that occurred between 2:00 AM and 6:00 AM are missing from DB B. Flipping DNS instantly drops 4 hours of customer activity.",
+                },
+                {
+                  label: "No, because the new database is missing 4 hours of live production writes.",
+                  isCorrect: true,
+                  explanation: "Spot on! In a 10M write/day system, that 4-hour dump window leaves ~1,600,000 customer writes completely missing from DB B. A static snapshot must always be paired with a Change Data Capture (CDC) stream to replay in-flight delta mutations.",
+                },
+                {
+                  label: "Yes, as long as you clear Redis and restart the application pods.",
+                  isCorrect: false,
+                  explanation: "Clearing caches and restarting pods does not replay missing persistent rows into PostgreSQL.",
+                },
+              ]}
+            />
 
             {/* ── 03 — Why it's hard ───────────────────────────── */}
             <SectionHeader
@@ -226,10 +262,10 @@ export function DatabaseMigrationArticle() {
               The application writes to <code>DB A</code> (the primary). A <TermTooltip termKey="snapshot">snapshot</TermTooltip> seeds <code>DB B</code> with existing data. <TermTooltip termKey="CDC">CDC</TermTooltip> captures ongoing changes from <code>DB A</code> and applies them to <code>DB B</code>. Once caught up and validated, traffic gradually shifts to <code>DB B</code>.
             </p>
 
-            <h3 className="font-hand text-2xl font-bold text-[#171717] mt-8 mb-2">
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">
               What&apos;s the difference between these strategies?
             </h3>
-            <p className="text-sm text-[#4B5563] mb-4">
+            <p>
               Each strategy addresses a different aspect of the migration. They&apos;re often used in combination — not as alternatives to each other.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -240,7 +276,7 @@ export function DatabaseMigrationArticle() {
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <span className="w-2 h-2 rounded-full bg-[#171717] shrink-0" />
-                    <h4 className="font-hand text-xl font-bold text-[#171717]">{s.name}</h4>
+                    <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717]">{s.name}</h4>
                   </div>
                   <p className="text-sm text-[#374151] leading-relaxed mb-0 font-sans">{s.description}</p>
                 </div>
@@ -254,7 +290,27 @@ export function DatabaseMigrationArticle() {
             </p>
             <ScrollReveal><Timeline phases={migrationPhases} /></ScrollReveal>
 
-            <h3 className="font-hand text-2xl font-bold text-[#171717] mt-8 mb-3">
+            <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717] mt-6 mb-2">
+              The Backfill Engine: Keyset (Cursor) Pagination
+            </h4>
+            <p>
+              Never use <code>OFFSET</code> when copying historical rows — <code>OFFSET 1000000</code> forces the database to read and discard one million dead rows, spiking disk I/O. Use an indexed cursor condition:
+            </p>
+            <CodeBlock
+              language="sql"
+              filename="keyset-cursor-backfill.sql"
+              code={`-- 1. Keyset Cursor: Seeks directly to the next index position (O(1) seek time)
+SELECT id, user_id, amount, status, updated_at
+FROM transactions
+WHERE id > $last_processed_id
+ORDER BY id ASC
+LIMIT 1000;
+
+-- 2. Throttle delay: Sleep 25-50ms between chunks during peak hours
+-- Keeps replication lag under 1.0s and production CPU under 60%`}
+            />
+
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">
               How does the cutover work?
             </h3>
             <div className="my-6">
@@ -283,6 +339,58 @@ export function DatabaseMigrationArticle() {
             <DecisionTable
               headers={["Approach", "Advantage", "Trade-off"]}
               rows={dualWriteApproaches}
+            />
+
+            <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717] mt-6 mb-2">
+              Stripe-Style Shadow (Dark) Reads: Zero-Risk Validation
+            </h4>
+            <p>
+              Before allowing any user to read from DB B, stream live production read traffic to both databases simultaneously and compare outputs in a background thread:
+            </p>
+            <CodeBlock
+              language="typescript"
+              filename="shadow-read-comparator.ts"
+              code={`// Shadow Reads: Prove target correctness under real traffic with zero user impact
+async function getUserAccount(userId: string) {
+  // 1. Authoritative primary read (served immediately to the customer)
+  const legacyAccount = await dbA.getAccount(userId);
+
+  // 2. Asynchronous shadow read from target DB B in background microtask
+  queueMicrotask(async () => {
+    try {
+      const targetAccount = await dbB.getAccount(userId);
+      if (!deepEquals(legacyAccount, targetAccount)) {
+        metrics.increment("migration.divergence_detected", { userId });
+        logger.warn("Divergence detected between DB A and DB B", { legacyAccount, targetAccount });
+      }
+    } catch (err) {
+      metrics.increment("migration.shadow_read_error");
+    }
+  });
+
+  return legacyAccount; // Always return the trusted source of truth
+}`}
+            />
+
+            <InlineCheck
+              question="Architectural Gut Check · The Dual-Write Illusion: Why not simply write to DB A and then write to DB B sequentially in application code?"
+              options={[
+                {
+                  label: "It works reliably if you wrap both calls in a standard try/catch block.",
+                  isCorrect: false,
+                  explanation: "A try/catch cannot rollback a write that already committed to DB A if the network connection to DB B drops mid-flight. DB A has the new data; DB B does not. You now have silent, undetected data drift.",
+                },
+                {
+                  label: "Partial-write failure causes silent divergence without distributed rollback.",
+                  isCorrect: true,
+                  explanation: "Spot on! Sequential dual writes are vulnerable to the Two Generals' Problem: if Write A succeeds and Write B times out, the databases permanently diverge. Without 2PC or CDC, you cannot guarantee synchronization.",
+                },
+                {
+                  label: "Database connection pools do not support querying two distinct databases from one backend.",
+                  isCorrect: false,
+                  explanation: "Modern application frameworks easily support multiple data sources, but multi-datasource writes lack distributed atomicity without coordination.",
+                },
+              ]}
             />
 
             {/* ── 08 — Trade-offs ──────────────────────────────── */}
@@ -349,7 +457,33 @@ export function DatabaseMigrationArticle() {
             /></ScrollReveal>
 
             {/* ── 11 — What to avoid ───────────────────────────── */}
-            <SectionHeader number="11" title="What would I avoid?" id="avoid" />
+            <SectionHeader number="11" title="What would I avoid: the 3 classic migration traps" id="avoid" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 01</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not a 3-hour maintenance window?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  Maintenance windows always overrun. If a schema migration or backfill takes 5 hours instead of 3, you face an agonizing choice: abort and restart next weekend, or extend downtime during peak business hours.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 02</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not validate with SELECT COUNT(*)?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  Row counts only prove quantity, not correctness. Two tables can have exactly 10,000,000 rows while having 50,000 corrupted values, truncated timestamps, or mismatched account balances. Sampled checksums are mandatory.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 03</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not decommission DB A immediately?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  Latent bugs often take 48–72 hours to surface (e.g. weekly reporting queries or end-of-month reconciliations). Keep the legacy database running in read-only reverse sync for at least one full business cycle.
+                </p>
+              </div>
+            </div>
+
             <div className="my-4 p-5 bg-[#FDE8E8] border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
               <p className="font-hand font-bold text-xl text-[#DC2626] mb-3 flex items-center gap-2">
                 <span>⚠️ Avoid unless explicitly justified:</span>
@@ -363,7 +497,7 @@ export function DatabaseMigrationArticle() {
                 ))}
               </ul>
             </div>
-            <p className="text-sm text-[#6B7280] italic">
+            <p className="text-xs sm:text-sm text-[#6B7280] italic">
               These aren&apos;t rules — they&apos;re patterns that tend to cause problems unless you have a specific reason and a plan for the risks they introduce.
             </p>
 
@@ -383,7 +517,7 @@ export function DatabaseMigrationArticle() {
                   🎙️ Candidate 30–60 Second Synthesis:
                 </span>
               </div>
-              <div className="text-[0.92rem] text-[#374151] leading-relaxed whitespace-pre-line font-sans">
+              <div className="text-sm sm:text-base text-[#374151] leading-relaxed whitespace-pre-line font-sans">
                 {interviewAnswer}
               </div>
             </div>

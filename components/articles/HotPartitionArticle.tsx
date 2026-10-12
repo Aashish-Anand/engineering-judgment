@@ -15,6 +15,9 @@ import { WhatBreaksNext } from "@/components/doodle/WhatBreaksNext";
 import { HotPartitionLab } from "@/components/HotPartitionLab";
 import { HotPartitionDiagram } from "@/components/diagrams/HotPartitionDiagram";
 import { HotPartitionFlow } from "@/components/diagrams/HotPartitionFlow";
+import { CodeBlock } from "@/components/CodeBlock";
+import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
+import { InlineCheck } from "@/components/InlineCheck";
 import {
   DatabaseRequestGate,
   ReactionKeyExample,
@@ -24,6 +27,7 @@ import {
 } from "@/components/diagrams/HotPartitionWorkedExamples";
 import { getTopicById } from "@/data/topics/catalog";
 import { JudgmentQuiz } from "@/components/JudgmentQuiz";
+import { DoodleArrow } from "@/components/doodle/DoodleArrow";
 import { meta, tocItems, phases, expectations, followUps, judgmentQuiz } from "@/data/topics/fix-hot-partition";
 
 export function HotPartitionArticle() {
@@ -31,12 +35,105 @@ export function HotPartitionArticle() {
     <article className="pt-4 pb-16 px-6">
       <div className="wide-width mx-auto">
         <Breadcrumb items={[{ label: "Problems", href: "/" }, { label: "Traffic", href: "/#problems" }, { label: "Hot Partition" }]} />
-        <header className="mb-8 pb-6 border-b border-ink/20">
-          <CategoryBadge category={meta.category} size="md" />
-          <h1 className="font-hand text-3xl sm:text-4xl font-bold mt-3 mb-4">{meta.title}</h1>
-          <p className="text-lg">Taylor Swift publishes a post. Millions of fans want to see it. Most DB nodes have spare capacity, but one partition is overwhelmed. Why doesn&apos;t adding servers fix it?</p>
-          <p className="text-sm">A worked system-design walkthrough: find the bottleneck, protect the database, spread independent writes, and check what breaks next.</p>
+        {/* Article header — 2-column notebook layout */}
+        <header className="mb-10 pb-8 border-b-[1.5px] border-[#171717]/20">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left side: Metadata, Title, Subtitle, Tags, Annotation */}
+            <div className="lg:col-span-8">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <CategoryBadge category={meta.category} size="md" />
+                <span className="font-hand font-bold text-sm px-2.5 py-0.5 bg-[#FFF0B8] border border-[#171717] rounded shadow-xs">
+                  {meta.difficulty}
+                </span>
+                <span className="text-xs text-[#9CA3AF]">·</span>
+                <span className="font-hand font-bold text-sm text-[#4B5563]">
+                  ⏱️ {meta.readingTime}
+                </span>
+              </div>
+
+              <h1 className="font-hand text-2xl sm:text-3xl lg:text-[2.35rem] font-bold text-[#171717] leading-[1.2] tracking-tight mb-3">
+                {meta.title}
+              </h1>
+
+              <p className="font-sans text-base sm:text-lg text-[#374151] leading-relaxed mb-4">
+                &ldquo;{meta.subtitle}&rdquo;
+              </p>
+
+              {/* Side / Subtitle Hand-drawn annotation */}
+              <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 bg-[#FFF0B8] border border-[#171717] rounded-lg shadow-xs transform -rotate-1">
+                <span className="font-hand font-bold text-sm sm:text-base text-[#171717]">
+                  Adding DB nodes doesn&apos;t divide a hot key. You must split writes &amp; coalesce reads.
+                </span>
+                <DoodleArrow direction="curved-down-right" width={22} height={16} />
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {meta.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="font-hand text-xs sm:text-sm font-bold px-2 py-0.5 bg-white rounded border border-[#171717] text-[#171717] shadow-xs"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Right side: Architecture Context Notebook Card */}
+            <div className="lg:col-span-4">
+              <div className="bg-white border-[1.5px] border-[#171717] rounded-xl p-5 shadow-[2px_3px_0px_#171717]">
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#171717]/20">
+                  <span className="font-hand font-bold text-base text-[#171717] uppercase tracking-wider">
+                    Architecture Context
+                  </span>
+                  <span className="font-hand font-bold text-xs px-2 py-0.5 bg-[#FDE8E8] text-[#DC2626] border border-[#DC2626] rounded shadow-2xs">
+                    Hot Key Skew
+                  </span>
+                </div>
+
+                <div className="space-y-2.5 text-xs font-sans">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Daily Scale</span>
+                    <span className="font-bold text-[#171717]">100,000 req/s Peak</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Traffic Skew</span>
+                    <span className="font-semibold text-[#DC2626]">70% Concentrated on P7</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Idle Capacity</span>
+                    <span className="font-semibold text-[#171717]">15 Nodes at ~2,000 req/s</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Primary Strategy</span>
+                    <span className="font-semibold text-[#171717]">Singleflight + Write Salting</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Target SLA</span>
+                    <span className="font-semibold text-[#16A34A]">Zero Lost Reactions</span>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-dashed border-[#171717]/20 flex items-center gap-1.5 text-xs font-hand font-bold text-[#4B5563]">
+                  <span>✏️ Notebook design walkthrough below</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </header>
+
+        <ExecutiveBlueprint
+          timeToRead="30-Second Architecture Blueprint"
+          bottleneck="Taylor Swift posts: 1 post ID routes 70,000 req/s (70% traffic) to Partition 7, while the other 15 partitions sit idle at 2,000 req/s."
+          solution="Separate Reads from Writes: Edge Cache with Singleflight (request coalescing) reduces 70K reads to 700 DB reads; Write Salting (bucket sharding) spreads independent reactions across 10 virtual shards."
+          goldenRule="Adding database nodes never divides a hot key; you must split independent writes with salted partition keys and coalesce repeated public reads."
+          keyMetrics={[
+            { label: "Traffic Skew", value: "70% concentrated on P7" },
+            { label: "Cache Hit Absorption", value: "99% (69,300 hits / 700 DB reads)" },
+            { label: "Write Sharding Factor", value: "10 salted virtual partitions" },
+          ]}
+        />
+
         <div className="flex flex-col lg:flex-row gap-10">
           <TableOfContents items={tocItems} />
           <div className="flex-1 min-w-0 prose-width">
@@ -60,6 +157,27 @@ export function HotPartitionArticle() {
             <ScrollReveal><InsightCard title="Hot partition is not always the same as hot key">If many different posts overload P7, rebalancing them may be enough. If one post dominates P7, we must avoid repeated work for that post or split work that can safely run independently.</InsightCard></ScrollReveal>
             <p>This is why “use more partitions” is not yet an answer. We need to explain <em>which records move, how requests find them, and whether those records still compete for the same physical capacity</em>.</p>
 
+            <InlineCheck
+              question="Architectural Gut Check · The Auto-Scaling Trap: When Partition P7 is overwhelmed with 70,000 req/s for Taylor's post, will adding 16 more database partitions fix the incident?"
+              options={[
+                {
+                  label: "Yes, because doubling partition count halves the load per partition.",
+                  isCorrect: false,
+                  explanation: "Hash partitioning routes all requests for the exact same post_id to the exact same partition! If hash(post_id) % N lands on P7, adding 100 more partitions still routes 100% of Taylor's traffic to that exact same partition.",
+                },
+                {
+                  label: "No, because a single partition key always hashes to the same physical node regardless of cluster size.",
+                  isCorrect: true,
+                  explanation: "Spot on! Adding partitions helps when thousands of distinct keys are unevenly clustered. But when a single key is hot, adding partitions does zero to divide that key's load. You must salt the key or cache the reads.",
+                },
+                {
+                  label: "Yes, as long as consistent hashing with virtual nodes is enabled.",
+                  isCorrect: false,
+                  explanation: "Consistent hashing maps one key to one position on the hash ring. Taylor's key still maps to a single node on the ring.",
+                },
+              ]}
+            />
+
             <SectionHeader number="03" id="diagnosis" title="Find what is actually making P7 busy" />
             <p>Start with per-partition latency, errors, throttling, and resource use. A healthy cluster average can hide one overloaded partition. Then use sampled request logs to identify the busiest post IDs and the operations hitting them.</p>
             <DecisionTable headers={["What we observe", "What it means", "Likely response"]} rows={[
@@ -79,23 +197,44 @@ export function HotPartitionArticle() {
 
             <SectionHeader number="05" id="architecture" title="The architecture: two paths with different guarantees" />
             <ScrollReveal><HotPartitionDiagram resolved /></ScrollReveal>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Path A: reading the public post</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Path A: reading the public post</h3>
             <p>Keep reusable public content in an edge cache or app-local cache. A cache is simply a stored copy that avoids repeated database work. Keep viewer-specific state—such as “you liked this post”—separate. A private response must not accidentally become a shared public copy.</p>
             <p>The following read-only example sends all 70,000 hot requests through the read path. At a 99% cache hit rate, 69,300 reads use the copy and only 700 reach the database. This is a simplified experiment, not a claim that our mixed workload consists entirely of reads.</p>
             <HotPartitionFlow />
             <p>Now let that cached copy expire. If 1,000 requests arrive together, they should not all fetch a replacement. Let one refresh run and have the others wait briefly or use an older copy when permitted. This is <strong>request coalescing</strong>. Vary expiry times across cached copies—<strong>expiration jitter</strong>—so they do not all refresh at once.</p>
             <p>Old public post-like counts may be acceptable briefly. Deleted posts, revoked access, and privacy changes need explicit invalidation or access checks. A short expiry time alone is not a security guarantee.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Keep a database request limit—even when the cache is healthy</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Keep a database request limit—even when the cache is healthy</h3>
             <p>A good hit rate is not a safety mechanism. A cache outage or sudden expiry can turn 700 DB reads into 70,000. Put an admission gate <em>after</em> the cache lookup and <em>before</em> starting a database query. Refresh jobs and retries must pass through it too.</p>
             <DatabaseRequestGate />
             <p>For a concrete read-only budget, suppose testing shows P7 can handle 10,000 reads/s. Reserve 4,000 for other work and spare capacity, leaving at most 6,000 reads/s for this hot post. A <strong>token bucket</strong> adds tokens at that rate; starting a query spends a token. Its small bucket size limits how large a burst can pass.</p>
             <p>Also limit queries running at the same time. If queries slow down, even an acceptable request rate can fill all database connections. Release that active-query slot when the query completes or is cancelled.</p>
             <p>The budget is <strong>6,000 across the service</strong>, not 6,000 on each app server. Ten independent limiters would allow 60,000. Use a shared limit or bounded allocations whose total stays within the budget. If the limiter is unavailable, use a conservative local fallback. If no capacity remains, serve a permitted older public copy or reject promptly; do not build an unlimited waiting line.</p>
-            <p className="text-sm">The distinction between a shared budget and a per-server limit is described in <a className="underline" href="https://gateway.envoyproxy.io/docs/concepts/rate-limiting/">Envoy&apos;s rate-limiting documentation</a>. The numbers here are illustrative; read and write budgets need separate workload measurements.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Path B: saving post-like actions</h3>
+            <p className="text-xs sm:text-sm text-[#6B7280] italic">The distinction between a shared budget and a per-server limit is described in <a className="underline" href="https://gateway.envoyproxy.io/docs/concepts/rate-limiting/">Envoy&apos;s rate-limiting documentation</a>. The numbers here are illustrative; read and write budgets need separate workload measurements.</p>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Path B: saving post-like actions</h3>
             <p>Replace “update the same counter for every click” with “save this user&apos;s reaction.” Spread those reaction records across several bucket keys. A background worker maintains bucket counts and periodically publishes a combined display count, rather than synchronously updating one global record on every action.</p>
             <HotPartitionFlow writes />
             <p>This changes the guarantee deliberately: Alice&apos;s reaction is durable when we confirm it, but the public count may take a moment to catch up. If the product requires a globally exact count immediately after every action, this cheaper design does not satisfy that requirement.</p>
+
+            <InlineCheck
+              question="Architectural Gut Check · The Thundering Herd: 50,000 fans read Taylor's post from edge cache. The 60-second TTL expires at 8:01:00 PM. What happens without Request Coalescing (Singleflight)?"
+              options={[
+                {
+                  label: "The cache automatically serves stale data while a background thread refreshes.",
+                  isCorrect: false,
+                  explanation: "Without explicit Singleflight or stale-while-revalidate directives, all 50,000 requests experience a cache miss at the exact same millisecond and forward queries directly to the origin database.",
+                },
+                {
+                  label: "A cache stampede occurs: 50,000 concurrent database queries hit P7 simultaneously, causing immediate connection pool starvation.",
+                  isCorrect: true,
+                  explanation: "Spot on! This is the classic thundering herd / cache stampede. Request coalescing (e.g. Go singleflight or mutex locks) allows only 1 query to touch the database, while the other 49,999 requests wait for that single result and share it.",
+                },
+                {
+                  label: "PostgreSQL automatically distributes the 50,000 queries across read replicas.",
+                  isCorrect: false,
+                  explanation: "Even with replicas, 50,000 sudden queries will saturate connection pools and CPU across the entire replica pool.",
+                },
+              ]}
+            />
 
             <SectionHeader number="06" id="incident" title="During the incident: stabilize first, redesign safely" />
             <p>Do not start an untested repartitioning job while P7 is already failing. First reduce pressure using controls you have already built and tested. The durable fix can then be rolled out without competing with emergency traffic.</p>
@@ -105,23 +244,53 @@ export function HotPartitionArticle() {
             <p>Watch recovery in both directions: user-visible errors and latency should fall, while the age of waiting work should shrink. A growing backlog with a green API success-rate graph is not recovery.</p>
 
             <SectionHeader number="07" id="sharding" title="Work through the reaction design: keys, retries, and migration" />
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">1. Make Alice&apos;s record easy to find</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">1. Make Alice&apos;s record easy to find</h3>
             <p>Take post <code>taylor-post-42</code> and four buckets. Compute <code>stable_hash(user_id) % 4</code>. Suppose Alice maps to bucket 0 and Bob to bucket 2. Use <code>post_id + bucket</code> as the partition key and <code>user_id</code> to identify the reaction inside that bucket.</p>
             <ReactionKeyExample />
+
+            <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717] mt-6 mb-2">
+              Write Salting: Code Formula &amp; Read Trade-off
+            </h4>
+            <p>
+              Deriving the shard ID from the user&apos;s hash ensures that Alice always accesses the exact same partition key, making toggle and unlike operations idempotent:
+            </p>
+            <CodeBlock
+              language="typescript"
+              filename="salted-write-routing.ts"
+              code={`// 1. Write Salting / Sharding: Spread reactions across 10 virtual partition keys
+const NUM_SHARDS = 10;
+
+// Stable hash of userId guarantees Alice always maps to the same shard
+const shardId = hash(userId) % NUM_SHARDS;
+const partitionKey = \`post#\${postId}#shard#\${shardId}\`;
+
+// 2. Put reaction into the salted shard
+await db.putItem({
+  pk: partitionKey,
+  sk: \`user#\${userId}\`,
+  action: "LIKE",
+  timestamp: Date.now(),
+});
+
+// 3. The Read Trade-off:
+// Approach A (Scatter-Gather): Query all 10 shards in parallel and sum (10x read IOPS)
+// Approach B (Async Aggregator - Recommended): A background worker streams CDC deltas
+// from the 10 shards and updates a single cached counter in Redis every 500ms.`}
+            />
             <p>When Alice taps “unlike,” the same calculation finds her existing record. We do not search every bucket. A stable hash is important: the same user ID must map consistently across app servers and restarts.</p>
             <p>Putting Alice&apos;s ID only in a sort key while leaving <code>post_id</code> as the partition key still groups those writes under the same partition key. And four bucket keys do not guarantee four DB nodes: verify actual placement and throughput. Splitting keys helps only when the database can serve them with additional capacity.</p>
-            <p className="text-sm"><a className="underline" href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html">AWS&apos;s write-sharding guidance</a> describes calculated bucket suffixes and their read trade-offs. This reaction schema is a worked design example, not a universal database layout.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">2. Save one action once—even if the network retries</h3>
+            <p className="text-xs sm:text-sm text-[#6B7280] italic"><a className="underline" href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html">AWS&apos;s write-sharding guidance</a> describes calculated bucket suffixes and their read trade-offs. This reaction schema is a worked design example, not a universal database layout.</p>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">2. Save one action once—even if the network retries</h3>
             <p>Alice sends a post-like action. The database saves it, but the response is lost. Her phone retries. Blindly adding 1 again would count the same action twice. Keep the same operation ID across retries and record whether that operation has already been accepted. This is <strong>idempotency</strong>: repeating a request does not repeat its effect.</p>
             <ReactionRetryExample />
             <p>Next, Alice sends an unlike. A delayed retry of her earlier post-like action must not undo it. Use an authoritative per-user/post sequence or conditional updates against the stored version; timestamps from different phones are not enough. The service must define how conflicting actions from multiple devices are ordered.</p>
             <p>Commit the reaction change and its count-update event together, for example with a transactional outbox: an event record saved in the same transaction and delivered later. Otherwise a crash between those two writes can leave a saved reaction with no count update. Apply a count delta only for an accepted state transition, make the count worker deduplicate replays, and periodically reconcile counts against stored reactions.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">3. Add buckets without losing existing reactions</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">3. Add buckets without losing existing reactions</h3>
             <p>Changing the formula from <code>% 4</code> to <code>% 8</code> can move records. A user whose hash is 6 was in bucket 2 and will now be in bucket 6. Changing every app server immediately would make old records appear missing and let old and new routes accept conflicting writes.</p>
             <ReactionMigrationExample />
             <p>Keep a routing version for the post. Copy existing reactions while capturing new changes, replay those changes, and verify the new copy. At handoff, stop or reject writes using the old ownership version before the new owner accepts writes; drain or retry in-flight operations using their original operation IDs.</p>
             <p>Start with a small set of posts. A rollback must preserve writes accepted after the handoff: switching the formula back without replaying those changes loses data. This is a small database migration, not merely a configuration change.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">4. Comments need a read plan too</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">4. Comments need a read plan too</h3>
             <p>Independent comments can also be distributed, but readers want one ordered page. Imagine bucket 0 contains comments at 10:03 and 10:01, while bucket 1 contains 10:02 and 10:00. Fetch candidates from both and merge them into one newest-first list.</p>
             <CommentReadExample />
             <p>Use a stable tie-breaker, such as comment ID, for equal timestamps. The next-page token needs each bucket&apos;s position and a defined rule for comments arriving between pages. Eight buckets can mean eight queries per page. A separate read index may reduce that cost, but an index keyed only by the same popular post can become the next hot partition.</p>
@@ -154,7 +323,33 @@ export function HotPartitionArticle() {
             <HotPartitionLab />
             <p><strong>Try this:</strong> set reads to 99% cache hits, then imagine the cache disappears. Switch to writes and choose seven partitions: each gets exactly 10,000 writes/s, leaving no spare room. Eight averages 8,750—but only if traffic is evenly distributed and the buckets have independent capacity. Which assumption would you verify first in production?</p>
 
-            <SectionHeader number="11" id="avoid" title="What to avoid" />
+            <SectionHeader number="11" id="avoid" title="What to avoid: the 3 classic hot partition traps" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 01</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not auto-scale partitions?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  Partition auto-scaling adds more partitions for the whole cluster. But consistent hashing maps a single partition key (`post_id`) to exactly ONE physical partition. Adding 50 partitions leaves 100% of Taylor&apos;s traffic hammering the exact same node.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 02</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not Scatter-Gather on read?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  Querying all 10 salted shards simultaneously to calculate the total like count multiplies read latency and database read consumption by 10×. When 100,000 fans view the post, Scatter-Gather generates 1,000,000 internal queries, causing self-inflicted starvation.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 03</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not a single Redis INCR key?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  A single Redis key resides on a single Redis node. While Redis is fast, 70,000 concurrent INCR operations on one key saturate that node&apos;s single-core event loop and network NIC, turning Redis into the exact hot partition you tried to avoid in the database.
+                </p>
+              </div>
+            </div>
+
             <ul className="list-disc pl-6 space-y-3 my-4">
               <li><strong>Do not cache away a write.</strong> A cached response is not proof that a reaction was saved.</li>
               <li><strong>Do not split records and keep one synchronous global counter.</strong> That preserves the original contention.</li>

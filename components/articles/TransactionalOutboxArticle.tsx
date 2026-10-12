@@ -14,6 +14,9 @@ import { WhatBreaksNext } from "@/components/doodle/WhatBreaksNext";
 import { ArticleNav } from "@/components/ArticleNav";
 import { CodeBlock } from "@/components/CodeBlock";
 import { JudgmentQuiz } from "@/components/JudgmentQuiz";
+import { DoodleArrow } from "@/components/doodle/DoodleArrow";
+import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
+import { InlineCheck } from "@/components/InlineCheck";
 import { OutboxDiagram, OutboxRelayFlow } from "@/components/diagrams/OutboxDiagram";
 import {
   OutboxRowLifecycle,
@@ -29,12 +32,105 @@ export function TransactionalOutboxArticle() {
     <article className="pt-4 pb-16 px-6">
       <div className="wide-width mx-auto">
         <Breadcrumb items={[{ label: "Problems", href: "/" }, { label: "Correctness", href: "/#problems" }, { label: "Transactional Outbox" }]} />
-        <header className="mb-8 pb-6 border-b border-ink/20">
-          <CategoryBadge category={meta.category} size="md" />
-          <h1 className="font-hand text-3xl sm:text-4xl font-bold mt-3 mb-4">{meta.title}</h1>
-          <p className="text-lg">A customer places an order. The database saves it. Then the service tries to notify downstream systems — and crashes before the message is sent. The order exists, but nothing happens next.</p>
-          <p className="text-sm">A worked system-design walkthrough: understand dual writes, use the transactional outbox, build a reliable relay, and check what breaks next.</p>
+        {/* Article header — 2-column notebook layout */}
+        <header className="mb-10 pb-8 border-b-[1.5px] border-[#171717]/20">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left side: Metadata, Title, Subtitle, Tags, Annotation */}
+            <div className="lg:col-span-8">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <CategoryBadge category={meta.category} size="md" />
+                <span className="font-hand font-bold text-sm px-2.5 py-0.5 bg-[#FFF0B8] border border-[#171717] rounded shadow-xs">
+                  {meta.difficulty}
+                </span>
+                <span className="text-xs text-[#9CA3AF]">·</span>
+                <span className="font-hand font-bold text-sm text-[#4B5563]">
+                  ⏱️ {meta.readingTime}
+                </span>
+              </div>
+
+              <h1 className="font-hand text-2xl sm:text-3xl lg:text-[2.35rem] font-bold text-[#171717] leading-[1.2] tracking-tight mb-3">
+                {meta.title}
+              </h1>
+
+              <p className="font-sans text-base sm:text-lg text-[#374151] leading-relaxed mb-4">
+                &ldquo;{meta.subtitle}&rdquo;
+              </p>
+
+              {/* Side / Subtitle Hand-drawn annotation */}
+              <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 bg-[#FFF0B8] border border-[#171717] rounded-lg shadow-xs transform -rotate-1">
+                <span className="font-hand font-bold text-sm sm:text-base text-[#171717]">
+                  Never publish to your broker inside a DB transaction. Write to an Outbox table instead.
+                </span>
+                <DoodleArrow direction="curved-down-right" width={22} height={16} />
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {meta.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="font-hand text-xs sm:text-sm font-bold px-2 py-0.5 bg-white rounded border border-[#171717] text-[#171717] shadow-xs"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Right side: Architecture Context Notebook Card */}
+            <div className="lg:col-span-4">
+              <div className="bg-white border-[1.5px] border-[#171717] rounded-xl p-5 shadow-[2px_3px_0px_#171717]">
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#171717]/20">
+                  <span className="font-hand font-bold text-base text-[#171717] uppercase tracking-wider">
+                    Architecture Context
+                  </span>
+                  <span className="font-hand font-bold text-xs px-2 py-0.5 bg-[#FDE8E8] text-[#DC2626] border border-[#DC2626] rounded shadow-2xs">
+                    Dual-Write Trap
+                  </span>
+                </div>
+
+                <div className="space-y-2.5 text-xs font-sans">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Target Throughput</span>
+                    <span className="font-bold text-[#171717]">5,000 WPS Peak</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Primary Failure</span>
+                    <span className="font-semibold text-[#DC2626]">Lost &amp; Ghost Events</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Atomic Mechanism</span>
+                    <span className="font-semibold text-[#171717]">Single ACID Transaction</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Relay Pattern</span>
+                    <span className="font-semibold text-[#171717]">SKIP LOCKED / CDC WAL</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[#6B7280] font-medium">Delivery Guarantee</span>
+                    <span className="font-semibold text-[#16A34A]">At-Least-Once + Idempotent</span>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-dashed border-[#171717]/20 flex items-center gap-1.5 text-xs font-hand font-bold text-[#4B5563]">
+                  <span>✏️ Notebook design walkthrough below</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </header>
+
+        <ExecutiveBlueprint
+          timeToRead="30-Second Architecture Blueprint"
+          bottleneck="DB write and Kafka publish are 2 uncoordinated network hops. A crash between them creates either lost events or ghost events."
+          solution="Transactional Outbox: Commit the event row into the local database in the same ACID transaction. An async relay worker streams committed events to Kafka."
+          goldenRule="Never call your broker inside a DB transaction, and always require consumer-side idempotency keys."
+          keyMetrics={[
+            { label: "Throughput < 1,500 WPS", value: "Polling Relay (SKIP LOCKED)" },
+            { label: "Throughput > 5,000 WPS", value: "CDC Stream (Debezium WAL)" },
+            { label: "Delivery Guarantee", value: "At-Least-Once + Consumer Dedup" },
+          ]}
+        />
+
         <div className="flex flex-col lg:flex-row gap-10">
           <TableOfContents items={tocItems} />
           <div className="flex-1 min-w-0 prose-width">
@@ -58,6 +154,27 @@ export function TransactionalOutboxArticle() {
             <ScrollReveal><InsightCard title="Neither ordering is safe">Publish-then-commit creates ghost events. Commit-then-publish creates lost events. The fundamental issue is that two independent systems cannot be updated atomically without a coordination mechanism. &ldquo;It usually works&rdquo; is not a correctness argument.</InsightCard></ScrollReveal>
             <p>Some teams try to fix this by wrapping the publish call inside the database transaction. This avoids lost events if the publish fails (the transaction rolls back), but it couples database availability to broker availability. A slow broker holds the transaction open, consuming a database connection until the timeout. Under load, this exhausts the connection pool and blocks all database work — not just event publishing.</p>
 
+            <InlineCheck
+              question="Architectural Gut Check: Why can't we just call kafka.publish() inside our DB transaction so that if Kafka fails, the DB rolls back?"
+              options={[
+                {
+                  label: "It works reliably and is standard production practice.",
+                  isCorrect: false,
+                  explanation: "Kafka is not an XA resource and does not participate in Postgres transactions. If the broker accepts the message but the DB commit later fails, Kafka cannot 'unsend' the message. Worse, broker latency blocks DB connections.",
+                },
+                {
+                  label: "It couples database throughput to broker latency, causing rapid connection pool exhaustion.",
+                  isCorrect: true,
+                  explanation: "Spot on! Holding a DB connection open while awaiting a remote network round-trip to Kafka will exhaust connection pools (50–200 slots) in milliseconds under load, taking down your entire API.",
+                },
+                {
+                  label: "Kafka brokers automatically reject any messages sent from within SQL transactions.",
+                  isCorrect: false,
+                  explanation: "Kafka has no visibility into database transactions. It will append the message to the log immediately, leading to phantom ghost events if the DB transaction aborts.",
+                },
+              ]}
+            />
+
             <SectionHeader number="03" id="diagnosis" title="Find every place your system does a dual write" />
             <p>Before designing a solution, map every code path that writes to the database and communicates with an external system in the same operation. The order service is one example. Others include:</p>
             <DecisionTable headers={["Code pattern", "What can go wrong", "Severity"]} rows={[
@@ -77,14 +194,14 @@ export function TransactionalOutboxArticle() {
 
             <SectionHeader number="05" id="architecture" title="The architecture: one transaction, one table, one relay" />
             <ScrollReveal><OutboxDiagram resolved /></ScrollReveal>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">The outbox table</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">The outbox table</h3>
             <p>The outbox table lives in the same database as the business data. Each row represents one event that must be published. The table is append-only on the write path: the application only INSERTs, never UPDATEs, during a business transaction.</p>
             <OutboxSchemaExample />
             <p>The <code>aggregate_id</code> column serves two purposes: it becomes the Kafka partition key (ensuring per-entity ordering), and it helps the relay parallelize work across independent entities without breaking ordering guarantees.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">The write path: no broker, no coupling</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">The write path: no broker, no coupling</h3>
             <p>When a customer places an order, the application opens a single database transaction, inserts the order row and the outbox row, and commits. The entire write path is a local database operation. The broker is not involved.</p>
             <p>If the transaction commits, both the order and the event record exist. If it rolls back, neither exists. There is no gap, no crash window, and no ghost event. This is the atomicity guarantee that the dual-write approach lacks.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">What the application code looks like</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">What the application code looks like</h3>
             <p>The change is small but structurally important. Instead of <code>save(order); publish(event);</code> the code becomes <code>save(order); saveOutboxRow(event); commit();</code> — all within the same transaction. The publish call disappears from the request path entirely.</p>
             <CodeBlock
               language="sql"
@@ -105,7 +222,7 @@ VALUES (
 
 COMMIT;`}
             />
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Adopting the outbox: a phased rollout</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Adopting the outbox: a phased rollout</h3>
             <p>Do not rewrite every producer at once. Audit the dual-write boundaries, add the outbox to one service, verify event delivery, and expand.</p>
             <ScrollReveal><Timeline phases={phases} /></ScrollReveal>
 
@@ -113,12 +230,17 @@ COMMIT;`}
             <p>The relay is a separate process — a background worker or a CDC connector — that reads unpublished outbox rows and publishes them to the broker. It runs independently of the application. Two common strategies:</p>
             <ScrollReveal><OutboxRelayFlow /></ScrollReveal>
             <ScrollReveal delay={100}><OutboxRelayFlow cdc /></ScrollReveal>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">Polling is simpler, CDC is faster</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Polling is simpler, CDC is faster</h3>
             <p>A polling relay queries <code>WHERE published_at IS NULL ORDER BY id</code> on a timer. It is simple to build, easy to reason about, and needs no additional infrastructure. The trade-off is latency: events wait up to the polling interval. For most applications, a 1-second poll is fast enough.</p>
             <CodeBlock
               language="sql"
               filename="polling-relay-worker.sql"
-              code={`-- Polling query with concurrency protection (prevents worker contention)
+              code={`-- 1. Mandatory Partial Index: Only indexes unpublished rows (keeps index tiny & hot in RAM)
+CREATE INDEX idx_outbox_unprocessed 
+ON outbox (id ASC) 
+WHERE published_at IS NULL;
+
+-- 2. Concurrency-safe batch poll: SKIP LOCKED allows multiple workers to scale horizontally
 SELECT id, aggregate_type, aggregate_id, event_type, payload
 FROM outbox
 WHERE published_at IS NULL
@@ -126,7 +248,7 @@ ORDER BY id ASC
 LIMIT 100
 FOR UPDATE SKIP LOCKED;
 
--- After publishing batch to broker:
+-- 3. Mark processed after broker ACK:
 UPDATE outbox
 SET published_at = NOW()
 WHERE id = ANY($1::bigint[]);`}
@@ -140,16 +262,37 @@ WHERE id = ANY($1::bigint[]);`}
             ]} />
             <p>Choose based on your latency requirement and operational maturity. Start with polling; move to CDC if sub-second delivery becomes a product requirement.</p>
 
+            <InlineCheck
+              question="Scaling the Relay: You scale from 1 relay worker to 5 workers querying the outbox table. Without 'SKIP LOCKED', what happens?"
+              options={[
+                {
+                  label: "The database automatically distributes rows round-robin across worker connections.",
+                  isCorrect: false,
+                  explanation: "Relational databases do not round-robin rows across parallel SELECT queries. All 5 workers execute the exact same query, fetching the exact same top 100 rows and locking each other out.",
+                },
+                {
+                  label: "Workers collide on the exact same rows, causing severe lock serialization, deadlocks, and duplicate publishes.",
+                  isCorrect: true,
+                  explanation: "Spot on! Without SKIP LOCKED, workers either wait on each other's row locks or read the same unpublished rows simultaneously before status updates occur. SKIP LOCKED instructs Postgres to skip currently locked rows and grab the next available batch without waiting.",
+                },
+                {
+                  label: "PostgreSQL automatically converts the table into a distributed Kafka topic.",
+                  isCorrect: false,
+                  explanation: "Postgres provides ACID storage and row locking, but messaging distribution must be explicitly managed by application workers or Debezium CDC.",
+                },
+              ]}
+            />
+
             <SectionHeader number="07" id="guarantees" title="Ordering, delivery guarantees, and deduplication" />
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">1. At-least-once delivery, not exactly-once</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">1. At-least-once delivery, not exactly-once</h3>
             <p>The relay publishes events and then marks the outbox row. If it crashes after publishing but before marking, the row remains unmarked. On restart, the relay re-publishes it. This is <strong>at-least-once delivery</strong>: every event reaches the broker at least once, but some may arrive more than once.</p>
             <ScrollReveal><OutboxRowLifecycle /></ScrollReveal>
             <p>Exactly-once delivery between two independent systems (database and broker) requires distributed transactions (2PC) or a single system that owns both storage and messaging. The outbox pattern deliberately avoids this complexity by pushing deduplication to the consumer.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">2. Consumers must be idempotent</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">2. Consumers must be idempotent</h3>
             <p>Since the relay delivers at-least-once, every consumer must handle receiving the same event twice. Use the outbox row <code>id</code> as a deduplication key. Before processing, check whether that ID has already been handled.</p>
             <ScrollReveal><IdempotentConsumerExample /></ScrollReveal>
             <p>The deduplication check and the business operation should happen in the same transaction on the consumer side. Otherwise, a crash between processing and recording creates the same gap we are trying to solve — just on the consumer instead of the producer.</p>
-            <h3 className="font-hand text-2xl font-bold mt-6 mb-3">3. Per-entity ordering is achievable</h3>
+            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">3. Per-entity ordering is achievable</h3>
             <p>Use <code>aggregate_id</code> (e.g., <code>order-7842</code>) as the Kafka partition key. All events for the same order land in the same partition, preserving their committed order. Different orders can be processed in parallel across partitions.</p>
             <p>Cross-entity ordering — &ldquo;all events from all orders in global commit order&rdquo; — requires a single relay thread publishing to a single partition. This limits throughput to one event at a time. Most systems do not need it. Define the ordering scope before building it.</p>
 
@@ -173,13 +316,57 @@ WHERE id = ANY($1::bigint[]);`}
               ["Outbox INSERT adds latency to the business write", "P99 write latency increases", "Append-only inserts are fast; monitor and keep outbox index lean"],
             ]} />
             <p>The most common operational issue is outbox table growth. Without cleanup, the table accumulates every event the system has ever produced. Partition the table by <code>created_at</code> and drop old partitions. A weekly partition with a 30-day retention is a reasonable starting point.</p>
+            <CodeBlock
+              language="sql"
+              filename="outbox-hygiene-patterns.sql"
+              code={`-- Strategy A: Immediate row deletion in the same relay transaction (table stays under 1,000 rows)
+DELETE FROM outbox 
+WHERE id = ANY($1::bigint[]);
+
+-- Strategy B: Range Partitioning by date (prevents PostgreSQL table & index bloat)
+CREATE TABLE outbox (
+  id BIGSERIAL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  payload JSONB NOT NULL,
+  PRIMARY KEY (id, created_at)
+) PARTITION BY RANGE (created_at);
+
+-- Drop 30-day old partition instantly with zero transaction locking:
+DROP TABLE outbox_y2026_m09_w03;`}
+            />
 
             <SectionHeader number="10" id="ten-x" title="What breaks next — and can you predict it?" />
             <ScrollReveal><WhatBreaksNext solved="Lost and ghost events from dual writes" nextIssue="Relay throughput, consumer idempotency at scale, schema evolution" steps={["Write outbox row", "Relay publishes", "Consumer deduplicates"]} explanation="The outbox solves producer-side atomicity. It moves the complexity to the relay (throughput, ordering) and the consumer (deduplication, idempotency). Follow the work downstream." /></ScrollReveal>
             <p>At 10× write volume, the relay becomes a throughput bottleneck if it runs as a single thread. Partition outbox reads by <code>aggregate_id</code> ranges and run multiple relay instances — each owning a subset. Ensure that events for the same aggregate always go through the same relay instance to preserve ordering.</p>
             <p>Event schema evolution is the next challenge. When the outbox payload format changes, in-flight events in the old format may already be queued. Consumers must handle multiple schema versions, or the relay must translate. Define an event versioning strategy before you need it.</p>
 
-            <SectionHeader number="11" id="avoid" title="What to avoid" />
+            <SectionHeader number="11" id="avoid" title="What to avoid: the 3 classic architectural traps" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 01</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not 2-Phase Commit (2PC)?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  2PC requires an XA transaction manager. Kafka does not support XA. Furthermore, 2PC blocks on the slowest participant — if one node delays, all locks stay held. In distributed clouds, 2PC kills availability.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 02</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not publish to Kafka first?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  If the Kafka publish succeeds but the database write fails (constraint check, deadlock, power failure), downstream consumers process an event for an entity that does not exist. Ghost orders cause real financial loss.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
+                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 03</span>
+                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Doesn&apos;t Kafka EOS solve this?&rdquo;</h4>
+                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+                  Kafka Exactly-Once Semantics (EOS) only applies to Kafka-to-Kafka streaming topologies (read-process-write within Kafka). It does not extend transaction boundaries to external PostgreSQL databases.
+                </p>
+              </div>
+            </div>
+
             <ul className="list-disc pl-6 space-y-3 my-4">
               <li><strong>Do not call the broker inside the database transaction.</strong> A slow broker holds the transaction open. Under load, this exhausts the connection pool and blocks all writes.</li>
               <li><strong>Do not rely on &ldquo;it usually works.&rdquo;</strong> Dual writes fail during deployments, network partitions, and broker maintenance — exactly when your system is under stress.</li>
