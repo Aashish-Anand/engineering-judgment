@@ -1,6 +1,6 @@
 export function ReservationFlowDiagram() {
   return (
-    <div className="w-full max-w-xl mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
+    <div className="w-full max-w-xl mx-auto p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs">
       <svg
         viewBox="0 0 540 220"
         className="w-full h-auto"
@@ -22,7 +22,7 @@ export function ReservationFlowDiagram() {
           x="95"
           y="104"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14.5"
           fontWeight="bold"
           fill="#171717"
@@ -77,7 +77,7 @@ export function ReservationFlowDiagram() {
           x="242"
           y="112"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="11.5"
           fontWeight="bold"
           fill="#171717"
@@ -100,7 +100,7 @@ export function ReservationFlowDiagram() {
           x="393"
           y="37"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14.5"
           fontWeight="bold"
           fill="#16A34A"
@@ -134,7 +134,7 @@ export function ReservationFlowDiagram() {
           x="393"
           y="170"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14.5"
           fontWeight="bold"
           fill="#DC2626"

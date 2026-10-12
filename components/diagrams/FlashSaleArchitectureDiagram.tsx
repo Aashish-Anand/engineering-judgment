@@ -1,6 +1,6 @@
 export function FlashSaleArchitectureDiagram() {
   return (
-    <div className="w-full max-w-xl mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
+    <div className="w-full max-w-xl mx-auto p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs">
       <svg
         viewBox="0 0 540 505"
         className="w-full h-auto"
@@ -22,7 +22,7 @@ export function FlashSaleArchitectureDiagram() {
           x="215"
           y="32"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="15"
           fontWeight="bold"
           fill="#171717"
@@ -33,7 +33,7 @@ export function FlashSaleArchitectureDiagram() {
         {/* Down arrow 1 */}
         <path d="M215 54 L215 76" stroke="#171717" strokeWidth="1.8" strokeLinecap="round" />
         <polygon points="215,81 211,73 219,73" fill="#171717" />
-        <text x="360" y="70" fontFamily="var(--font-hand)" fontSize="11.5" fontWeight="bold" fill="#6B7280">
+        <text x="360" y="70" fontFamily="var(--font-sans)" fontSize="11.5" fontWeight="bold" fill="#6B7280">
           ↳ Bot &amp; static traffic
         </text>
 
@@ -52,7 +52,7 @@ export function FlashSaleArchitectureDiagram() {
           x="215"
           y="105"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14.5"
           fontWeight="bold"
           fill="#171717"
@@ -74,7 +74,7 @@ export function FlashSaleArchitectureDiagram() {
         {/* Down arrow 2 */}
         <path d="M215 132 L215 154" stroke="#171717" strokeWidth="1.8" strokeLinecap="round" />
         <polygon points="215,159 211,151 219,151" fill="#171717" />
-        <text x="360" y="148" fontFamily="var(--font-hand)" fontSize="11.5" fontWeight="bold" fill="#6B7280">
+        <text x="360" y="148" fontFamily="var(--font-sans)" fontSize="11.5" fontWeight="bold" fill="#6B7280">
           ↳ ~600,000 RPS
         </text>
 
@@ -93,7 +93,7 @@ export function FlashSaleArchitectureDiagram() {
           x="215"
           y="183"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14"
           fontWeight="bold"
           fill="#171717"
@@ -115,7 +115,7 @@ export function FlashSaleArchitectureDiagram() {
         {/* Down arrow 3 */}
         <path d="M215 210 L215 232" stroke="#171717" strokeWidth="1.8" strokeLinecap="round" />
         <polygon points="215,237 211,229 219,229" fill="#171717" />
-        <text x="360" y="226" fontFamily="var(--font-hand)" fontSize="11.5" fontWeight="bold" fill="#6B7280">
+        <text x="360" y="226" fontFamily="var(--font-sans)" fontSize="11.5" fontWeight="bold" fill="#6B7280">
           ↳ Controlled 50K RPS
         </text>
 
@@ -134,7 +134,7 @@ export function FlashSaleArchitectureDiagram() {
           x="215"
           y="262"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14.5"
           fontWeight="bold"
           fill="#171717"
@@ -156,7 +156,7 @@ export function FlashSaleArchitectureDiagram() {
         {/* Down arrow 4 */}
         <path d="M215 292 L215 314" stroke="#171717" strokeWidth="1.8" strokeLinecap="round" />
         <polygon points="215,319 211,311 219,311" fill="#171717" />
-        <text x="360" y="308" fontFamily="var(--font-hand)" fontSize="11.5" fontWeight="bold" fill="#16A34A">
+        <text x="360" y="308" fontFamily="var(--font-sans)" fontSize="11.5" fontWeight="bold" fill="#16A34A">
           ↳ Exactly 10,000 wins
         </text>
 
@@ -175,7 +175,7 @@ export function FlashSaleArchitectureDiagram() {
           x="215"
           y="343"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14"
           fontWeight="bold"
           fill="#171717"
@@ -197,7 +197,7 @@ export function FlashSaleArchitectureDiagram() {
         {/* Down arrow 5 */}
         <path d="M215 370 L215 392" stroke="#171717" strokeWidth="1.8" strokeLinecap="round" />
         <polygon points="215,397 211,389 219,389" fill="#171717" />
-        <text x="360" y="386" fontFamily="var(--font-hand)" fontSize="11.5" fontWeight="bold" fill="#6B7280">
+        <text x="360" y="386" fontFamily="var(--font-sans)" fontSize="11.5" fontWeight="bold" fill="#6B7280">
           ↳ Smooth 500 WPS
         </text>
 
@@ -216,7 +216,7 @@ export function FlashSaleArchitectureDiagram() {
           x="215"
           y="422"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14.5"
           fontWeight="bold"
           fill="#171717"
@@ -250,7 +250,7 @@ export function FlashSaleArchitectureDiagram() {
           x="270"
           y="483"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="12"
           fontWeight="bold"
           fill="#16A34A"

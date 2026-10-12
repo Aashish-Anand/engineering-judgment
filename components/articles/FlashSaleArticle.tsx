@@ -23,6 +23,7 @@ import { NaiveFlashSaleDiagram } from "@/components/diagrams/NaiveFlashSaleDiagr
 import { FlashSaleArchitectureDiagram } from "@/components/diagrams/FlashSaleArchitectureDiagram";
 import { InventoryRaceDiagram } from "@/components/diagrams/InventoryRaceDiagram";
 import { ReservationFlowDiagram } from "@/components/diagrams/ReservationFlowDiagram";
+import { FlashSaleLab } from "@/components/FlashSaleLab";
 
 import * as article from "@/data/topics/survive-flash-sale";
 
@@ -172,7 +173,7 @@ export function FlashSaleArticle() {
               <p>
                 The business requirement is non-negotiable: <strong>zero overselling</strong>. Selling 10,001 units creates legal and reputation liabilities. The site must remain responsive — crashing under connection exhaustion is as bad as overselling.
               </p>
-              <p className="font-hand text-lg text-[#171717] font-bold">
+              <p className="font-sans text-base sm:text-lg text-slate-900 font-bold italic border-l-2 border-blue-500 pl-3 my-2">
                 &ldquo;When 10 million concurrent buyers hit one row, the database isn&apos;t slow — it&apos;s mathematically serialized.&rdquo;
               </p>
             </ProblemStatement>
@@ -269,23 +270,26 @@ COMMIT;`}
               Traffic is funneled through 5 distinct protection barriers: Edge WAF, Virtual Waiting Room, In-memory Lua stock reservation, Kafka ordering buffer, and batched background Postgres settlement.
             </p>
 
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">
               Key Architectural Strategies
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
               {saleStrategies.map((s) => (
                 <div
                   key={s.name}
-                  className="p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_2px_0px_#171717] hover:shadow-[3px_3px_0px_#171717] transition-all"
+                  className="p-4 bg-white border border-slate-200 rounded-xl shadow-xs hover:border-blue-200 hover:shadow-sm transition-all"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="w-2 h-2 rounded-full bg-[#171717] shrink-0" />
-                    <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717]">{s.name}</h4>
+                    <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                    <h4 className="font-sans text-base sm:text-lg font-bold text-slate-900 m-0">{s.name}</h4>
                   </div>
-                  <p className="text-sm text-[#374151] leading-relaxed mb-0 font-sans">{s.description}</p>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-0 font-sans">{s.description}</p>
                 </div>
               ))}
             </div>
+
+            {/* Interactive Flash Sale Simulator */}
+            <FlashSaleLab />
 
             {/* ── 06 — Phases ──────────────────────────────────── */}
             <SectionHeader number="06" title="What are the flash sale phases?" id="phases" />
@@ -294,7 +298,7 @@ COMMIT;`}
             </p>
             <ScrollReveal><Timeline phases={flashSalePhases} /></ScrollReveal>
 
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">
               How does the 10-Minute Reservation Lifecycle work?
             </h3>
             <div className="my-6">
@@ -318,7 +322,7 @@ COMMIT;`}
               <ScrollReveal><InventoryRaceDiagram /></ScrollReveal>
             </div>
 
-            <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717] mt-6 mb-2">
+            <h4 className="font-sans text-lg sm:text-xl font-bold text-slate-900 mt-6 mb-2">
               The Atomic Lua Script: Zero Interleaving, Zero Overselling
             </h4>
             <p>
@@ -417,8 +421,8 @@ end`}
             </InsightCard>
             <ul className="space-y-2 my-4">
               {tenXProblems.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm sm:text-base text-[#374151]">
-                  <span className="font-hand text-lg text-[#171717] shrink-0 select-none">▸</span>
+                <li key={i} className="flex items-start gap-2 text-sm sm:text-base text-slate-700">
+                  <span className="font-sans text-sm text-blue-600 font-bold shrink-0 select-none mt-0.5">▸</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -440,39 +444,39 @@ end`}
             {/* ── 11 — What to avoid ───────────────────────────── */}
             <SectionHeader number="11" title="What would I avoid: the 3 classic flash sale traps" id="avoid" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 01</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not rely on Kubernetes HPA?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 01</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not rely on Kubernetes HPA?&rdquo;</h4>
+                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
                   Kubernetes HPA takes 45–90 seconds to observe CPU metrics and spin up new pod containers. The 10,000 iPhones sell out in 3 seconds. The spike is completely over before the first new pod reaches ready status.
                 </p>
               </div>
 
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 02</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not process payments first?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 02</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not process payments first?&rdquo;</h4>
+                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
                   External payment gateways (Stripe, Adyen) take 1,500–3,000ms per transaction. Subjecting payment gateways to 2,000,000 concurrent API calls triggers rate limits and causes thousands of cards to be billed for out-of-stock items.
                 </p>
               </div>
 
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 03</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not let stock go negative?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 03</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not let stock go negative?&rdquo;</h4>
+                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
                   Selling 10,500 items when you only have 10,000 units requires canceling 500 orders post-sale. This creates credit card chargeback fees, social media outrage, and severe reputational damage. Zero overselling must be an inviolable invariant.
                 </p>
               </div>
             </div>
 
-            <div className="my-4 p-5 bg-[#FDE8E8] border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-              <p className="font-hand font-bold text-xl text-[#DC2626] mb-3 flex items-center gap-2">
+            <div className="my-4 p-4 sm:p-5 bg-rose-50/40 border border-rose-200 rounded-xl shadow-2xs">
+              <p className="font-sans font-bold text-sm sm:text-base text-rose-900 mb-2 flex items-center gap-2">
                 <span>⚠️ Anti-patterns that guarantee production outages:</span>
               </p>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5 pl-0 list-none m-0">
                 {avoidList.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-[#171717]">
-                    <span className="text-[#DC2626] font-bold mt-0.5 shrink-0 select-none">✗</span>
+                  <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-slate-700">
+                    <span className="text-rose-600 font-bold shrink-0 select-none">✗</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -489,37 +493,37 @@ end`}
             <p>
               A staff-level interview response structures the problem as an admission filter before discussing storage primitives:
             </p>
-            <div className="my-4 p-5 sm:p-6 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#171717]/15">
-                <span className="font-hand font-bold text-base text-[#171717]">
+            <div className="my-4 p-5 sm:p-6 bg-blue-50/50 border border-blue-200 rounded-xl shadow-xs">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-blue-200/60">
+                <span className="font-sans font-bold text-sm sm:text-base text-blue-950">
                   🎙️ Candidate 30–60 Second Synthesis:
                 </span>
               </div>
-              <div className="text-sm sm:text-base text-[#374151] leading-relaxed whitespace-pre-line font-sans">
+              <div className="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-sans">
                 {interviewAnswer}
               </div>
             </div>
 
             {/* Whiteboard reasoning chain */}
-            <div className="p-4 bg-[#FAF9F5] border-[1.5px] border-[#171717] rounded-xl my-4 shadow-xs">
-              <span className="font-hand font-bold text-base text-[#171717] block mb-2">
+            <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl my-4 shadow-2xs">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">
                 Whiteboard Reasoning Chain:
               </span>
               <div className="flex flex-wrap items-center gap-2">
                 {[
-                  { label: "1. Funnel Edge", bg: "bg-[#F9DDE5]" },
-                  { label: "2. Queue Token", bg: "bg-[#FFF0B8]" },
-                  { label: "3. Redis Lua", bg: "bg-[#DFF3DF]" },
-                  { label: "4. Kafka Buffer", bg: "bg-[#E7E1F8]" },
-                  { label: "5. DB Settlement", bg: "bg-white" },
-                  { label: "6. Reconciliation", bg: "bg-[#DCEBFF]" },
+                  { label: "1. Funnel Edge" },
+                  { label: "2. Queue Token" },
+                  { label: "3. Redis Lua" },
+                  { label: "4. Kafka Buffer" },
+                  { label: "5. DB Settlement" },
+                  { label: "6. Reconciliation" },
                 ].map((step, idx, arr) => (
                   <span key={step.label} className="inline-flex items-center gap-1.5">
-                    <span className={`font-hand font-bold text-sm px-2.5 py-0.5 rounded border border-[#171717] shadow-2xs ${step.bg}`}>
+                    <span className="font-sans font-semibold text-xs px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 shadow-2xs">
                       {step.label}
                     </span>
                     {idx < arr.length - 1 && (
-                      <span className="text-[#171717]/50 select-none">→</span>
+                      <span className="text-slate-400 select-none text-xs">→</span>
                     )}
                   </span>
                 ))}
@@ -546,7 +550,7 @@ end`}
             <p>
               Interviewers use these follow-ups to test if you understand edge cases like payment webhook delays and Lua script deadlocks:
             </p>
-            <div className="my-4 bg-white border-[1.5px] border-[#171717] rounded-xl px-5 shadow-[2px_3px_0px_#171717]">
+            <div className="my-4 bg-white border border-slate-200 rounded-xl px-5 shadow-xs divide-y divide-slate-100">
               {followUpQuestions.map((qa) => (
                 <ExpandableQuestion
                   key={qa.question}

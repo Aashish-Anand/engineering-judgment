@@ -55,23 +55,23 @@ export function JudgmentQuiz({
   if (isFinished) {
     const isPerfect = correctCount === questions.length;
     return (
-      <div className="my-8 p-6 bg-white border border-slate-200 rounded-xl shadow-xs text-center">
-        <div className="text-3xl mb-2" aria-hidden="true">
+      <div className="my-4 p-4 bg-white border border-slate-200 rounded-xl shadow-2xs text-center">
+        <div className="text-xl mb-1" aria-hidden="true">
           {isPerfect ? "🎯" : "📝"}
         </div>
-        <h4 className="font-sans text-xl font-bold text-slate-900 mb-1">
+        <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1">
           Judgment Check Complete
         </h4>
-        <p className="text-sm font-sans text-slate-600 mb-4">
-          You scored <strong className="text-slate-900">{correctCount} of {questions.length}</strong> correct.
+        <p className="text-xs font-sans text-slate-600 mb-2.5 max-w-md mx-auto">
+          Score: <strong className="text-slate-900">{correctCount} of {questions.length}</strong> correct.
           {isPerfect
-            ? " Outstanding! You have crisp intuition for these production failure modes."
-            : " Good practice! Review the explanations above to sharpen your edge."}
+            ? " Outstanding production intuition."
+            : " Review the rationale above to sharpen your architectural trade-offs."}
         </p>
         <button
           onClick={handleReset}
           type="button"
-          className="font-sans text-xs font-semibold py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
+          className="font-sans text-xs font-semibold py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
         >
           Try Again ↺
         </button>
@@ -80,44 +80,58 @@ export function JudgmentQuiz({
   }
 
   return (
-    <div className="my-8 p-5 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-xs">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <span className="text-xl" aria-hidden="true">
+    <div className="my-4 p-3.5 sm:p-4 bg-white border border-slate-200 rounded-xl shadow-2xs">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm select-none" aria-hidden="true">
             🧠
           </span>
-          <h4 className="font-sans text-base sm:text-lg font-bold text-slate-900 m-0">
+          <h4 className="font-sans text-xs sm:text-sm font-bold text-slate-900 m-0">
             {title}
           </h4>
         </div>
-        <span className="text-xs font-mono font-bold text-slate-400">
-          Scenario {currentIdx + 1} of {questions.length}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {questions.map((_, i) => (
+            <span
+              key={i}
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                i === currentIdx
+                  ? "bg-blue-600 ring-2 ring-blue-200"
+                  : i < currentIdx
+                  ? "bg-emerald-500"
+                  : "bg-slate-200"
+              }`}
+            />
+          ))}
+          <span className="text-[10px] font-mono text-slate-400 ml-1">
+            {currentIdx + 1}/{questions.length}
+          </span>
+        </div>
       </div>
 
       {/* Scenario text */}
-      <p className="font-sans font-semibold text-sm sm:text-base text-slate-800 mb-4 leading-relaxed">
+      <p className="font-sans font-semibold text-xs sm:text-[13px] text-slate-800 mb-2.5 leading-snug">
         {q.scenario}
       </p>
 
-      {/* Options */}
-      <div className="space-y-2.5 mb-4">
+      {/* Compact Options */}
+      <div className="space-y-1 mb-2.5">
         {q.options.map((opt, idx) => {
           const letter = String.fromCharCode(65 + idx);
           const isSelected = selectedOption === idx;
           let optionStyles =
-            "bg-white border-slate-200 text-slate-700 hover:bg-slate-50";
+            "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300";
 
           if (hasSubmitted) {
             if (opt.isCorrect) {
               optionStyles =
-                "bg-emerald-50 border-emerald-500 text-emerald-950 font-semibold ring-1 ring-emerald-500";
+                "bg-emerald-50 border-emerald-500 text-emerald-950 font-medium ring-1 ring-emerald-500";
             } else if (isSelected && !opt.isCorrect) {
               optionStyles =
-                "bg-red-50 border-red-500 text-red-950 ring-1 ring-red-500";
+                "bg-red-50 border-red-500 text-red-950 font-medium ring-1 ring-red-500";
             } else {
-              optionStyles = "bg-slate-50/60 border-slate-200 text-slate-400 opacity-60";
+              optionStyles = "bg-white/60 border-slate-200 text-slate-400 opacity-50";
             }
           }
 
@@ -127,12 +141,12 @@ export function JudgmentQuiz({
               type="button"
               disabled={hasSubmitted}
               onClick={() => handleSelect(idx)}
-              className={`w-full text-left p-3 rounded-lg border text-xs sm:text-sm font-sans transition-all flex items-start gap-3 cursor-pointer ${optionStyles}`}
+              className={`w-full text-left py-1.5 px-2.5 rounded-lg border text-xs font-sans transition-all flex items-center gap-2 cursor-pointer ${optionStyles}`}
             >
-              <span className="font-mono font-bold text-xs shrink-0 w-5 h-5 rounded flex items-center justify-center bg-slate-100 text-slate-700">
+              <span className="font-mono font-bold text-[10px] shrink-0 w-4 h-4 rounded flex items-center justify-center bg-slate-100 text-slate-700">
                 {letter}
               </span>
-              <span className="leading-snug pt-0.5">{opt.text}</span>
+              <span className="leading-snug flex-1">{opt.text}</span>
             </button>
           );
         })}
@@ -141,20 +155,18 @@ export function JudgmentQuiz({
       {/* Explanation when submitted */}
       {hasSubmitted && selectedOption !== null && (
         <div
-          className={`p-4 rounded-lg border mb-4 text-xs sm:text-sm leading-relaxed ${
+          className={`p-2.5 rounded-lg border mb-2.5 text-xs leading-relaxed ${
             q.options[selectedOption].isCorrect
               ? "bg-emerald-50 border-emerald-200 text-emerald-950"
               : "bg-amber-50 border-amber-200 text-amber-950"
           }`}
         >
-          <div className="font-sans font-bold text-xs sm:text-sm mb-1 flex items-center gap-1.5">
-            {q.options[selectedOption].isCorrect ? (
-              <span className="text-emerald-700">✓ Correct judgment!</span>
-            ) : (
-              <span className="text-amber-800">💡 Architecture rationale:</span>
-            )}
+          <div className="font-sans font-bold text-[11px] mb-0.5">
+            {q.options[selectedOption].isCorrect
+              ? "✓ Senior Engineering Verdict:"
+              : "⚠️ Architectural Trap:"}
           </div>
-          <p className="m-0 font-sans">
+          <p className="font-sans text-[11px] leading-snug mb-0 text-slate-800">
             {q.options[selectedOption].explanation}
           </p>
         </div>
@@ -166,9 +178,10 @@ export function JudgmentQuiz({
           <button
             onClick={handleNext}
             type="button"
-            className="font-sans text-xs font-semibold py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
+            className="font-sans text-xs font-bold py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-2xs transition-colors cursor-pointer flex items-center gap-1"
           >
-            {currentIdx + 1 === questions.length ? "Finish →" : "Next Scenario →"}
+            <span>{currentIdx < questions.length - 1 ? "Next Scenario" : "See Final Score"}</span>
+            <span>→</span>
           </button>
         </div>
       )}

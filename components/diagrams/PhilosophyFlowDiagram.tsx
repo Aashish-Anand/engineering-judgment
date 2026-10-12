@@ -17,9 +17,9 @@ export function PhilosophyFlowDiagram() {
   const centerX = 140;
 
   return (
-    <div className="p-4 bg-white border-[1.5px] border-[#171717] rounded-[16px_14px_18px_13px] shadow-[3px_4px_0px_#171717] max-w-sm mx-auto">
-      <div className="font-hand font-bold text-center text-lg text-[#171717] mb-2 border-b border-dashed border-[#171717]/20 pb-2">
-        Senior Engineer&apos;s Whiteboard Chain
+    <div className="p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs max-w-sm mx-auto">
+      <div className="font-sans font-bold text-center text-sm sm:text-base text-slate-900 mb-3 border-b border-slate-100 pb-2.5">
+        Architectural Reasoning Chain
       </div>
       <svg
         viewBox={`0 0 280 ${totalHeight}`}
@@ -71,7 +71,7 @@ export function PhilosophyFlowDiagram() {
                 textAnchor="middle"
                 fontSize="16"
                 fontWeight="bold"
-                fontFamily="var(--font-hand)"
+                fontFamily="var(--font-sans)"
                 fill="#171717"
               >
                 {step.label}
@@ -113,7 +113,7 @@ export function PhilosophyFlowDiagram() {
             y={totalHeight - 8}
             textAnchor="middle"
             fontSize="15"
-            fontFamily="var(--font-hand)"
+            fontFamily="var(--font-sans)"
             fontWeight="bold"
             fill="#DC2626"
           >

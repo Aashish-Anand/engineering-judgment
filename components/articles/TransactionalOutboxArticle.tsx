@@ -23,6 +23,7 @@ import {
   IdempotentConsumerExample,
   OutboxSchemaExample,
 } from "@/components/diagrams/OutboxWorkedExamples";
+import { OutboxLab } from "@/components/OutboxLab";
 import { getTopicById } from "@/data/topics/catalog";
 import { meta, tocItems, phases, expectations, followUps, judgmentQuiz } from "@/data/topics/transactional-outbox";
 
@@ -188,14 +189,14 @@ export function TransactionalOutboxArticle() {
 
             <SectionHeader number="05" id="architecture" title="The architecture: one transaction, one table, one relay" />
             <ScrollReveal><OutboxDiagram resolved /></ScrollReveal>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">The outbox table</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">The outbox table</h3>
             <p>The outbox table lives in the same database as the business data. Each row represents one event that must be published. The table is append-only on the write path: the application only INSERTs, never UPDATEs, during a business transaction.</p>
             <OutboxSchemaExample />
             <p>The <code>aggregate_id</code> column serves two purposes: it becomes the Kafka partition key (ensuring per-entity ordering), and it helps the relay parallelize work across independent entities without breaking ordering guarantees.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">The write path: no broker, no coupling</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">The write path: no broker, no coupling</h3>
             <p>When a customer places an order, the application opens a single database transaction, inserts the order row and the outbox row, and commits. The entire write path is a local database operation. The broker is not involved.</p>
             <p>If the transaction commits, both the order and the event record exist. If it rolls back, neither exists. There is no gap, no crash window, and no ghost event. This is the atomicity guarantee that the dual-write approach lacks.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">What the application code looks like</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">What the application code looks like</h3>
             <p>The change is small but structurally important. Instead of <code>save(order); publish(event);</code> the code becomes <code>save(order); saveOutboxRow(event); commit();</code> — all within the same transaction. The publish call disappears from the request path entirely.</p>
             <CodeBlock
               language="sql"
@@ -216,7 +217,7 @@ VALUES (
 
 COMMIT;`}
             />
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Adopting the outbox: a phased rollout</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">Adopting the outbox: a phased rollout</h3>
             <p>Do not rewrite every producer at once. Audit the dual-write boundaries, add the outbox to one service, verify event delivery, and expand.</p>
             <ScrollReveal><Timeline phases={phases} /></ScrollReveal>
 
@@ -224,7 +225,7 @@ COMMIT;`}
             <p>The relay is a separate process — a background worker or a CDC connector — that reads unpublished outbox rows and publishes them to the broker. It runs independently of the application. Two common strategies:</p>
             <ScrollReveal><OutboxRelayFlow /></ScrollReveal>
             <ScrollReveal delay={100}><OutboxRelayFlow cdc /></ScrollReveal>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Polling is simpler, CDC is faster</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">Polling is simpler, CDC is faster</h3>
             <p>A polling relay queries <code>WHERE published_at IS NULL ORDER BY id</code> on a timer. It is simple to build, easy to reason about, and needs no additional infrastructure. The trade-off is latency: events wait up to the polling interval. For most applications, a 1-second poll is fast enough.</p>
             <CodeBlock
               language="sql"
@@ -256,6 +257,9 @@ WHERE id = ANY($1::bigint[]);`}
             ]} />
             <p>Choose based on your latency requirement and operational maturity. Start with polling; move to CDC if sub-second delivery becomes a product requirement.</p>
 
+            {/* Interactive Outbox & Relay Throughput Simulator */}
+            <OutboxLab />
+
             <InlineCheck
               question="Scaling the Relay: You scale from 1 relay worker to 5 workers querying the outbox table. Without 'SKIP LOCKED', what happens?"
               options={[
@@ -278,15 +282,15 @@ WHERE id = ANY($1::bigint[]);`}
             />
 
             <SectionHeader number="07" id="guarantees" title="Ordering, delivery guarantees, and deduplication" />
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">1. At-least-once delivery, not exactly-once</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">1. At-least-once delivery, not exactly-once</h3>
             <p>The relay publishes events and then marks the outbox row. If it crashes after publishing but before marking, the row remains unmarked. On restart, the relay re-publishes it. This is <strong>at-least-once delivery</strong>: every event reaches the broker at least once, but some may arrive more than once.</p>
             <ScrollReveal><OutboxRowLifecycle /></ScrollReveal>
             <p>Exactly-once delivery between two independent systems (database and broker) requires distributed transactions (2PC) or a single system that owns both storage and messaging. The outbox pattern deliberately avoids this complexity by pushing deduplication to the consumer.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">2. Consumers must be idempotent</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">2. Consumers must be idempotent</h3>
             <p>Since the relay delivers at-least-once, every consumer must handle receiving the same event twice. Use the outbox row <code>id</code> as a deduplication key. Before processing, check whether that ID has already been handled.</p>
             <ScrollReveal><IdempotentConsumerExample /></ScrollReveal>
             <p>The deduplication check and the business operation should happen in the same transaction on the consumer side. Otherwise, a crash between processing and recording creates the same gap we are trying to solve — just on the consumer instead of the producer.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">3. Per-entity ordering is achievable</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">3. Per-entity ordering is achievable</h3>
             <p>Use <code>aggregate_id</code> (e.g., <code>order-7842</code>) as the Kafka partition key. All events for the same order land in the same partition, preserving their committed order. Different orders can be processed in parallel across partitions.</p>
             <p>Cross-entity ordering — &ldquo;all events from all orders in global commit order&rdquo; — requires a single relay thread publishing to a single partition. This limits throughput to one event at a time. Most systems do not need it. Define the ordering scope before building it.</p>
 
@@ -336,32 +340,32 @@ DROP TABLE outbox_y2026_m09_w03;`}
 
             <SectionHeader number="11" id="avoid" title="What to avoid: the 3 classic architectural traps" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 01</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not 2-Phase Commit (2PC)?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 01</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not 2-Phase Commit (2PC)?&rdquo;</h4>
+                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
                   2PC requires an XA transaction manager. Kafka does not support XA. Furthermore, 2PC blocks on the slowest participant — if one node delays, all locks stay held. In distributed clouds, 2PC kills availability.
                 </p>
               </div>
 
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 02</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not publish to Kafka first?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 02</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not publish to Kafka first?&rdquo;</h4>
+                <p className="font-sans text-xs text-sm text-slate-600 leading-relaxed mb-0">
                   If the Kafka publish succeeds but the database write fails (constraint check, deadlock, power failure), downstream consumers process an event for an entity that does not exist. Ghost orders cause real financial loss.
                 </p>
               </div>
 
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 03</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Doesn&apos;t Kafka EOS solve this?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 03</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Doesn&apos;t Kafka EOS solve this?&rdquo;</h4>
+                <p className="font-sans text-xs text-sm text-slate-600 leading-relaxed mb-0">
                   Kafka Exactly-Once Semantics (EOS) only applies to Kafka-to-Kafka streaming topologies (read-process-write within Kafka). It does not extend transaction boundaries to external PostgreSQL databases.
                 </p>
               </div>
             </div>
 
-            <ul className="list-disc pl-6 space-y-3 my-4">
+            <ul className="list-disc pl-6 space-y-2.5 my-4 text-xs sm:text-sm text-slate-700">
               <li><strong>Do not call the broker inside the database transaction.</strong> A slow broker holds the transaction open. Under load, this exhausts the connection pool and blocks all writes.</li>
               <li><strong>Do not rely on &ldquo;it usually works.&rdquo;</strong> Dual writes fail during deployments, network partitions, and broker maintenance — exactly when your system is under stress.</li>
               <li><strong>Do not skip consumer-side deduplication.</strong> At-least-once delivery means duplicates will arrive. A consumer without an idempotency check will double-charge customers or double-reserve inventory.</li>
@@ -396,13 +400,13 @@ DROP TABLE outbox_y2026_m09_w03;`}
               const topic = getTopicById(id as "database-migration" | "flash-sale" | "hot-partition");
               return { title: topic.meta.title, category: topic.meta.category, href: topic.href };
             })} />
-            <details className="my-8 rounded-lg border border-ink/20 p-4">
-              <summary className="font-hand text-xl font-bold cursor-pointer">Sources and further reading</summary>
-              <ul className="list-disc pl-6 mt-3 space-y-2">
-                <li><a className="underline" href="https://microservices.io/patterns/data/transactional-outbox.html">Microservices.io: Transactional Outbox pattern</a></li>
-                <li><a className="underline" href="https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html">Debezium: Outbox Event Router</a></li>
-                <li><a className="underline" href="https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/">Confluent: Exactly-once semantics in Kafka</a></li>
-                <li><a className="underline" href="https://brandur.org/idempotency-keys">Brandur Leach: Implementing Stripe-like idempotency keys</a></li>
+            <details className="my-8 rounded-xl border border-slate-200 p-4 bg-slate-50/50">
+              <summary className="font-sans text-sm sm:text-base font-bold text-slate-900 cursor-pointer">Sources and further reading</summary>
+              <ul className="list-disc pl-6 mt-3 space-y-2 text-xs sm:text-sm text-slate-600">
+                <li><a className="underline hover:text-blue-600" href="https://microservices.io/patterns/data/transactional-outbox.html">Microservices.io: Transactional Outbox pattern</a></li>
+                <li><a className="underline hover:text-blue-600" href="https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html">Debezium: Outbox Event Router</a></li>
+                <li><a className="underline hover:text-blue-600" href="https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/">Confluent: Exactly-once semantics in Kafka</a></li>
+                <li><a className="underline hover:text-blue-600" href="https://brandur.org/idempotency-keys">Brandur Leach: Implementing Stripe-like idempotency keys</a></li>
               </ul>
             </details>
             <ArticleNav currentId="transactional-outbox" />

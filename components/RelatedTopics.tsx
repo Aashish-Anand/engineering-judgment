@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { CategoryBadge } from "./CategoryBadge";
-import { DoodleArrow } from "./doodle/DoodleArrow";
 
 type RelatedTopic = {
   title: string;
@@ -14,10 +13,10 @@ type RelatedTopicsProps = {
 
 export function RelatedTopics({ topics }: RelatedTopicsProps) {
   return (
-    <div className="my-6">
+    <div className="my-8">
       <div className="flex items-center gap-2 mb-3">
-        <span className="font-hand font-bold text-lg text-[#171717]">
-          Keep exploring →
+        <span className="font-sans font-bold text-base sm:text-lg text-slate-900">
+          Keep exploring real-world failure modes →
         </span>
       </div>
 
@@ -26,31 +25,31 @@ export function RelatedTopics({ topics }: RelatedTopicsProps) {
           const isAvailable = Boolean(topic.href);
           const inner = (
             <div
-              className={`flex flex-col justify-between p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_2px_0px_#171717] transition-all duration-150 ${
+              className={`flex flex-col justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-xs transition-all duration-200 h-full ${
                 isAvailable
-                  ? "hover:shadow-[3px_4px_0px_#171717] hover:-translate-y-0.5"
-                  : "opacity-60 bg-[#FAF9F5]"
+                  ? "hover:border-blue-300 hover:shadow-sm hover:-translate-y-0.5 group"
+                  : "opacity-60 bg-slate-50/50"
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
                 <CategoryBadge category={topic.category} size="sm" />
-                {isAvailable && (
-                  <span className="font-hand text-xs font-bold text-[#16A34A] bg-[#DFF3DF] border border-[#171717] px-1.5 py-0.2 rounded shadow-2xs">
-                    Available
+                {isAvailable ? (
+                  <span className="font-sans text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    Read Blueprint
+                  </span>
+                ) : (
+                  <span className="font-mono text-[10px] text-slate-400 uppercase tracking-wider">
+                    In Production
                   </span>
                 )}
               </div>
 
-              <span className="font-sans font-semibold text-sm sm:text-base text-[#171717] leading-snug mb-3">
+              <span className="font-sans font-bold text-sm sm:text-base text-slate-900 leading-snug mb-3 group-hover:text-blue-600 transition-colors">
                 {topic.title}
               </span>
 
-              <div className="flex items-center justify-end text-xs">
-                {isAvailable ? (
-                  <DoodleArrow direction="straight-right" width={20} height={12} />
-                ) : (
-                  <span className="font-hand text-xs text-[#9CA3AF]">Coming soon</span>
-                )}
+              <div className="flex items-center justify-end text-xs font-semibold text-blue-600">
+                {isAvailable ? "Open Blueprint →" : ""}
               </div>
             </div>
           );
@@ -63,11 +62,7 @@ export function RelatedTopics({ topics }: RelatedTopicsProps) {
             );
           }
 
-          return (
-            <div key={topic.title}>
-              {inner}
-            </div>
-          );
+          return <div key={topic.title}>{inner}</div>;
         })}
       </div>
     </div>

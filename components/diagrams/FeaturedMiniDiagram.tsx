@@ -2,7 +2,7 @@
 
 export function FeaturedMiniDiagram() {
   return (
-    <div className="relative p-2 bg-[#FAF9F5] border-[1.5px] border-[#171717] rounded-xl shadow-[2px_2px_0px_#171717]">
+    <div className="relative p-2.5 bg-slate-50 border border-slate-200 rounded-xl shadow-2xs">
       <svg
         viewBox="0 0 240 140"
         className="w-full max-w-[210px]"
@@ -24,7 +24,7 @@ export function FeaturedMiniDiagram() {
           x="120"
           y="25"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="15"
           fontWeight="bold"
           fill="#171717"
@@ -65,7 +65,7 @@ export function FeaturedMiniDiagram() {
           x="61"
           y="77"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14"
           fontWeight="bold"
           fill="#171717"
@@ -99,7 +99,7 @@ export function FeaturedMiniDiagram() {
           x="179"
           y="77"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14"
           fontWeight="bold"
           fill="#171717"
@@ -143,7 +143,7 @@ export function FeaturedMiniDiagram() {
           x="120"
           y="125"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14"
           fontWeight="bold"
           fill="#171717"

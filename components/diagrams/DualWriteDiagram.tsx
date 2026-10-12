@@ -1,6 +1,6 @@
 export function DualWriteDiagram() {
   return (
-    <div className="w-full max-w-xl mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
+    <div className="w-full max-w-xl mx-auto p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs">
       <svg
         viewBox="0 0 480 230"
         className="w-full h-auto"
@@ -22,7 +22,7 @@ export function DualWriteDiagram() {
           x="240"
           y="36"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="16"
           fontWeight="bold"
           fill="#171717"
@@ -43,7 +43,7 @@ export function DualWriteDiagram() {
           x="122"
           y="76"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="12"
           fontWeight="bold"
           fill="#16A34A"
@@ -63,7 +63,7 @@ export function DualWriteDiagram() {
           x="358"
           y="76"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="12"
           fontWeight="bold"
           fill="#DC2626"
@@ -86,7 +86,7 @@ export function DualWriteDiagram() {
           x="107.5"
           y="130"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="15"
           fontWeight="bold"
           fill="#171717"
@@ -120,7 +120,7 @@ export function DualWriteDiagram() {
           x="372.5"
           y="130"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="15"
           fontWeight="bold"
           fill="#171717"
@@ -154,7 +154,7 @@ export function DualWriteDiagram() {
           x="240"
           y="193"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="13"
           fontWeight="bold"
           fill="#DC2626"

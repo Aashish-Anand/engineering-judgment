@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { EngineerDoodle } from "./doodle/EngineerDoodle";
+import { ArchitecturePressurePreview } from "./ArchitecturePressurePreview";
 import { heroContent } from "@/data/homepage";
 import { topicCatalog } from "@/data/topics/catalog";
 
@@ -150,9 +150,9 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right Column: Hand-drawn Engineer Doodle with Thought Bubble */}
+          {/* Right Column: Interactive System Architecture Pressure Console */}
           <div className="lg:col-span-5 flex justify-center">
-            <EngineerDoodle />
+            <ArchitecturePressurePreview />
           </div>
         </div>
       </div>

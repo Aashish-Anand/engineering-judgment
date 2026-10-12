@@ -8,7 +8,7 @@ export function CutoverDiagram() {
   ];
 
   return (
-    <div className="w-full max-w-xl mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
+    <div className="w-full max-w-xl mx-auto p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs">
       <svg
         viewBox="0 0 470 185"
         className="w-full h-auto"
@@ -28,7 +28,7 @@ export function CutoverDiagram() {
                 x={x + 28}
                 y="18"
                 textAnchor="middle"
-                fontFamily="var(--font-hand)"
+                fontFamily="var(--font-sans)"
                 fontSize="15"
                 fontWeight="bold"
                 fill="#171717"
@@ -101,12 +101,12 @@ export function CutoverDiagram() {
         {/* Legend */}
         <g transform="translate(120, 140)">
           <rect x="0" y="0" width="16" height="12" rx="3" fill="#DCEBFF" stroke="#171717" strokeWidth="1.2" />
-          <text x="22" y="10" fontFamily="var(--font-hand)" fontSize="13.5" fontWeight="bold" fill="#171717">
+          <text x="22" y="10" fontFamily="var(--font-sans)" fontSize="13.5" fontWeight="bold" fill="#171717">
             DB A (Primary)
           </text>
 
           <rect x="125" y="0" width="16" height="12" rx="3" fill="#DFF3DF" stroke="#171717" strokeWidth="1.2" />
-          <text x="147" y="10" fontFamily="var(--font-hand)" fontSize="13.5" fontWeight="bold" fill="#171717">
+          <text x="147" y="10" fontFamily="var(--font-sans)" fontSize="13.5" fontWeight="bold" fill="#171717">
             DB B (Target)
           </text>
         </g>
@@ -116,7 +116,7 @@ export function CutoverDiagram() {
           x="235"
           y="172"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="12.5"
           fontWeight="bold"
           fill="#DC2626"

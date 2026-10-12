@@ -117,12 +117,12 @@ export function CommandPalette() {
       <button
         onClick={openPalette}
         type="button"
-        className="flex items-center gap-2 px-3 py-1 bg-white border-[1.5px] border-[#171717] rounded-full shadow-[1.5px_1.5px_0px_#171717] hover:shadow-[2.5px_2.5px_0px_#171717] hover:-translate-y-0.5 transition-all text-xs font-hand font-bold text-[#171717]"
+        className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full shadow-xs hover:border-slate-300 hover:bg-slate-50 transition-all text-xs font-sans font-semibold text-slate-700 cursor-pointer"
         aria-label="Search topics and concepts"
       >
-        <span aria-hidden="true">🔍</span>
+        <span aria-hidden="true" className="text-xs">🔍</span>
         <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden md:inline-block px-1.5 py-0.2 bg-[#FAF9F5] border border-[#171717]/30 rounded text-[10px] font-mono text-[#6B7280]">
+        <kbd className="hidden md:inline-block px-1.5 py-0.2 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-500">
           ⌘K
         </kbd>
       </button>
@@ -130,16 +130,16 @@ export function CommandPalette() {
       {/* Modal Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/40 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-950/40 backdrop-blur-xs animate-fadeIn"
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="w-full max-w-xl bg-white border-2 border-[#171717] rounded-2xl shadow-[4px_6px_0px_#171717] overflow-hidden flex flex-col max-h-[75vh]"
+            className="w-full max-w-xl bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[75vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Search Input Bar */}
-            <div className="flex items-center gap-2.5 px-4 py-3 border-b-2 border-[#171717] bg-[#FAF9F5]">
-              <span className="text-lg select-none" aria-hidden="true">
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-200 bg-slate-50/70">
+              <span className="text-base select-none text-slate-400" aria-hidden="true">
                 🔍
               </span>
               <input
@@ -151,21 +151,21 @@ export function CommandPalette() {
                 }}
                 onKeyDown={handleInputKeyDown}
                 placeholder="Search topics, failure modes, CDC, partition keys..."
-                className="w-full bg-transparent text-sm sm:text-base font-sans text-[#171717] outline-hidden placeholder:text-[#9CA3AF]"
+                className="w-full bg-transparent text-sm sm:text-base font-sans text-slate-900 outline-hidden placeholder:text-slate-400"
               />
               <button
                 onClick={() => setIsOpen(false)}
                 type="button"
-                className="px-1.5 py-0.5 border border-[#171717]/30 rounded text-xs font-mono text-[#6B7280] hover:bg-white"
+                className="px-1.5 py-0.5 border border-slate-200 rounded text-xs font-mono text-slate-500 hover:bg-white cursor-pointer"
               >
                 ESC
               </button>
             </div>
 
             {/* Results List */}
-            <div className="overflow-y-auto p-2 divide-y divide-[#171717]/10">
+            <div className="overflow-y-auto p-2 divide-y divide-slate-100">
               {filtered.length === 0 ? (
-                <div className="py-8 text-center text-sm font-hand text-[#6B7280]">
+                <div className="py-8 text-center text-sm font-sans text-slate-500">
                   No matching engineering topics or concepts found.
                 </div>
               ) : (
@@ -176,23 +176,23 @@ export function CommandPalette() {
                       key={item.title}
                       onClick={() => handleSelect(item)}
                       onMouseEnter={() => setSelectedIndex(idx)}
-                      className={`p-3 rounded-xl cursor-pointer transition-colors ${
+                      className={`p-3 rounded-xl cursor-pointer transition-colors border ${
                         isSelected
-                          ? "bg-[#FFF0B8] border border-[#171717] shadow-xs"
-                          : "hover:bg-[#FAF9F5]"
+                          ? "bg-blue-50/80 border-blue-200 shadow-2xs"
+                          : "border-transparent hover:bg-slate-50"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="font-hand font-bold text-sm sm:text-base text-[#171717] line-clamp-1">
+                        <span className="font-sans font-bold text-sm sm:text-base text-slate-900 line-clamp-1">
                           {item.title}
                         </span>
                         <span
-                          className={`shrink-0 text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border border-[#171717]/30 ${item.badgeColor}`}
+                          className={`shrink-0 text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border border-slate-200 ${item.badgeColor}`}
                         >
                           {item.badge}
                         </span>
                       </div>
-                      <p className="text-xs text-[#4B5563] line-clamp-2 m-0 leading-relaxed font-sans">
+                      <p className="text-xs text-slate-600 line-clamp-2 m-0 leading-relaxed font-sans">
                         {item.subtitle}
                       </p>
                     </div>
@@ -202,12 +202,12 @@ export function CommandPalette() {
             </div>
 
             {/* Footer with Keyboard Hints */}
-            <div className="px-4 py-2 bg-[#FAF9F5] border-t border-[#171717]/20 flex items-center justify-between text-[11px] font-mono text-[#6B7280]">
+            <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] font-mono text-slate-500">
               <div className="flex items-center gap-3">
-                <span>↑↓ to navigate</span>
-                <span>↵ to select</span>
+                <span>↑↓ navigate</span>
+                <span>↵ select</span>
               </div>
-              <span>Engineering Judgment</span>
+              <span className="font-sans font-semibold text-slate-600">Engineering Judgment</span>
             </div>
           </div>
         </div>

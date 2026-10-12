@@ -191,20 +191,20 @@ export function HotPartitionArticle() {
 
             <SectionHeader number="05" id="architecture" title="The architecture: two paths with different guarantees" />
             <ScrollReveal><HotPartitionDiagram resolved /></ScrollReveal>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Path A: reading the public post</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">Path A: reading the public post</h3>
             <p>Keep reusable public content in an edge cache or app-local cache. A cache is simply a stored copy that avoids repeated database work. Keep viewer-specific state—such as “you liked this post”—separate. A private response must not accidentally become a shared public copy.</p>
             <p>The following read-only example sends all 70,000 hot requests through the read path. At a 99% cache hit rate, 69,300 reads use the copy and only 700 reach the database. This is a simplified experiment, not a claim that our mixed workload consists entirely of reads.</p>
             <HotPartitionFlow />
             <p>Now let that cached copy expire. If 1,000 requests arrive together, they should not all fetch a replacement. Let one refresh run and have the others wait briefly or use an older copy when permitted. This is <strong>request coalescing</strong>. Vary expiry times across cached copies—<strong>expiration jitter</strong>—so they do not all refresh at once.</p>
             <p>Old public post-like counts may be acceptable briefly. Deleted posts, revoked access, and privacy changes need explicit invalidation or access checks. A short expiry time alone is not a security guarantee.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Keep a database request limit—even when the cache is healthy</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">Keep a database request limit—even when the cache is healthy</h3>
             <p>A good hit rate is not a safety mechanism. A cache outage or sudden expiry can turn 700 DB reads into 70,000. Put an admission gate <em>after</em> the cache lookup and <em>before</em> starting a database query. Refresh jobs and retries must pass through it too.</p>
             <DatabaseRequestGate />
             <p>For a concrete read-only budget, suppose testing shows P7 can handle 10,000 reads/s. Reserve 4,000 for other work and spare capacity, leaving at most 6,000 reads/s for this hot post. A <strong>token bucket</strong> adds tokens at that rate; starting a query spends a token. Its small bucket size limits how large a burst can pass.</p>
             <p>Also limit queries running at the same time. If queries slow down, even an acceptable request rate can fill all database connections. Release that active-query slot when the query completes or is cancelled.</p>
             <p>The budget is <strong>6,000 across the service</strong>, not 6,000 on each app server. Ten independent limiters would allow 60,000. Use a shared limit or bounded allocations whose total stays within the budget. If the limiter is unavailable, use a conservative local fallback. If no capacity remains, serve a permitted older public copy or reject promptly; do not build an unlimited waiting line.</p>
             <p className="text-xs sm:text-sm text-[#6B7280] italic">The distinction between a shared budget and a per-server limit is described in <a className="underline" href="https://gateway.envoyproxy.io/docs/concepts/rate-limiting/">Envoy&apos;s rate-limiting documentation</a>. The numbers here are illustrative; read and write budgets need separate workload measurements.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">Path B: saving post-like actions</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">Path B: saving post-like actions</h3>
             <p>Replace “update the same counter for every click” with “save this user&apos;s reaction.” Spread those reaction records across several bucket keys. A background worker maintains bucket counts and periodically publishes a combined display count, rather than synchronously updating one global record on every action.</p>
             <HotPartitionFlow writes />
             <p>This changes the guarantee deliberately: Alice&apos;s reaction is durable when we confirm it, but the public count may take a moment to catch up. If the product requires a globally exact count immediately after every action, this cheaper design does not satisfy that requirement.</p>
@@ -238,11 +238,11 @@ export function HotPartitionArticle() {
             <p>Watch recovery in both directions: user-visible errors and latency should fall, while the age of waiting work should shrink. A growing backlog with a green API success-rate graph is not recovery.</p>
 
             <SectionHeader number="07" id="sharding" title="Work through the reaction design: keys, retries, and migration" />
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">1. Make Alice&apos;s record easy to find</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">1. Make Alice&apos;s record easy to find</h3>
             <p>Take post <code>taylor-post-42</code> and four buckets. Compute <code>stable_hash(user_id) % 4</code>. Suppose Alice maps to bucket 0 and Bob to bucket 2. Use <code>post_id + bucket</code> as the partition key and <code>user_id</code> to identify the reaction inside that bucket.</p>
             <ReactionKeyExample />
 
-            <h4 className="font-hand text-lg sm:text-xl font-bold text-[#171717] mt-6 mb-2">
+            <h4 className="font-sans text-lg sm:text-xl font-bold text-slate-900 mt-6 mb-2">
               Write Salting: Code Formula &amp; Read Trade-off
             </h4>
             <p>
@@ -274,17 +274,17 @@ await db.putItem({
             <p>When Alice taps “unlike,” the same calculation finds her existing record. We do not search every bucket. A stable hash is important: the same user ID must map consistently across app servers and restarts.</p>
             <p>Putting Alice&apos;s ID only in a sort key while leaving <code>post_id</code> as the partition key still groups those writes under the same partition key. And four bucket keys do not guarantee four DB nodes: verify actual placement and throughput. Splitting keys helps only when the database can serve them with additional capacity.</p>
             <p className="text-xs sm:text-sm text-[#6B7280] italic"><a className="underline" href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html">AWS&apos;s write-sharding guidance</a> describes calculated bucket suffixes and their read trade-offs. This reaction schema is a worked design example, not a universal database layout.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">2. Save one action once—even if the network retries</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">2. Save one action once—even if the network retries</h3>
             <p>Alice sends a post-like action. The database saves it, but the response is lost. Her phone retries. Blindly adding 1 again would count the same action twice. Keep the same operation ID across retries and record whether that operation has already been accepted. This is <strong>idempotency</strong>: repeating a request does not repeat its effect.</p>
             <ReactionRetryExample />
             <p>Next, Alice sends an unlike. A delayed retry of her earlier post-like action must not undo it. Use an authoritative per-user/post sequence or conditional updates against the stored version; timestamps from different phones are not enough. The service must define how conflicting actions from multiple devices are ordered.</p>
             <p>Commit the reaction change and its count-update event together, for example with a transactional outbox: an event record saved in the same transaction and delivered later. Otherwise a crash between those two writes can leave a saved reaction with no count update. Apply a count delta only for an accepted state transition, make the count worker deduplicate replays, and periodically reconcile counts against stored reactions.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">3. Add buckets without losing existing reactions</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">3. Add buckets without losing existing reactions</h3>
             <p>Changing the formula from <code>% 4</code> to <code>% 8</code> can move records. A user whose hash is 6 was in bucket 2 and will now be in bucket 6. Changing every app server immediately would make old records appear missing and let old and new routes accept conflicting writes.</p>
             <ReactionMigrationExample />
             <p>Keep a routing version for the post. Copy existing reactions while capturing new changes, replay those changes, and verify the new copy. At handoff, stop or reject writes using the old ownership version before the new owner accepts writes; drain or retry in-flight operations using their original operation IDs.</p>
             <p>Start with a small set of posts. A rollback must preserve writes accepted after the handoff: switching the formula back without replaying those changes loses data. This is a small database migration, not merely a configuration change.</p>
-            <h3 className="font-hand text-xl sm:text-2xl font-bold text-[#171717] mt-8 mb-3">4. Comments need a read plan too</h3>
+            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">4. Comments need a read plan too</h3>
             <p>Independent comments can also be distributed, but readers want one ordered page. Imagine bucket 0 contains comments at 10:03 and 10:01, while bucket 1 contains 10:02 and 10:00. Fetch candidates from both and merge them into one newest-first list.</p>
             <CommentReadExample />
             <p>Use a stable tie-breaker, such as comment ID, for equal timestamps. The next-page token needs each bucket&apos;s position and a defined rule for comments arriving between pages. Eight buckets can mean eight queries per page. A separate read index may reduce that cost, but an index keyed only by the same popular post can become the next hot partition.</p>
@@ -319,26 +319,26 @@ await db.putItem({
 
             <SectionHeader number="11" id="avoid" title="What to avoid: the 3 classic hot partition traps" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 01</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not auto-scale partitions?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
-                  Partition auto-scaling adds more partitions for the whole cluster. But consistent hashing maps a single partition key (`post_id`) to exactly ONE physical partition. Adding 50 partitions leaves 100% of Taylor&apos;s traffic hammering the exact same node.
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 01</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not auto-scale partitions?&rdquo;</h4>
+                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
+                  Partition auto-scaling adds more partitions for the whole cluster. But consistent hashing maps a single partition key (<code>post_id</code>) to exactly ONE physical partition. Adding 50 partitions leaves 100% of Taylor&apos;s traffic hammering the exact same node.
                 </p>
               </div>
 
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 02</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not Scatter-Gather on read?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 02</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not Scatter-Gather on read?&rdquo;</h4>
+                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
                   Querying all 10 salted shards simultaneously to calculate the total like count multiplies read latency and database read consumption by 10×. When 100,000 fans view the post, Scatter-Gather generates 1,000,000 internal queries, causing self-inflicted starvation.
                 </p>
               </div>
 
-              <div className="p-4 bg-white border-[1.5px] border-[#DC2626] rounded-xl shadow-[2px_2px_0px_#DC2626]">
-                <span className="font-mono text-xs font-bold text-[#DC2626] block mb-1">TRAP 03</span>
-                <h4 className="font-hand text-lg font-bold text-[#171717] mb-1.5">&ldquo;Why not a single Redis INCR key?&rdquo;</h4>
-                <p className="font-sans text-xs text-[#374151] leading-relaxed mb-0">
+              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
+                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 03</span>
+                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not a single Redis INCR key?&rdquo;</h4>
+                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
                   A single Redis key resides on a single Redis node. While Redis is fast, 70,000 concurrent INCR operations on one key saturate that node&apos;s single-core event loop and network NIC, turning Redis into the exact hot partition you tried to avoid in the database.
                 </p>
               </div>
@@ -379,8 +379,8 @@ await db.putItem({
               const topic = getTopicById(id as "database-migration" | "flash-sale");
               return { title: topic.meta.title, category: topic.meta.category, href: topic.href };
             })} />
-            <details className="my-8 rounded-lg border border-ink/20 p-4">
-              <summary className="font-hand text-xl font-bold cursor-pointer">Sources and further reading</summary>
+            <details className="my-8 rounded-xl border border-slate-200 p-4 bg-white shadow-2xs">
+              <summary className="font-sans text-lg font-bold text-slate-900 cursor-pointer">Sources and further reading</summary>
               <ul className="list-disc pl-6 mt-3 space-y-2">
                 <li><a className="underline" href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html">AWS: calculated write-sharding keys and query trade-offs</a></li>
                 <li><a className="underline" href="https://gateway.envoyproxy.io/docs/concepts/rate-limiting/">Envoy: global and local rate limits</a></li>

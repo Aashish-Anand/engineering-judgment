@@ -90,10 +90,6 @@ body {
 }
 
 /* Typography Helpers */
-.font-hand {
-  font-family: var(--font-hand);
-}
-
 .font-sans {
   font-family: var(--font-sans);
 }

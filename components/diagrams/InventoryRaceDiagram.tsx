@@ -1,6 +1,6 @@
 export function InventoryRaceDiagram() {
   return (
-    <div className="w-full max-w-xl mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
+    <div className="w-full max-w-xl mx-auto p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs">
       <svg
         viewBox="0 0 540 310"
         className="w-full h-auto"
@@ -21,7 +21,7 @@ export function InventoryRaceDiagram() {
         <text
           x="24"
           y="31"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14.5"
           fontWeight="bold"
           fill="#DC2626"
@@ -71,7 +71,7 @@ export function InventoryRaceDiagram() {
           x="270"
           y="115"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="12.5"
           fontWeight="bold"
           fill="#DC2626"
@@ -93,7 +93,7 @@ export function InventoryRaceDiagram() {
         <text
           x="24"
           y="173"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="14.5"
           fontWeight="bold"
           fill="#171717"
@@ -156,7 +156,7 @@ export function InventoryRaceDiagram() {
           x="270"
           y="266"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="12"
           fontWeight="bold"
           fill="#16A34A"

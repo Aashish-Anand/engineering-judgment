@@ -1,6 +1,6 @@
 export function NaiveMigrationDiagram() {
   return (
-    <div className="w-full max-w-lg mx-auto p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]">
+    <div className="w-full max-w-lg mx-auto p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs">
       <svg
         viewBox="0 0 440 160"
         className="w-full h-auto"
@@ -22,7 +22,7 @@ export function NaiveMigrationDiagram() {
           x="87.5"
           y="48"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="17"
           fontWeight="bold"
           fill="#171717"
@@ -53,7 +53,7 @@ export function NaiveMigrationDiagram() {
           x="215"
           y="42"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="15"
           fontWeight="bold"
           fill="#171717"
@@ -76,7 +76,7 @@ export function NaiveMigrationDiagram() {
           x="352.5"
           y="48"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="17"
           fontWeight="bold"
           fill="#171717"
@@ -107,7 +107,7 @@ export function NaiveMigrationDiagram() {
           x="95"
           y="126"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="12.5"
           fontWeight="bold"
           fill="#DC2626"
@@ -120,7 +120,7 @@ export function NaiveMigrationDiagram() {
           x="215"
           y="80"
           textAnchor="middle"
-          fontFamily="var(--font-hand)"
+          fontFamily="var(--font-sans)"
           fontSize="18"
           fontWeight="bold"
           fill="#DC2626"

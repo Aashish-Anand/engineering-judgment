@@ -180,31 +180,31 @@ export function TermTooltip({ termKey, children }: TermTooltipProps) {
           ref={tooltipRef}
           id={`tooltip-${termKey}`}
           role="tooltip"
-          className="term-tooltip absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 sm:w-80 p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[3px_4px_0px_#171717]"
+          className="term-tooltip absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 sm:w-80 p-3.5 sm:p-4 bg-white border border-slate-200 rounded-xl shadow-lg animate-fadeIn"
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
         >
           {/* Arrow */}
           <div
-            className="absolute top-full left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 -mt-[5px] bg-white border-r-[1.5px] border-b-[1.5px] border-[#171717]"
+            className="absolute top-full left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 -mt-[5px] bg-white border-r border-b border-slate-200"
           />
 
           <p className="font-sans font-bold text-xs sm:text-sm text-slate-900 mb-1">
             {def.term}
           </p>
-          <p className="text-xs text-[#374151] leading-relaxed mb-0 font-sans">
+          <p className="text-xs text-slate-600 leading-relaxed mb-0 font-sans">
             {def.definition}
           </p>
           {def.tools && def.tools.length > 0 && (
-            <div className="mt-2.5 pt-2 border-t border-dashed border-[#171717]/20">
-              <p className="font-sans font-bold text-[0.7rem] uppercase tracking-wider text-[#6B7280] mb-1">
+            <div className="mt-2.5 pt-2 border-t border-slate-100">
+              <p className="font-mono font-bold text-[10px] uppercase tracking-wider text-slate-400 mb-1">
                 Common Tools
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {def.tools.map((tool) => (
                   <span
                     key={tool}
-                    className="text-[0.7rem] font-mono px-2 py-0.5 bg-[#FAF9F5] border border-[#171717] rounded text-[#171717] shadow-2xs"
+                    className="text-[10px] font-mono px-2 py-0.5 bg-slate-50 border border-slate-200 rounded text-slate-700"
                   >
                     {tool}
                   </span>
