@@ -65,43 +65,103 @@ export const followUps: ExpandableQA[] = [
 
 export const judgmentQuiz = [
   {
-    scenario: "A celebrity posts an announcement. Partition P7 hits 99% CPU while all other partitions sit idle at 5%. An engineer suggests doubling database partitions from 16 to 32. What will happen?",
-    options: [
+    "scenario": "A celebrity posts an announcement. Partition P7 hits 99% CPU while all other partitions sit idle at 5%. An engineer suggests doubling database partitions from 16 to 32. What will happen?",
+    "options": [
       {
-        text: "P7's load will immediately drop by 50% across the new partition boundaries.",
-        isCorrect: false,
-        explanation: "Adding partitions only helps when multiple distinct hot keys share a partition. If a single key (e.g. post-42) receives all traffic, it still routes to exactly one partition unless the key or access pattern itself is sharded.",
+        "text": "The celebrity post's partition remains 99% pegged because the entire workload shares the exact same post_id key.",
+        "isCorrect": true,
+        "explanation": "Correct! Partition key routing maps the single post_id to a single node. You cannot divide a single hot key simply by adding nodes without write-sharding or read caching."
       },
       {
-        text: "The celebrity post's partition remains 99% pegged because the entire workload shares the exact same post_id key.",
-        isCorrect: true,
-        explanation: "Correct! Partition key routing maps the single post_id to a single node. You cannot divide a single hot key simply by adding nodes without write-sharding or read caching.",
+        "text": "P7's load will immediately drop by 50% across the new partition boundaries.",
+        "isCorrect": false,
+        "explanation": "Adding partitions only helps when multiple distinct hot keys share a partition. If a single key (e.g. post-42) receives all traffic, it still routes to exactly one partition unless the key or access pattern itself is sharded."
       },
       {
-        text: "Database auto-rebalancing will automatically split the single post record into multiple physical fragments.",
-        isCorrect: false,
-        explanation: "Standard distributed databases partition at the record or partition-key level; they do not transparently split a single record without schema-level write sharding.",
-      },
-    ],
+        "text": "Database auto-rebalancing will automatically split the single post record into multiple physical fragments.",
+        "isCorrect": false,
+        "explanation": "Standard distributed databases partition at the record or partition-key level; they do not transparently split a single record without schema-level write sharding."
+      }
+    ]
   },
   {
-    scenario: "To distribute reaction writes, you shard the post counter into 16 random buckets. When showing the post's total like count to a user, how do you read the count?",
-    options: [
+    "scenario": "To distribute reaction writes, you shard the post counter into 16 random buckets. When showing the post's total like count to a user, how do you read the count?",
+    "options": [
       {
-        text: "Read a single random bucket and multiply by 16.",
-        isCorrect: false,
-        explanation: "Random multiplication creates massive jitter and inaccurate counts for user displays.",
+        "text": "Read a single random bucket and multiply by 16.",
+        "isCorrect": false,
+        "explanation": "Random multiplication creates massive jitter and inaccurate counts for user displays."
       },
       {
-        text: "Read all 16 buckets asynchronously or use a background aggregator that periodically combines them into a cached total.",
-        isCorrect: true,
-        explanation: "Correct! Sharding writes trades cheap writes for scatter-gather reads. Combining them asynchronously into a cache avoids running 16 DB queries on every public read.",
+        "text": "Read all 16 buckets asynchronously or use a background aggregator that periodically combines them into a cached total.",
+        "isCorrect": true,
+        "explanation": "Correct! Sharding writes trades cheap writes for scatter-gather reads. Combining them asynchronously into a cache avoids running 16 DB queries on every public read."
       },
       {
-        text: "Require an ACID distributed transaction across all 16 partitions for every page view.",
-        isCorrect: false,
-        explanation: "Running a distributed transaction across 16 partitions for public reads recreates an even worse system-wide bottleneck.",
-      },
-    ],
+        "text": "Require an ACID distributed transaction across all 16 partitions for every page view.",
+        "isCorrect": false,
+        "explanation": "Running a distributed transaction across 16 partitions for public reads recreates an even worse system-wide bottleneck."
+      }
+    ]
   },
+  {
+    "scenario": "Most traffic to the hot post consists of identical public reads. What should you try before redesigning the write key?",
+    "options": [
+      {
+        "text": "Salt every read key and query every shard for each request.",
+        "isCorrect": false,
+        "explanation": "Scatter-gather makes repeated reads more expensive. First exploit the fact that they reuse the same data."
+      },
+      {
+        "text": "Increase the database connection pool so all readers can reach the hot partition.",
+        "isCorrect": false,
+        "explanation": "A larger pool sends more concurrent work to an already saturated resource."
+      },
+      {
+        "text": "Cache the shared read result and coalesce concurrent cache misses.",
+        "isCorrect": true,
+        "explanation": "Cache reuse removes repeated work. Request coalescing prevents a burst of misses from overwhelming the database when a popular entry expires."
+      }
+    ]
+  },
+  {
+    "scenario": "You plan to salt writes for a single account whose operations require strict per-account ordering. What must the design preserve?",
+    "options": [
+      {
+        "text": "Operations for that account still need one ordered ownership path; independent counter sharding is not automatically suitable.",
+        "isCorrect": true,
+        "explanation": "Independent counters can often be merged, but ordered state transitions require an explicit ordering or coordination mechanism. Decide which invariants must survive before splitting the key."
+      },
+      {
+        "text": "Randomly distributing each operation guarantees the same ordering at every shard.",
+        "isCorrect": false,
+        "explanation": "Independent queues or shards can observe and apply operations in different orders."
+      },
+      {
+        "text": "Reading the shards more often repairs any ordering violations.",
+        "isCorrect": false,
+        "explanation": "Faster reads cannot undo an invalid state transition caused by out-of-order writes."
+      }
+    ]
+  },
+  {
+    "scenario": "After sharding reaction writes, database load improves but the public count lags by a few seconds. Which trade-off should you explain?",
+    "options": [
+      {
+        "text": "The shards provide a globally consistent count without any read coordination.",
+        "isCorrect": false,
+        "explanation": "An exact snapshot across independent shards needs additional coordination; it is not supplied by sharding alone."
+      },
+      {
+        "text": "The design improves write distribution at the cost of aggregation work and bounded staleness in the displayed total.",
+        "isCorrect": true,
+        "explanation": "Background aggregation reduces scatter-gather on each read, but freshness depends on the aggregation cadence. State the acceptable staleness and monitor lag."
+      },
+      {
+        "text": "Caching has removed the need to handle duplicate reactions.",
+        "isCorrect": false,
+        "explanation": "Duplicate handling is a correctness concern independent of how the count is cached."
+      }
+    ]
+  }
 ];

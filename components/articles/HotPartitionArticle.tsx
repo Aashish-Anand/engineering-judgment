@@ -22,7 +22,7 @@ import {
   CommentReadExample,
 } from "@/components/diagrams/HotPartitionWorkedExamples";
 import { getTopicById } from "@/data/topics/catalog";
-import { JudgmentQuiz } from "@/components/JudgmentQuiz";
+import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
 import { CareerRubricHub } from "@/components/CareerRubricHub";
 import {
@@ -195,7 +195,7 @@ export function HotPartitionArticle() {
         />
 
         {/* Main Content Layout with Sticky TOC */}
-        <div className="flex gap-10 items-start">
+        <div className="article-layout">
           {/* Sticky TOC */}
           <TableOfContents items={tocItems} />
 
@@ -441,7 +441,8 @@ await redis.incr(shardKey);
                   id="judgment-quiz"
                 />
                 <ScrollReveal>
-                  <JudgmentQuiz
+                  <ArticleQuizEntry
+                    quizHref="/topics/traffic/fix-hot-partition/quiz"
                     title="Hot Partition Sharding Judgment Test"
                     questions={judgmentQuiz}
                   />

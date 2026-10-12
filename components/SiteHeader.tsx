@@ -6,8 +6,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 
 const navItems = [
   { label: "Blueprints", href: "/#problems" },
-  { label: "Interactive Labs", href: "/#about" },
-  { label: "Career Rubric", href: "/#topics" },
+  { label: "Workbench", href: "/#labs" },
   { label: "About", href: "/#about" },
 ];
 
@@ -23,14 +22,14 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all shadow-2xs">
-      <div className="max-w-7xl mx-auto h-15 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <div className="page-shell h-18 flex items-center justify-between gap-4">
         {/* Left: Clean Brand Identity */}
         <Link
           href="/"
           className="flex items-center gap-2.5 no-underline group select-none shrink-0 whitespace-nowrap"
         >
           {/* Custom Architectural Layer Emblem */}
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+          <div className="w-8 h-8 rounded-sm bg-slate-800 flex items-center justify-center text-white shadow-2xs group-hover:scale-105 transition-transform shrink-0">
             <svg
               width="17"
               height="17"
@@ -49,17 +48,17 @@ export function SiteHeader() {
           </div>
 
           <div className="flex items-baseline whitespace-nowrap">
-            <span className="font-sans font-extrabold text-base sm:text-lg text-slate-900 tracking-tight leading-none">
+            <span className="font-sans font-semibold text-base sm:text-lg text-slate-900 tracking-tight leading-none">
               Engineering
             </span>
-            <span className="font-sans font-bold text-base sm:text-lg text-blue-600 tracking-tight leading-none ml-1">
+            <span className="font-sans font-semibold text-base sm:text-lg text-slate-900 tracking-tight leading-none ml-1">
               Judgment
             </span>
           </div>
         </Link>
 
         {/* Center: Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1 sm:gap-2">
+        <nav className="hidden lg:flex items-center gap-1 sm:gap-2">
           {navItems.map((item) => (
             <Link
               key={item.label}
@@ -79,7 +78,7 @@ export function SiteHeader() {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             type="button"
-            className="md:hidden p-2 rounded-lg border border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="lg:hidden p-2 rounded-lg border border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileOpen}
           >
@@ -112,7 +111,7 @@ export function SiteHeader() {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-4 py-4 space-y-4 shadow-lg animate-fadeIn">
+        <div className="lg:hidden border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-4 py-4 space-y-4 shadow-lg animate-fadeIn">
           <div>
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
               Navigation

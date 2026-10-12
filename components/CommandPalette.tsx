@@ -117,7 +117,7 @@ export function CommandPalette() {
       <button
         onClick={openPalette}
         type="button"
-        className="flex items-center justify-between gap-3 px-3 py-1.5 h-9 bg-slate-100/80 hover:bg-slate-100 hover:border-slate-300 border border-slate-200/90 rounded-lg transition-all text-xs font-sans font-medium text-slate-600 cursor-pointer shadow-2xs whitespace-nowrap shrink-0 w-36 sm:w-48 lg:w-56"
+        className="flex items-center justify-between gap-3 px-2 sm:px-3 py-1.5 h-9 bg-slate-100/80 hover:bg-slate-100 hover:border-slate-300 border border-slate-200/90 rounded-lg transition-all text-xs font-sans font-medium text-slate-600 cursor-pointer shadow-2xs whitespace-nowrap shrink-0 w-9 sm:w-40 lg:w-56"
         aria-label="Search architecture topics and concepts (Cmd+K)"
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -136,7 +136,7 @@ export function CommandPalette() {
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span className="text-slate-500 text-xs truncate">Search architecture...</span>
+          <span className="hidden sm:inline text-slate-500 text-xs truncate">Search architecture...</span>
         </div>
         <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-mono font-medium text-slate-400 shadow-2xs shrink-0">
           ⌘K

@@ -1,0 +1,25 @@
+.surface {
+  position: relative;
+  isolation: isolate;
+  transform-style: preserve-3d;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+.surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--light-x, 50%) var(--light-y, 30%), #fff8, transparent 65%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .surface:hover {
+    transform: perspective(1100px) translateY(-3px) rotateX(var(--depth-x, 0deg)) rotateY(var(--depth-y, 0deg));
+  }
+  .surface:hover::after { opacity: .55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface, .surface::after { transition: none; }
+}

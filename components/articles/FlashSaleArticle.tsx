@@ -2,7 +2,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArticleNav } from "@/components/ArticleNav";
 import { CodeBlock } from "@/components/CodeBlock";
-import { JudgmentQuiz } from "@/components/JudgmentQuiz";
+import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
 import { InlineCheck } from "@/components/InlineCheck";
 import { CategoryBadge } from "@/components/CategoryBadge";
@@ -171,7 +171,7 @@ export function FlashSaleArticle() {
         />
 
         {/* Main Content Layout with Sticky TOC */}
-        <div className="flex gap-10 items-start">
+        <div className="article-layout">
           {/* Sticky TOC */}
           <TableOfContents items={tocItems} />
 
@@ -437,7 +437,8 @@ end`}
                   id="judgment-quiz"
                 />
                 <ScrollReveal>
-                  <JudgmentQuiz
+                  <ArticleQuizEntry
+                    quizHref="/topics/traffic/survive-flash-sale/quiz"
                     title="Flash Sale Concurrency Judgment Test"
                     questions={article.judgmentQuiz}
                   />

@@ -339,44 +339,104 @@ export const saleStrategies = [
 
 export const judgmentQuiz = [
   {
-    scenario: "During a flash sale with 10,000 items and 2,000,000 concurrent shoppers, why does `SELECT stock FROM items WHERE id = ? FOR UPDATE` crash the database within milliseconds?",
-    options: [
+    "scenario": "Two million shoppers contend for 10,000 items. Why does letting every checkout request acquire a lock on the same inventory row overload the database?",
+    "options": [
       {
-        text: "Relational databases cannot store more than 10,000 rows in memory simultaneously.",
-        isCorrect: false,
-        explanation: "Relational databases can easily store millions of rows. The issue is write lock contention on one single row.",
+        "text": "Requests serialize on the hot row, occupying connections and creating a growing queue of lock waits and timeouts.",
+        "isCorrect": true,
+        "explanation": "A single hot row limits useful concurrency. Waiting requests hold scarce resources; admission control must protect the database before traffic reaches this bottleneck."
       },
       {
-        text: "All incoming requests compete for an exclusive lock on the exact same row, saturating connection pools within 5ms and triggering cascading timeouts.",
-        isCorrect: true,
-        explanation: "Correct! Row-level locking serializes writes. Connection pools (50–200 connections) immediately saturate waiting for the single row lock, causing cascading 504 timeouts across all database consumers.",
+        "text": "Relational databases cannot store more than 10,000 rows in memory simultaneously.",
+        "isCorrect": false,
+        "explanation": "Relational databases can easily store millions of rows. The issue is write lock contention on one single row."
       },
       {
-        text: "The database query optimizer refuses to use the primary key index under high read volumes.",
-        isCorrect: false,
-        explanation: "The index is used correctly; the physical bottleneck is lock contention and connection pool exhaustion.",
-      },
-    ],
+        "text": "The database query optimizer refuses to use the primary key index under high read volumes.",
+        "isCorrect": false,
+        "explanation": "The index is used correctly; the physical bottleneck is lock contention and connection pool exhaustion."
+      }
+    ]
   },
   {
-    scenario: "A user successfully reserves an item in Redis with a 10-minute hold TTL, but navigates away and closes their browser. How should inventory be returned?",
-    options: [
+    "scenario": "A user successfully reserves an item in Redis with a 10-minute hold TTL, but navigates away and closes their browser. How should inventory be returned?",
+    "options": [
       {
-        text: "Immediately decrement the user's bank account via an automated debit charge.",
-        isCorrect: false,
-        explanation: "You cannot charge users without explicit authorization and payment confirmation.",
+        "text": "Immediately decrement the user's bank account via an automated debit charge.",
+        "isCorrect": false,
+        "explanation": "You cannot charge users without explicit authorization and payment confirmation."
       },
       {
-        text: "A background expiry listener or delayed reconciliation worker detects expired unconfirmed reservations and atomically increments Redis stock back up.",
-        isCorrect: true,
-        explanation: "Correct! Temporary inventory holds with TTLs ensure items aren't leaked forever if customers abandon their cart. Background workers safely return expired stock.",
+        "text": "Use a durable reservation-expiry process that atomically releases only still-pending holds, with reconciliation for missed notifications.",
+        "isCorrect": true,
+        "explanation": "A TTL alone does not restore stock. Expiry and payment completion must coordinate the reservation state so inventory is released once and confirmed purchases are not returned. Reconciliation catches missed expiry notifications."
       },
       {
-        text: "Restart the Redis cluster to purge expired in-memory cache entries.",
-        isCorrect: false,
-        explanation: "Restarting Redis would drop all other active reservations and destabilize the ongoing flash sale.",
-      },
-    ],
+        "text": "Restart the Redis cluster to purge expired in-memory cache entries.",
+        "isCorrect": false,
+        "explanation": "Restarting Redis would drop all other active reservations and destabilize the ongoing flash sale."
+      }
+    ]
   },
+  {
+    "scenario": "Two buyers simultaneously see one unit remaining. Which reservation mechanism prevents both from claiming it?",
+    "options": [
+      {
+        "text": "Cache the stock count for longer to reduce database load.",
+        "isCorrect": false,
+        "explanation": "A cache can reduce reads, but stale availability is not an atomic inventory gate."
+      },
+      {
+        "text": "Read stock first, then decrement it in a separate request after the browser confirms.",
+        "isCorrect": false,
+        "explanation": "Both requests can read the same value before either decrement happens."
+      },
+      {
+        "text": "Use an atomic operation that checks availability and creates the reservation while decrementing stock.",
+        "isCorrect": true,
+        "explanation": "The check and state transition must be indivisible within the authoritative inventory mechanism. Separate reads and writes create a race."
+      }
+    ]
+  },
+  {
+    "scenario": "Payment succeeds, but the client times out before receiving confirmation and retries checkout. What should happen?",
+    "options": [
+      {
+        "text": "Reuse a stable checkout idempotency key and recover the existing payment and order outcome.",
+        "isCorrect": true,
+        "explanation": "Idempotency identifies retries of the same logical operation. Persist the outcome and reconcile uncertain payment states with the provider."
+      },
+      {
+        "text": "Create a fresh payment because a timeout means the first attempt failed.",
+        "isCorrect": false,
+        "explanation": "A timeout leaves the outcome unknown. Repeating the side effect without deduplication can charge twice."
+      },
+      {
+        "text": "Reject the customer permanently because retrying is unsafe.",
+        "isCorrect": false,
+        "explanation": "Retries are normal. The system needs a safe way to recover the original outcome."
+      }
+    ]
+  },
+  {
+    "scenario": "The order queue grows faster than workers can drain it. Which response protects the system?",
+    "options": [
+      {
+        "text": "Accept all buyers because a queue has unlimited capacity.",
+        "isCorrect": false,
+        "explanation": "Queues absorb bursts only within finite memory, retention, and customer waiting-time budgets."
+      },
+      {
+        "text": "Bound admission and queue capacity, shed excess demand, and show clear reservation status.",
+        "isCorrect": true,
+        "explanation": "Admission control limits accepted work to sustainable capacity. Monitor queue age as well as depth, and communicate whether the customer has a reservation or a completed order."
+      },
+      {
+        "text": "Remove the queue and send all requests directly to the payment provider.",
+        "isCorrect": false,
+        "explanation": "Bypassing the buffer exposes downstream services to the original surge."
+      }
+    ]
+  }
 ];
 

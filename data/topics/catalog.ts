@@ -34,7 +34,7 @@ export const topicCatalog: readonly TopicCatalogEntry[] = [
       category: "DATA",
       categorySlug: "database",
       difficulty: "Senior+",
-      title: "How to Safely Migrate a 100M-Read / 10M-Write-per-Day Production Database",
+      title: "Migrate a production database without losing writes",
       subtitle: "Zero downtime sounds simple. Keeping writes correct during the migration is not.",
       tags: ["Snapshot", "CDC", "Validation", "Cutover", "Rollback"],
       readingTime: "10 min read",

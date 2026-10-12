@@ -90,15 +90,8 @@ export function CutoverWorkbench() {
       <div className="p-5 sm:p-6 border-b border-slate-100 bg-slate-50/70">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-                INTERACTIVE ARCHITECTURE WORKBENCH
-              </span>
-              <span className="text-xs text-slate-400">·</span>
-              <span className="font-mono text-xs text-slate-500 font-medium">5-Phase Production Lifecycle</span>
-            </div>
             <h3 id={headingId} className="font-sans font-bold text-xl sm:text-2xl text-slate-900 m-0 tracking-tight">
-              Control the Zero-Downtime Migration Pipeline
+              Migration workbench
             </h3>
           </div>
 
@@ -168,10 +161,10 @@ export function CutoverWorkbench() {
           </div>
 
           {/* Clean SVG Vector Diagram */}
-          <div className="w-full flex justify-center py-2 overflow-x-auto">
+          <div className="w-full py-2 overflow-x-auto">
             <svg
               viewBox="0 0 760 170"
-              className="w-full max-w-[760px] h-auto select-none font-sans text-xs"
+              className="w-full min-w-[600px] max-w-[760px] h-auto select-none font-sans text-xs"
               aria-label="Migration Topology Visualizer"
             >
               {/* App Router Node */}
@@ -186,7 +179,7 @@ export function CutoverWorkbench() {
                   App Services
                 </text>
                 <text x="65" y="52" textAnchor="middle" className="fill-slate-500 text-[10px] font-mono">
-                  1,160 RPS / 115 WPS
+                  2,300 RPS / 250 WPS
                 </text>
               </g>
 
@@ -218,7 +211,7 @@ export function CutoverWorkbench() {
                 />
                 <rect x="0" y="0" width="150" height="24" rx="8" className="fill-blue-50" />
                 <text x="75" y="17" textAnchor="middle" className="font-bold fill-blue-900 text-xs font-sans">
-                  🗄️ Primary DB A (Legacy)
+                  Primary DB A
                 </text>
                 <text x="75" y="48" textAnchor="middle" className="fill-slate-700 text-[11px] font-mono">
                   {activeStage === "cutover" ? `Reads: ${state.readsA.toLocaleString()} RPS` : "Reads: 2,300 RPS"}
@@ -306,7 +299,7 @@ export function CutoverWorkbench() {
                 />
                 <rect x="0" y="0" width="150" height="24" rx="8" className="fill-emerald-50" />
                 <text x="75" y="17" textAnchor="middle" className="font-bold fill-emerald-900 text-xs font-sans">
-                  🗄️ Target DB B (New)
+                  Target DB B
                 </text>
                 <text x="75" y="48" textAnchor="middle" className="fill-slate-700 text-[11px] font-mono">
                   Reads: {state.readsB.toLocaleString()} RPS
@@ -425,6 +418,7 @@ queueMicrotask(async () => {
           <div className="mb-4">
             <input
               id="cutover-slider"
+              aria-label="Traffic sent to target database"
               type="range"
               min="0"
               max="100"

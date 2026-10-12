@@ -23,7 +23,7 @@ export function SectionHeader({ number, title, id, annotation }: SectionHeaderPr
   }, [id]);
 
   return (
-    <div id={id} className="scroll-mt-16 pt-8 mb-4 group">
+    <div className="section-heading scroll-mt-24 pt-8 mb-6 group">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="circle-num">
@@ -34,7 +34,7 @@ export function SectionHeader({ number, title, id, annotation }: SectionHeaderPr
           </h2>
           <button
             onClick={copyLink}
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-800"
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-800"
             aria-label={`Copy link to "${title}"`}
             title="Copy link to section"
           >

@@ -9,10 +9,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 1,
     },
-    ...topicCatalog.map((topic) => ({
+    ...topicCatalog.flatMap((topic) => [{
       url: `${siteConfig.url}${topic.href}`,
       changeFrequency: "monthly" as const,
       priority: 0.8,
-    })),
+    }, {
+      url: `${siteConfig.url}${topic.href}/quiz`,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    }]),
   ];
 }

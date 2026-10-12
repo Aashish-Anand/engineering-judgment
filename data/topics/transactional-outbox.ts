@@ -64,63 +64,103 @@ export const followUps: ExpandableQA[] = [
 
 export const judgmentQuiz = [
   {
-    scenario: "An e-commerce service commits an order to PostgreSQL, but the relay worker process crashes before publishing the event to Kafka. When the relay restarts, what happens?",
-    options: [
+    "scenario": "An e-commerce service commits an order to PostgreSQL, but the relay worker process crashes before publishing the event to Kafka. When the relay restarts, what happens?",
+    "options": [
       {
-        text: "The event is lost permanently because the in-memory publisher process terminated.",
-        isCorrect: false,
-        explanation: "In the outbox pattern, events are durably persisted in the database table, not held in volatile worker memory. Unmarked rows survive any process crash.",
+        "text": "The outbox row still has published_at = NULL, so the restarted relay reads and publishes it to Kafka.",
+        "isCorrect": true,
+        "explanation": "Correct! The database row is the durable source of truth. The relay queries WHERE published_at IS NULL, providing guaranteed at-least-once delivery."
       },
       {
-        text: "The outbox row still has published_at = NULL, so the restarted relay reads and publishes it to Kafka.",
-        isCorrect: true,
-        explanation: "Correct! The database row is the durable source of truth. The relay queries WHERE published_at IS NULL, providing guaranteed at-least-once delivery.",
+        "text": "The event is lost permanently because the in-memory publisher process terminated.",
+        "isCorrect": false,
+        "explanation": "In the outbox pattern, events are durably persisted in the database table, not held in volatile worker memory. Unmarked rows survive any process crash."
       },
       {
-        text: "PostgreSQL automatically rolls back the committed order when the relay crashes.",
-        isCorrect: false,
-        explanation: "The database transaction already completed and committed during the HTTP request. It cannot retroactively roll back after commit.",
-      },
-    ],
+        "text": "PostgreSQL automatically rolls back the committed order when the relay crashes.",
+        "isCorrect": false,
+        "explanation": "The database transaction already completed and committed during the HTTP request. It cannot retroactively roll back after commit."
+      }
+    ]
   },
   {
-    scenario: "The relay worker successfully publishes an OrderCreated event to Kafka, but crashes just before updating published_at = NOW() in PostgreSQL. What must downstream consumers do?",
-    options: [
+    "scenario": "The relay worker successfully publishes an OrderCreated event to Kafka, but crashes just before updating published_at = NOW() in PostgreSQL. What must downstream consumers do?",
+    "options": [
       {
-        text: "Rely on Kafka to automatically erase unconfirmed messages from the broker partition.",
-        isCorrect: false,
-        explanation: "Kafka already accepted and appended the message to the partition log; it has no insight into Postgres' internal row state.",
+        "text": "Rely on Kafka to automatically erase unconfirmed messages from the broker partition.",
+        "isCorrect": false,
+        "explanation": "Kafka already accepted and appended the message to the partition log; it has no insight into Postgres' internal row state."
       },
       {
-        text: "Implement idempotent processing using the event ID to detect and discard duplicate deliveries.",
-        isCorrect: true,
-        explanation: "Correct! Because the unmarked row will be re-published upon relay restart, at-least-once delivery requires consumer-side idempotency keys.",
+        "text": "Implement idempotent processing using the event ID to detect and discard duplicate deliveries.",
+        "isCorrect": true,
+        "explanation": "Correct! Because the unmarked row will be re-published upon relay restart, at-least-once delivery requires consumer-side idempotency keys."
       },
       {
-        text: "Reject all incoming events until the Postgres relay database recovers and completes the timestamp update.",
-        isCorrect: false,
-        explanation: "Downstream consumers should not couple their availability to the producer's internal database state.",
-      },
-    ],
+        "text": "Reject all incoming events until the Postgres relay database recovers and completes the timestamp update.",
+        "isCorrect": false,
+        "explanation": "Downstream consumers should not couple their availability to the producer's internal database state."
+      }
+    ]
   },
   {
-    scenario: "Under a 10× traffic spike, your single-threaded polling relay falls behind, creating a 15-minute event lag. How should you scale the relay without corrupting per-order event ordering?",
-    options: [
+    "scenario": "Under a 10× traffic spike, your single-threaded polling relay falls behind, creating a 15-minute event lag. How should you scale the relay without corrupting per-order event ordering?",
+    "options": [
       {
-        text: "Run 10 relay threads that all poll ORDER BY id LIMIT 100 concurrently without partitioning.",
-        isCorrect: false,
-        explanation: "Multiple workers polling the same rows can publish events for the same order out-of-order, violating event causality.",
+        "text": "Run 10 relay threads that all poll ORDER BY id LIMIT 100 concurrently without partitioning.",
+        "isCorrect": false,
+        "explanation": "Multiple workers polling the same rows can publish events for the same order out-of-order, violating event causality."
       },
       {
-        text: "Partition relay instances by hash(aggregate_id) so all events for any given order are processed by the same worker.",
-        isCorrect: true,
-        explanation: "Correct! Per-entity ordering is preserved when all events for the same aggregate_id flow through the same relay instance into the same Kafka partition.",
+        "text": "Switch to asynchronous dual writes directly from the web application servers.",
+        "isCorrect": false,
+        "explanation": "Dual writes reintroduce the exact silent failure and ghost event bugs that the outbox pattern was chosen to eliminate."
       },
       {
-        text: "Switch to asynchronous dual writes directly from the web application servers.",
-        isCorrect: false,
-        explanation: "Dual writes reintroduce the exact silent failure and ghost event bugs that the outbox pattern was chosen to eliminate.",
-      },
-    ],
+        "text": "Partition relay instances by hash(aggregate_id) so all events for any given order are processed by the same worker.",
+        "isCorrect": true,
+        "explanation": "Correct! Per-entity ordering is preserved when all events for the same aggregate_id flow through the same relay instance into the same Kafka partition."
+      }
+    ]
   },
+  {
+    "scenario": "An order insert succeeds but the outbox insert fails. What transaction boundary prevents an order without its event intent?",
+    "options": [
+      {
+        "text": "Write the order and its outbox event in the same database transaction.",
+        "isCorrect": true,
+        "explanation": "The local transaction commits both records or neither. The relay handles the separate broker interaction after commit."
+      },
+      {
+        "text": "Publish to Kafka first and then attempt the order insert.",
+        "isCorrect": false,
+        "explanation": "Publishing first can expose an event for an order whose transaction later rolls back."
+      },
+      {
+        "text": "Commit the order first and retry the outbox insert later without recording retry intent.",
+        "isCorrect": false,
+        "explanation": "A process crash between commits can leave no durable record that an event is missing."
+      }
+    ]
+  },
+  {
+    "scenario": "Kafka is unavailable for twenty minutes. Orders can still commit locally. Which signals and limits need attention?",
+    "options": [
+      {
+        "text": "Only HTTP response time, because a committed order proves the event was delivered.",
+        "isCorrect": false,
+        "explanation": "A local commit proves the event intent exists, not that consumers have received it."
+      },
+      {
+        "text": "Outbox backlog age and size, relay errors, and database capacity, with a recovery and admission plan.",
+        "isCorrect": true,
+        "explanation": "Durable intent survives the outage, but the backlog consumes storage and delays downstream effects. Monitor unpublished event age, provision recovery headroom, and define when to limit intake."
+      },
+      {
+        "text": "Only Kafka consumer lag, because unpublished outbox rows are already in the broker.",
+        "isCorrect": false,
+        "explanation": "Consumer lag excludes events the relay has not yet published. The producer backlog needs its own monitoring."
+      }
+    ]
+  }
 ];

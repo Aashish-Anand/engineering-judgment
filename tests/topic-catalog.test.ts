@@ -39,12 +39,14 @@ describe("topic catalog", () => {
 });
 
 describe("discovery metadata", () => {
-  it("includes the homepage and every topic in the sitemap", () => {
+  it("includes the homepage, every topic, and every dedicated quiz in the sitemap", () => {
     const urls = sitemap().map(({ url }) => url);
 
-    expect(urls).toHaveLength(topicCatalog.length + 1);
+    expect(urls).toHaveLength(topicCatalog.length * 2 + 1);
+    expect(new Set(urls).size).toBe(urls.length);
     for (const topic of topicCatalog) {
       expect(urls.some((url) => url.endsWith(topic.href))).toBe(true);
+      expect(urls.some((url) => url.endsWith(`${topic.href}/quiz`))).toBe(true);
     }
   });
 

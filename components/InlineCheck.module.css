@@ -1,0 +1,37 @@
+.check {
+  margin: 32px 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #dbe0da;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+}
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.kicker { color: #52645e; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
+.toggle, .retry { color: #52645e; font-size: 12px; cursor: pointer; text-underline-offset: 4px; }
+.toggle:hover, .retry:hover { text-decoration: underline; }
+.check .question { margin: 20px 0 8px; font-size: 18px; font-weight: 500; line-height: 1.55; letter-spacing: -.015em; }
+.check .hint { margin: 0 0 20px; color: #66716e; font-size: 13px; line-height: 1.6; }
+.options { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.option { display: flex; align-items: start; gap: 10px; padding: 13px 14px; border: 1px solid #dbe0da; border-radius: 4px; font-size: 14px; line-height: 1.65; color: #35413c; cursor: pointer; }
+.option input { margin-top: 5px; accent-color: #263d35; flex-shrink: 0; }
+.letter { font-family: var(--font-mono); font-size: 11px; color: #707b75; padding-top: 2px; }
+.option:hover, .selected { border-color: #728277; background: #f5f7f3; }
+.option:focus-within { outline: 2px solid #52645e; outline-offset: 2px; }
+.options:disabled .option { cursor: default; }
+.correct, .options:disabled .correct:hover { background: #edf6ef; border-color: #679a74; }
+.incorrect, .options:disabled .incorrect:hover { background: #fff5ed; border-color: #bd8965; }
+.feedback { margin-top: 20px; padding: 16px 18px; background: #f5f7f3; border-left: 2px solid #728277; font-size: 14px; line-height: 1.7; }
+.check .feedback p { margin: 8px 0 0; font-size: 14px; line-height: 1.7; }
+.actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
+.actions > span { font-size: 11px; color: #66716e; }
+.submit { padding: 10px 16px; border-radius: 4px; background: #263d35; color: white; font-size: 12px; font-weight: 500; cursor: pointer; }
+.submit:hover { background: #384f45; }
+.submit:disabled { opacity: .45; cursor: not-allowed; }
+.toggle:focus-visible, .retry:focus-visible, .submit:focus-visible { outline: 2px solid #52645e; outline-offset: 4px; }
+@media (max-width: 640px) {
+  .check { padding: 18px; margin: 24px 0; }
+  .check .question { font-size: 17px; }
+  .option { padding: 12px; gap: 8px; }
+  .actions { flex-wrap: wrap; }
+}

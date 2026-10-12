@@ -1,137 +1,145 @@
-# 💡 Engineering Judgment
+# Engineering Judgment
 
-> **Real-world bottlenecks, failure modes, and architecture trade-offs — explained in an engineering notebook style without the usual system-design fluff.**
+A field guide to architecture under pressure: real production constraints, worked decisions, failure modes, and the trade-offs that follow.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.2-blue?style=flat-square&logo=react)](https://react.dev/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+Each blueprint follows a reasoning chain:
 
----
-
-## 📖 About The Project
-
-Most system-design resources teach you definitions: *"What is a database?"*, *"What is CAP theorem?"*, or *"Design Twitter in 45 minutes."*
-
-**Engineering Judgment** is designed around what senior and staff engineers actually face when production is under pressure:
-- How do you migrate a **100M-read / 10M-write database** without downtime while live writes never stop?
-- How do you survive a **10M-user flash sale for 10,000 items** when 2 million requests hit the exact same inventory row in the first 3 seconds?
-- Why do naive solutions fail in milliseconds?
-- What are you actually giving up with each decision?
-- And most importantly: **What breaks next?**
-
-### The Core Reasoning Chain
-
-```
-Problem ➔ Constraint ➔ Bottleneck ➔ Decision ➔ Trade-off ➔ Failure ➔ What breaks next?
+```text
+Constraint → Bottleneck → Decision → Trade-off → Failure → What breaks next?
 ```
 
----
+## What’s included
 
-## 🎨 Visual Identity: Whiteboard & Engineering Notebook
+- Four published architecture blueprints with explanations, diagrams, code examples, incident runbooks, and engineering-level rubrics.
+- Interactive workbenches for exploring database cutover, traffic spikes, inventory reservations, and hot partitions. Their numbers are illustrative models, not production benchmarks.
+- Seven inline concept checks embedded in the articles. Select a response and explicitly check it to reveal the reasoning; these checkpoints are unscored.
+- A dedicated five-scenario quiz for each article: 20 scenarios in total, with explanations for every option, progress, a scored review, and retry.
+- Quiz entry points near the end of each article and a dismissible invitation after sufficient reading progress.
+- Search with `Cmd+K` or `Ctrl+K`, article navigation, responsive tables of contents, reading progress, and back-to-top controls.
+- Static article and quiz routes, canonical metadata, a sitemap, and robots metadata.
 
-The site is styled like an experienced distributed systems engineer opened their personal notebook to sketch architectures:
+## Published blueprints
 
-- **Physical Paper & Ink**: Warm `#FAF9F5` paper with subtle graph dots, deep `#171717` ink typography, and pencil accents.
-- **Pastel Highlighters**: Blue (`#DCEBFF`), Green (`#DFF3DF`), Yellow (`#FFF0B8`), Pink (`#F9DDE5`), Lavender (`#E7E1F8`).
-- **Typography Pairing**: Hand-drawn headings and annotations via Google Font **`Shantell Sans`** paired with clean, readable **`Plus Jakarta Sans`** for technical prose and **`JetBrains Mono`** for code.
-- **Hand-Drawn Vector SVG Diagrams**: Hand-drawn database cylinders, queues, CDC pipelines, and progressive funnels.
-- **Editorial Navigation**: Lightweight floating notebook header and natural notebook endings (*"Better systems start with better questions."*).
+These links use the local development server at `http://localhost:3000`.
 
----
+| Blueprint | Main decisions | Practice |
+| --- | --- | --- |
+| [Fix a hot partition](http://localhost:3000/topics/traffic/fix-hot-partition) | Cache repeated reads, distribute independent writes, preserve ordering, and migrate routing safely. | [Quiz](http://localhost:3000/topics/traffic/fix-hot-partition/quiz) |
+| [Migrate a production database](http://localhost:3000/topics/database/safely-migrate-production-database) | Snapshot, CDC, validation, controlled cutover, and rollback after new writes. | [Quiz](http://localhost:3000/topics/database/safely-migrate-production-database/quiz) |
+| [Survive a flash sale](http://localhost:3000/topics/traffic/survive-flash-sale) | Admission control, atomic inventory reservations, asynchronous settlement, and idempotent payments. | [Quiz](http://localhost:3000/topics/traffic/survive-flash-sale/quiz) |
+| [Use a transactional outbox](http://localhost:3000/topics/correctness/transactional-outbox) | Commit state and event intent together, relay reliably, and handle duplicate delivery. | [Quiz](http://localhost:3000/topics/correctness/transactional-outbox/quiz) |
 
-## 🚀 Live Topics Included
+Each quiz lives at its article’s URL with `/quiz` appended.
 
-### 1. [How to Safely Migrate a 100M-Read / 10M-Write-per-Day Database](/topics/database/safely-migrate-production-database)
-- **The Naive Mistake**: Why taking a dump/snapshot while writes are flowing causes immediate divergence.
-- **The Mental Model**: A migration is a *synchronization problem* followed by a *traffic-switching problem*.
-- **The Architecture**: Snapshot seeding + CDC replication stream + continuous checksum validation + canary cutover + reverse replication rollback.
-- **What Breaks Next**: CDC stream consumer lag and target IOPS saturation.
+## Design
 
-### 2. [How to Survive a 10M-User Flash Sale for 10,000 iPhones](/topics/traffic/survive-flash-sale)
-- **The Naive Mistake**: `SELECT FOR UPDATE` serializing 2M RPS onto a single row, exhausting database connection pools in 5ms.
-- **The Mental Model**: A flash sale is an *admission control problem* followed by a *reservation reconciliation problem*.
-- **The Architecture**: Cloudflare JA3 WAF ➔ Virtual Waiting Room ➔ Single-threaded atomic Redis Lua stock gate ➔ Kafka decoupled order queue ➔ Asynchronous Postgres settlement.
-- **What Breaks Next**: Redis cluster NIC saturation & multi-region inventory split-brain.
+The current interface uses a restrained editorial style: bounded reading widths, clear information hierarchy, quiet borders, and muted sage, blue, amber, and lavender accents.
 
----
+- **Typography:** Plus Jakarta Sans for interface text, Georgia for selected editorial passages, and JetBrains Mono for code and technical labels.
+- **Homepage:** layered surfaces, soft shadows, and gentle pointer-responsive card tilt. Motion respects reduced-motion preferences; tilt is limited to mouse interaction.
+- **Articles:** readable prose, responsive navigation, architecture diagrams, and space for interactive tools.
+- **Inline checks:** larger answer targets, explicit submission, explanatory feedback, and retry/collapse controls.
 
-## 🛠️ Tech Stack
+The homepage has no cursor trail or animated canvas background.
 
-The third live walkthrough is [One partition receives 70% of your traffic. How do you fix a hot partition?](/topics/traffic/fix-hot-partition). A hypothetical Taylor Swift post illustrates read caching, stable write buckets, celebrity fanout, ordering constraints, and safe routing migration.
+## Stack
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
-- **Library**: [React 19](https://react.dev/)
-- **Styling**: [TailwindCSS v4](https://tailwindcss.com/) (CSS-first design tokens)
-- **Typography**: [Next Font](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) (`Shantell Sans`, `Plus Jakarta Sans`, `JetBrains Mono`)
-- **Illustrations**: Handcrafted responsive SVG doodle components
+- Next.js 16.3.5 with the App Router
+- React 19.2.8 and TypeScript 5
+- Tailwind CSS v4, shared global styles, and component CSS Modules
+- Google fonts through `next/font`
+- Custom SVG diagrams and React-based simulations
+- Vitest for model and content validation; ESLint for linting
 
----
+## Local development
 
-## 💻 Getting Started
-
-### Prerequisites
-
-- Node.js 20.9+ or later
-- npm, pnpm, or yarn
-
-### Installation
+Requires Node.js 20.9 or newer and npm.
 
 ```bash
-# Clone the repository
 git clone https://github.com/Aashish-Anand/engineering-judgment.git
-
-# Navigate to the project directory
 cd engineering-judgment
-
-# Install dependencies
-npm install
-
-# Start the local development server
+npm ci
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [localhost:3000](http://localhost:3000). Development uses Next.js’s default Turbopack bundler.
 
-### Build for Production
+### Commands
 
-```bash
-npm run build
-npm run start
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the development server. |
+| `npm test` | Run the Vitest suite once. |
+| `npm run lint` | Run ESLint. |
+| `npx tsc --noEmit` | Check TypeScript types. |
+| `npm run build` | Create a production build. |
+| `npm run build -- --webpack` | Build with webpack; an alternative when Turbopack cannot run in the environment. |
+| `npm run start` | Serve an existing production build. |
+
+The Google fonts configured in `app/layout.tsx` require network access during the build.
+
+### Site URL
+
+For deployment, set `NEXT_PUBLIC_SITE_URL` to the public origin before building:
+
+```dotenv
+NEXT_PUBLIC_SITE_URL=https://your-domain.example
 ```
 
----
+It can be set in `.env.local` or the deployment environment. `data/site.ts` uses this value for metadata and discovery URLs, with `http://localhost:3000` as the development fallback.
 
-## 📂 Project Structure
+## Project structure
 
+```text
+app/
+  layout.tsx                          Shared header, footer, fonts, and reading controls
+  page.tsx                            Homepage library, workbench, and approach
+  globals.css                         Design tokens and shared layouts
+  sitemap.ts                          Homepage, article, and quiz discovery
+  robots.ts                           Crawling metadata
+  topics/[category]/[slug]/
+    page.tsx                          Static article routing
+    quiz/page.tsx                     Static per-article quiz routing
+components/
+  Hero.tsx                            Featured homepage blueprint
+  DepthLink.tsx                       Pointer-responsive card depth
+  SiteHeader.tsx / SiteFooter.tsx      Shared navigation
+  CommandPalette.tsx                  Topic search
+  TableOfContents.tsx                 Responsive article outline
+  InlineCheck.tsx                     Unscored in-article checkpoints
+  ArticleQuizEntry.tsx                Quiz link and reading invitation
+  ArchitectureQuiz.tsx                Quiz questions, feedback, and results
+  articles/                           Article layouts and inline questions
+  diagrams/                           Architecture diagrams and worked examples
+  doodle/                             Reusable illustration primitives
+  *Workbench.tsx / *Simulator.tsx      Interactive tools
+data/
+  site.ts                             Site identity and public URL
+  cutover-model.ts                     Database migration simulation model
+  hot-partition-model.ts               Hot-partition simulation model
+  topics/catalog.ts                   Published topics, metadata, and routes
+  topics/quizzes.ts                   Topic-to-quiz mapping
+  topics/*.ts                         Article content and judgment questions
+tests/
+  cutover-model.test.ts                Migration invariants
+  hot-partition-model.test.ts          Traffic and capacity calculations
+  topic-catalog.test.ts                Route and discovery coverage
+  topic-quizzes.test.ts                Question completeness and answer validity
 ```
-├── app/
-│   ├── globals.css          # Design tokens, pastel markers, doodle borders
-│   ├── layout.tsx           # Root layout with Caveat & Plus Jakarta Sans fonts
-│   ├── page.tsx             # Redesigned notebook landing page
-│   └── topics/              # Dynamic topic routing
-├── components/
-│   ├── Hero.tsx             # Sketched hero, typewriter search, engineer doodle
-│   ├── SiteHeader.tsx       # Floating editorial handwritten navigation
-│   ├── SiteFooter.tsx       # Natural notebook ending with mountain sketch
-│   ├── CategoryProblemCard.tsx # 8 pastel problem type cards
-│   ├── TableOfContents.tsx  # Notebook index with circled numbers
-│   ├── LevelExpectation.tsx # MID / SENIOR / STAFF evaluation tier cards
-│   ├── articles/            # Rich technical problem walkthroughs
-│   ├── diagrams/            # 10 hand-drawn SVG architecture diagrams
-│   └── doodle/              # Reusable hand-drawn primitives
-│       ├── DoodleBox.tsx
-│       ├── DoodleArrow.tsx
-│       ├── HighlightStroke.tsx
-│       ├── ThoughtBubble.tsx
-│       ├── FailureCallout.tsx
-│       ├── WhatBreaksNext.tsx
-│       └── EngineerDoodle.tsx
-└── data/                    # Topic technical content, metrics, tradeoffs
-```
 
----
+## Adding a blueprint
 
-## 📝 License
+1. Add its ID and metadata to `data/topics/catalog.ts`.
+2. Add the topic’s content and `judgmentQuiz` questions in `data/topics/`.
+3. Create the article component in `components/articles/` and register it in `components/articles/registry.ts`.
+4. Register the questions in `data/topics/quizzes.ts` and add the homepage display title in `app/page.tsx`.
+5. Include `ArticleQuizEntry` in the article, with the matching `/quiz` URL. Add inline checks where they help reinforce a specific section.
+6. Run the tests, lint, type check, and production build. Check the article and quiz at desktop and mobile widths.
+
+The catalog supplies static parameters for both article and quiz routes and supplies sitemap entries. Quiz validation requires at least five distinct scenarios, at least three distinct options per question, exactly one correct option, explanations for every option, and varied correct-answer positions.
+
+Before changing Next.js code, follow `AGENTS.md` and read the relevant version-specific documentation in `node_modules/next/dist/docs/`.
+
+## License
 
 MIT © [Aashish Anand](https://github.com/Aashish-Anand)

@@ -9,14 +9,14 @@ import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-jakarta",
   display: "swap",
   weight: ["400", "500", "600", "700", "800"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-jetbrains",
   display: "swap",
   weight: ["400", "500", "600"],
 });
@@ -48,7 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="min-h-screen flex flex-col bg-paper text-ink font-sans antialiased" suppressHydrationWarning>
+      <body id="top" className="min-h-screen flex flex-col bg-paper text-ink font-sans antialiased" suppressHydrationWarning>
         <ReadingProgress />
         <SiteHeader />
         <main className="flex-1">{children}</main>

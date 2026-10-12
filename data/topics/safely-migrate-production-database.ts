@@ -4,12 +4,12 @@ import { getTopicById } from "@/data/topics/catalog";
 export const meta = getTopicById("database-migration").meta;
 
 export const tocItems: TocItem[] = [
-  { id: "the-problem",       label: "Problem & Capacity Sizing" },
-  { id: "the-mistake",       label: "The Naive Snapshot Trap" },
-  { id: "mental-model",      label: "The Core Mental Model" },
-  { id: "workbench",         label: "Interactive Workbench" },
+  { id: "the-problem",       label: "Workload and constraints" },
+  { id: "the-mistake",       label: "Why a snapshot fails" },
+  { id: "mental-model",      label: "Synchronize, then switch" },
+  { id: "workbench",         label: "Migration workbench" },
   { id: "tradeoffs-hub",     label: "Trade-offs & Runbook" },
-  { id: "career-rubric",     label: "Interview & Career Rubric" },
+  { id: "career-rubric",     label: "Explain the decision" },
   { id: "judgment-quiz",     label: "Test Your Judgment" },
   { id: "related",           label: "Related Architectures" },
 ];
@@ -267,44 +267,104 @@ export const migrationStrategies = [
 
 export const judgmentQuiz = [
   {
-    scenario: "During a zero-downtime database migration, an engineer proposes having application servers execute dual writes to both DB A and DB B synchronously. What is the fundamental danger?",
-    options: [
+    "scenario": "During a zero-downtime database migration, an engineer proposes having application servers execute dual writes to both DB A and DB B synchronously. What is the fundamental danger?",
+    "options": [
       {
-        text: "Dual writes require purchasing double the cloud CPU licenses.",
-        isCorrect: false,
-        explanation: "Infrastructure cost is secondary. The fundamental danger is silent data corruption.",
+        "text": "Network hiccups or partial failures will cause one write to succeed and the other to fail, leading to divergent datasets with undefined state.",
+        "isCorrect": true,
+        "explanation": "Correct! Two separate network writes cannot be made atomic without distributed transactions. Partial failures leave DB A and DB B permanently divergent."
       },
       {
-        text: "Network hiccups or partial failures will cause one write to succeed and the other to fail, leading to divergent datasets with undefined state.",
-        isCorrect: true,
-        explanation: "Correct! Two separate network writes cannot be made atomic without distributed transactions. Partial failures leave DB A and DB B permanently divergent.",
+        "text": "Dual writes require purchasing double the cloud CPU licenses.",
+        "isCorrect": false,
+        "explanation": "Infrastructure cost is secondary. The fundamental danger is silent data corruption."
       },
       {
-        text: "Application servers cannot open connections to two databases simultaneously.",
-        isCorrect: false,
-        explanation: "App servers can easily connect to multiple databases; the constraint is distributed consistency.",
-      },
-    ],
+        "text": "Application servers cannot open connections to two databases simultaneously.",
+        "isCorrect": false,
+        "explanation": "App servers can easily connect to multiple databases; the constraint is distributed consistency."
+      }
+    ]
   },
   {
-    scenario: "After a 10-hour snapshot copy finishes, you start the CDC pipeline. How does the CDC pipeline catch up on writes that occurred during the snapshot?",
-    options: [
+    "scenario": "After a 10-hour snapshot copy finishes, you start the CDC pipeline. How does the CDC pipeline catch up on writes that occurred during the snapshot?",
+    "options": [
       {
-        text: "It asks DB A to re-execute all client HTTP requests from application memory.",
-        isCorrect: false,
-        explanation: "Database engines do not store or replay external HTTP requests.",
+        "text": "It asks DB A to re-execute all client HTTP requests from application memory.",
+        "isCorrect": false,
+        "explanation": "Database engines do not store or replay external HTTP requests."
       },
       {
-        text: "It replays change events from the Write-Ahead Log (WAL) starting from the exact log position (LSN/Binlog offset) where the snapshot began.",
-        isCorrect: true,
-        explanation: "Correct! By recording the exact WAL offset (LSN) at the start of the snapshot, the CDC pipeline replays every subsequent mutation to bring the target up to real-time.",
+        "text": "It replays change events from the Write-Ahead Log (WAL) starting from the exact log position (LSN/Binlog offset) where the snapshot began.",
+        "isCorrect": true,
+        "explanation": "Correct! By recording the exact WAL offset (LSN) at the start of the snapshot, the CDC pipeline replays every subsequent mutation to bring the target up to real-time."
       },
       {
-        text: "It ignores writes made during the snapshot and relies on user bug reports.",
-        isCorrect: false,
-        explanation: "Ignoring mutations made during a multi-hour snapshot causes immediate data loss.",
-      },
-    ],
+        "text": "It ignores writes made during the snapshot and relies on user bug reports.",
+        "isCorrect": false,
+        "explanation": "Ignoring mutations made during a multi-hour snapshot causes immediate data loss."
+      }
+    ]
   },
+  {
+    "scenario": "Row counts match between the source and target, but sampled account balances differ. What should you do before cutover?",
+    "options": [
+      {
+        "text": "Promote the target because matching counts prove the copy is complete.",
+        "isCorrect": false,
+        "explanation": "Equal counts do not prove equal values. Missing and extra records can also cancel each other out."
+      },
+      {
+        "text": "Increase the traffic percentage so more users can help identify discrepancies.",
+        "isCorrect": false,
+        "explanation": "Customer traffic increases the blast radius; it is not a substitute for validation."
+      },
+      {
+        "text": "Pause the cutover, investigate the mismatches, and validate business invariants after reconciliation.",
+        "isCorrect": true,
+        "explanation": "Checksums, sampled records, and business invariants test correctness beyond quantity. Resolve unexplained divergence before moving ownership."
+      }
+    ]
+  },
+  {
+    "scenario": "The target has accepted production writes for an hour. A latency regression now requires rollback. What makes returning to the source safe?",
+    "options": [
+      {
+        "text": "The source has received the target’s acknowledged writes through a verified reverse replication path, and writer ownership is coordinated.",
+        "isCorrect": true,
+        "explanation": "Reverse replication keeps the rollback target current. Verify it is caught up, fence the old writer, and coordinate the ownership change to avoid losing writes or accepting conflicting ones."
+      },
+      {
+        "text": "The source still has the original snapshot, so redirecting traffic is sufficient.",
+        "isCorrect": false,
+        "explanation": "An intact snapshot does not contain writes accepted by the new primary after promotion."
+      },
+      {
+        "text": "A low forward CDC lag guarantees that the source contains the target’s new writes.",
+        "isCorrect": false,
+        "explanation": "Forward lag measures source-to-target replication. It says nothing about writes that originate on the target."
+      }
+    ]
+  },
+  {
+    "scenario": "A backfill increases source CPU and production latency while CDC lag grows. What is the safest response?",
+    "options": [
+      {
+        "text": "Double the backfill workers to finish sooner.",
+        "isCorrect": false,
+        "explanation": "More workers may increase the contention causing the incident. Migration speed is subordinate to production health."
+      },
+      {
+        "text": "Throttle or pause the backfill, protect production headroom, and allow CDC to catch up.",
+        "isCorrect": true,
+        "explanation": "The backfill competes with production and replication for resources. Adjust batch size and concurrency, monitor headroom, and resume once the system is stable."
+      },
+      {
+        "text": "Disable CDC until the historical copy completes.",
+        "isCorrect": false,
+        "explanation": "Stopping CDC delays synchronization and risks exhausting retained change logs."
+      }
+    ]
+  }
 ];
 

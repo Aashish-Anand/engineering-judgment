@@ -103,21 +103,22 @@ export function TradeoffDiagnosticsHub({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 type="button"
+                aria-pressed={isActive}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-sans transition-all whitespace-nowrap cursor-pointer ${
+                className={`min-w-0 flex flex-col items-start gap-1.5 px-3 py-2.5 rounded-lg text-xs font-sans transition-all cursor-pointer ${
                   isActive
                     ? "bg-slate-900 text-white font-bold shadow-xs"
                     : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
                 }`}
               >
-                <span>{tab.label}</span>
+                <span className="text-left leading-relaxed">{tab.label}</span>
                 <span
                   className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
                     isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"

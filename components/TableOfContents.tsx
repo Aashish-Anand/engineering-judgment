@@ -15,7 +15,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showFloatingBtn, setShowFloatingBtn] = useState(false);
-  const [maxVisitedIndex, setMaxVisitedIndex] = useState<number>(-1);
+
 
   // Track active section with IntersectionObserver
   useEffect(() => {
@@ -25,10 +25,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
         if (visible.length > 0) {
           const id = visible[0].target.id;
           setActiveId(id);
-          const idx = items.findIndex((i) => i.id === id);
-          if (idx >= 0) {
-            setMaxVisitedIndex((prev) => Math.max(prev, idx));
-          }
+
         }
       },
       { rootMargin: "-80px 0px -70% 0px", threshold: 0 }
@@ -72,7 +69,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
     setDrawerOpen(false);
     const el = document.getElementById(id);
     if (el) {
-      const yOffset = -70;
+      const yOffset = -104;
       const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
@@ -82,16 +79,11 @@ export function TableOfContents({ items }: TableOfContentsProps) {
   const activeIndex = items.findIndex((i) => i.id === activeId);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : items[0];
 
-  const progressPercent = Math.min(
-    100,
-    Math.round(((maxVisitedIndex + 1) / items.length) * 100)
-  );
-
   return (
     <>
       {/* ── Desktop: compact notebook index sidebar ────────────────── */}
       <nav
-        className="hidden lg:block sticky top-8 self-start w-56 max-w-56 shrink-0 p-4 bg-white border-[1.5px] border-[#171717] rounded-xl shadow-[2px_3px_0px_#171717]"
+        className="article-outline hidden lg:block sticky top-24 self-start w-56 shrink-0 pr-5 border-r border-slate-200 max-h-[calc(100vh-7rem)] overflow-y-auto"
         aria-label="Table of Contents"
       >
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
@@ -101,26 +93,18 @@ export function TableOfContents({ items }: TableOfContentsProps) {
             </span>
           </div>
           <span className="text-[11px] font-mono font-medium text-slate-400">
-            {maxVisitedIndex >= 0 ? `${progressPercent}%` : `${items.length} sects`}
+            {items.length} sections
           </span>
-        </div>
-
-        {/* Clean progress meter */}
-        <div className="w-full bg-slate-100 rounded-full h-1 mb-3 overflow-hidden">
-          <div
-            className="bg-blue-600 h-full transition-all duration-300 rounded-full"
-            style={{ width: `${Math.max(4, progressPercent)}%` }}
-          />
         </div>
 
         <ul className="space-y-1">
           {items.map((item, index) => {
             const isActive = activeId === item.id;
-            const isCompleted = index <= maxVisitedIndex && !isActive;
 
             return (
               <li key={item.id}>
                 <button
+                  aria-current={isActive ? "location" : undefined}
                   onClick={() => handleClick(item.id)}
                   type="button"
                   className={`w-full text-left flex items-center gap-2 py-1.5 px-2 rounded-md transition-all text-xs font-sans ${
@@ -133,14 +117,12 @@ export function TableOfContents({ items }: TableOfContentsProps) {
                     className={`font-mono text-[10px] font-bold shrink-0 w-4 h-4 rounded flex items-center justify-center ${
                       isActive
                         ? "bg-blue-600 text-white"
-                        : isCompleted
-                        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
                         : "bg-slate-100 text-slate-500"
                     }`}
                   >
-                    {isCompleted ? "✓" : index + 1}
+                    {index + 1}
                   </span>
-                  <span className="truncate leading-tight">{item.label}</span>
+                  <span className="leading-relaxed">{item.label}</span>
                 </button>
               </li>
             );
@@ -149,7 +131,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
       </nav>
 
       {/* ── Mobile: Top active section bar ────────────────────────── */}
-      <div className="lg:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-slate-200 -mx-6 px-4 py-2 shadow-xs print:hidden">
+      <div className="lg:hidden sticky top-18 z-30 bg-white/95 backdrop-blur-xs border-b border-slate-200 px-4 py-2 shadow-xs print:hidden">
         <button
           onClick={() => setDrawerOpen(true)}
           type="button"
@@ -218,24 +200,16 @@ export function TableOfContents({ items }: TableOfContentsProps) {
               </button>
             </div>
 
-            {/* Mobile drawer progress bar */}
-            <div className="w-full bg-slate-100 rounded-full h-1 mb-3 overflow-hidden">
-              <div
-                className="bg-blue-600 h-full transition-all duration-300 rounded-full"
-                style={{ width: `${Math.max(4, progressPercent)}%` }}
-              />
-            </div>
-
             {/* Section links list */}
             <ul className="space-y-1.5 overflow-y-auto pr-1">
               {items.map((item, index) => {
                 const isActive = activeId === item.id;
-                const isCompleted = index <= maxVisitedIndex && !isActive;
 
                 return (
                   <li key={item.id}>
                     <button
-                      onClick={() => handleClick(item.id)}
+                      aria-current={isActive ? "location" : undefined}
+                  onClick={() => handleClick(item.id)}
                       type="button"
                       className={`w-full text-left flex items-center gap-2.5 py-2 px-2.5 rounded-lg text-sm font-sans transition-all ${
                         isActive
@@ -247,12 +221,10 @@ export function TableOfContents({ items }: TableOfContentsProps) {
                         className={`font-mono text-xs font-bold shrink-0 w-5 h-5 rounded flex items-center justify-center ${
                           isActive
                             ? "bg-blue-600 text-white"
-                            : isCompleted
-                            ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
                             : "bg-slate-100 text-slate-500"
                         }`}
                       >
-                        {isCompleted ? "✓" : index + 1}
+                        {index + 1}
                       </span>
                       <span className="leading-snug">{item.label}</span>
                     </button>

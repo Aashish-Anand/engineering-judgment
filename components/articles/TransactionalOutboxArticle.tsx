@@ -1,7 +1,7 @@
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArticleNav } from "@/components/ArticleNav";
-import { JudgmentQuiz } from "@/components/JudgmentQuiz";
+import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
 import { InlineCheck } from "@/components/InlineCheck";
 import { CategoryBadge } from "@/components/CategoryBadge";
@@ -190,7 +190,7 @@ export function TransactionalOutboxArticle() {
         />
 
         {/* Main Content Layout with Sticky TOC */}
-        <div className="flex gap-10 items-start">
+        <div className="article-layout">
           {/* Sticky TOC */}
           <TableOfContents items={tocItems} />
 
@@ -415,7 +415,8 @@ export function TransactionalOutboxArticle() {
                   id="judgment-quiz"
                 />
                 <ScrollReveal>
-                  <JudgmentQuiz
+                  <ArticleQuizEntry
+                    quizHref="/topics/correctness/transactional-outbox/quiz"
                     title="Transactional Outbox Judgment Test"
                     questions={judgmentQuiz}
                   />
