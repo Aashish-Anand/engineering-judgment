@@ -3,21 +3,14 @@ import type { TocItem, TimelinePhaseData, ExpandableQA, LevelData } from "@/data
 
 export const meta = getTopicById("transactional-outbox").meta;
 export const tocItems: TocItem[] = [
-  { id: "the-problem", label: "The Problem" },
-  { id: "the-mistake", label: "The First Mistake" },
-  { id: "diagnosis", label: "Find the Coupling" },
-  { id: "mental-model", label: "Mental Model" },
-  { id: "architecture", label: "Outbox Architecture" },
-  { id: "relay", label: "The Relay Worker" },
-  { id: "guarantees", label: "Ordering, Delivery & Dedup" },
-  { id: "trade-offs", label: "Key Trade-offs" },
-  { id: "failure-modes", label: "What Can Go Wrong" },
-  { id: "ten-x", label: "What Breaks Next" },
-  { id: "avoid", label: "What to Avoid" },
-  { id: "interview", label: "Interview Answer" },
-  { id: "expectations", label: "Level Expectations" },
-  { id: "follow-ups", label: "Follow-up Questions" },
-  { id: "related", label: "Related Problems" },
+  { id: "the-problem",       label: "01 · Dual-Write Problem" },
+  { id: "the-mistake",       label: "02 · Naive Publish Trap" },
+  { id: "mental-model",      label: "03 · Core Mental Model" },
+  { id: "architecture",      label: "04 · Outbox Architecture & Relay" },
+  { id: "tradeoffs-hub",     label: "05 · Trade-offs & Production Traps" },
+  { id: "career-rubric",     label: "06 · Staff+ Interview Rubric" },
+  { id: "judgment-quiz",     label: "07 · Test Your Judgment" },
+  { id: "related",           label: "08 · Related Architectures" },
 ];
 export const scenarioMetrics = [
   { label: "Service", value: "Order service processing purchases" },

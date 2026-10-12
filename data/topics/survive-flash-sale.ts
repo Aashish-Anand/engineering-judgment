@@ -4,21 +4,14 @@ import { getTopicById } from "@/data/topics/catalog";
 export const meta = getTopicById("flash-sale").meta;
 
 export const tocItems: TocItem[] = [
-  { id: "the-problem",       label: "The Problem" },
-  { id: "the-mistake",       label: "The First Mistake" },
-  { id: "why-hard",          label: "Why It's Hard" },
-  { id: "mental-model",      label: "Mental Model" },
-  { id: "sale-shape",        label: "Architecture Shape" },
-  { id: "phases",            label: "Flash Sale Phases" },
-  { id: "inventory-lock",    label: "Inventory Consistency" },
-  { id: "trade-offs",        label: "Key Trade-offs" },
-  { id: "failure-modes",     label: "What Can Go Wrong" },
-  { id: "ten-x",             label: "What Happens at 10×" },
-  { id: "avoid",             label: "What to Avoid" },
-  { id: "interview",         label: "Interview Answer" },
-  { id: "expectations",      label: "Level Expectations" },
-  { id: "follow-ups",        label: "Interviewer Follow-ups" },
-  { id: "related",           label: "Related Problems" },
+  { id: "the-problem",       label: "01 · Problem & Scale Anatomy" },
+  { id: "the-mistake",       label: "02 · Naive Row-Lock Trap" },
+  { id: "mental-model",      label: "03 · Core Mental Model" },
+  { id: "architecture",      label: "04 · Funnel Pipeline & Lua Gate" },
+  { id: "tradeoffs-hub",     label: "05 · Trade-offs & Production Traps" },
+  { id: "career-rubric",     label: "06 · Staff+ Interview Rubric" },
+  { id: "judgment-quiz",     label: "07 · Test Your Judgment" },
+  { id: "related",           label: "08 · Related Architectures" },
 ];
 
 export const scenarioMetrics = [

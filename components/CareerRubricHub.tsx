@@ -1,15 +1,47 @@
 "use client";
 
 import { useState } from "react";
+import type { LevelData, ExpandableQA } from "@/data/types";
 import {
-  interviewAnswer,
-  levelExpectations,
-  followUpQuestions,
+  interviewAnswer as defaultInterviewAnswer,
+  levelExpectations as defaultLevelExpectations,
+  followUpQuestions as defaultFollowUpQuestions,
 } from "@/data/topics/safely-migrate-production-database";
 import { ExpandableQuestion } from "@/components/ExpandableQuestion";
 
-export function CareerRubricHub() {
-  const [selectedLevelIdx, setSelectedLevelIdx] = useState<number>(2); // Default to Staff level
+type WhiteboardStep = {
+  label: string;
+  color?: string;
+};
+
+type CareerRubricHubProps = {
+  title?: string;
+  badge?: string;
+  interviewAnswer?: string;
+  levelExpectations?: LevelData[];
+  followUpQuestions?: ExpandableQA[];
+  whiteboardChain?: WhiteboardStep[];
+};
+
+const DEFAULT_WHITEBOARD_CHAIN: WhiteboardStep[] = [
+  { label: "1. Constraint", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { label: "2. Synchronize (CDC)", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { label: "3. Backfill (Keyset)", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  { label: "4. Validate (Shadow)", color: "bg-purple-50 text-purple-700 border-purple-200" },
+  { label: "5. Cutover (Reverse CDC)", color: "bg-amber-50 text-amber-800 border-amber-200" },
+];
+
+export function CareerRubricHub({
+  title = "Engineering Level Expectations & Interview Synthesis",
+  badge = "STAFF+ EVALUATION",
+  interviewAnswer = defaultInterviewAnswer,
+  levelExpectations = defaultLevelExpectations,
+  followUpQuestions = defaultFollowUpQuestions,
+  whiteboardChain = DEFAULT_WHITEBOARD_CHAIN,
+}: CareerRubricHubProps) {
+  const [selectedLevelIdx, setSelectedLevelIdx] = useState<number>(
+    Math.min(2, levelExpectations.length - 1)
+  );
   const [showSynthesis, setShowSynthesis] = useState<boolean>(true);
 
   const currentLevel = levelExpectations[selectedLevelIdx] ?? levelExpectations[0];
@@ -24,11 +56,11 @@ export function CareerRubricHub() {
               🎯
             </span>
             <span className="font-sans font-bold text-base sm:text-lg text-slate-900 tracking-tight">
-              Engineering Level Expectations &amp; Interview Synthesis
+              {title}
             </span>
           </div>
           <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">
-            STAFF+ EVALUATION
+            {badge}
           </span>
         </div>
 
@@ -68,7 +100,7 @@ export function CareerRubricHub() {
             {currentLevel.items.map((item, idx) => (
               <div
                 key={idx}
-                className="flex items-start gap-2 p-2 bg-white border border-slate-200/80 rounded-lg text-xs text-slate-700"
+                className="flex items-start gap-2 p-2 bg-white border border-slate-200/80 rounded-lg text-xs text-slate-700 font-sans"
               >
                 <span className="text-emerald-600 font-bold shrink-0">✓</span>
                 <span>{item}</span>
@@ -78,64 +110,68 @@ export function CareerRubricHub() {
         </div>
 
         {/* Candidate 60-Second Verbal Synthesis (Collapsible) */}
-        <div className="border border-slate-200 rounded-xl overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setShowSynthesis((prev) => !prev)}
-            className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-sm">🎙️</span>
-              <span className="font-sans font-bold text-sm text-slate-900">
-                Candidate 60-Second Architecture Synthesis
-              </span>
-            </div>
-            <span className="text-xs text-slate-500 font-mono font-bold">
-              {showSynthesis ? "Hide ▲" : "Show ▼"}
-            </span>
-          </button>
-
-          {showSynthesis && (
-            <div className="p-4 sm:p-5 bg-white border-t border-slate-200 space-y-4">
-              <p className="font-sans text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line mb-0">
-                {interviewAnswer}
-              </p>
-
-              {/* Whiteboard reasoning chain */}
-              <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
-                <span className="font-mono text-[11px] text-slate-400 uppercase font-bold mr-1">
-                  Whiteboard Chain:
+        {interviewAnswer && (
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowSynthesis((prev) => !prev)}
+              className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm">🎙️</span>
+                <span className="font-sans font-bold text-sm text-slate-900">
+                  Candidate 60-Second Architecture Synthesis
                 </span>
-                {[
-                  { label: "1. Constraint", color: "bg-blue-50 text-blue-700 border-blue-200" },
-                  { label: "2. Synchronize (CDC)", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-                  { label: "3. Backfill (Keyset)", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-                  { label: "4. Validate (Shadow)", color: "bg-purple-50 text-purple-700 border-purple-200" },
-                  { label: "5. Cutover (Reverse CDC)", color: "bg-amber-50 text-amber-800 border-amber-200" },
-                ].map((step, idx, arr) => (
-                  <span key={step.label} className="inline-flex items-center gap-1.5">
-                    <span className={`px-2 py-0.5 rounded border text-[11px] font-mono font-semibold ${step.color}`}>
-                      {step.label}
-                    </span>
-                    {idx < arr.length - 1 && <span className="text-slate-300">→</span>}
-                  </span>
-                ))}
               </div>
-            </div>
-          )}
-        </div>
+              <span className="text-xs text-slate-500 font-mono font-bold">
+                {showSynthesis ? "Hide ▲" : "Show ▼"}
+              </span>
+            </button>
+
+            {showSynthesis && (
+              <div className="p-4 sm:p-5 bg-white border-t border-slate-200 space-y-4">
+                <p className="font-sans text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line mb-0">
+                  {interviewAnswer}
+                </p>
+
+                {/* Whiteboard reasoning chain */}
+                {whiteboardChain && whiteboardChain.length > 0 && (
+                  <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-mono text-[11px] text-slate-400 uppercase font-bold mr-1">
+                      Whiteboard Chain:
+                    </span>
+                    {whiteboardChain.map((step, idx, arr) => (
+                      <span key={step.label} className="inline-flex items-center gap-1.5">
+                        <span
+                          className={`px-2 py-0.5 rounded border text-[11px] font-mono font-semibold ${
+                            step.color || "bg-slate-50 text-slate-700 border-slate-200"
+                          }`}
+                        >
+                          {step.label}
+                        </span>
+                        {idx < arr.length - 1 && <span className="text-slate-300">→</span>}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Interviewer Follow-ups Accordion */}
-        <div>
-          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-            Interviewer Follow-ups &amp; Deep-Dive Probes
-          </span>
-          <div className="bg-white border border-slate-200 rounded-xl px-4 divide-y divide-slate-100">
-            {followUpQuestions.map((qa) => (
-              <ExpandableQuestion key={qa.question} question={qa.question} answer={qa.answer} />
-            ))}
+        {followUpQuestions && followUpQuestions.length > 0 && (
+          <div>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+              Interviewer Follow-ups &amp; Deep-Dive Probes
+            </span>
+            <div className="bg-white border border-slate-200 rounded-xl px-4 divide-y divide-slate-100">
+              {followUpQuestions.map((qa) => (
+                <ExpandableQuestion key={qa.question} question={qa.question} answer={qa.answer} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

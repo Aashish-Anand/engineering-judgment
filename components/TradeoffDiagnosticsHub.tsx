@@ -2,22 +2,87 @@
 
 import { useState } from "react";
 import {
-  dualWriteApproaches,
-  keyTradeoffs,
-  failureModes,
-  tenXProblems,
-  avoidList,
+  dualWriteApproaches as defaultDualWriteApproaches,
+  keyTradeoffs as defaultKeyTradeoffs,
+  failureModes as defaultFailureModes,
+  tenXProblems as defaultTenXProblems,
+  avoidList as defaultAvoidList,
 } from "@/data/topics/safely-migrate-production-database";
+
+export type TrapItem = {
+  trapNum: string;
+  question: string;
+  explanation: string;
+};
+
+const DEFAULT_TRAPS: TrapItem[] = [
+  {
+    trapNum: "TRAP 01",
+    question: "Why not a 3-hour maintenance window?",
+    explanation:
+      "Maintenance windows always overrun. If a schema migration takes 5 hours instead of 3, you face an agonizing choice: abort and restart next weekend, or extend downtime during peak business hours.",
+  },
+  {
+    trapNum: "TRAP 02",
+    question: "Why not validate with SELECT COUNT(*)??",
+    explanation:
+      "Row counts only prove quantity, not correctness. Two tables can have exactly 10,000,000 rows while having 50,000 corrupted values, truncated timestamps, or mismatched account balances. Sampled checksums are mandatory.",
+  },
+  {
+    trapNum: "TRAP 03",
+    question: "Why not decommission DB A immediately?",
+    explanation:
+      "Latent bugs often take 48–72 hours to surface (e.g. weekly reporting queries or end-of-month reconciliations). Keep the legacy database running in read-only reverse sync for at least one full business cycle.",
+  },
+];
+
+type TradeoffDiagnosticsHubProps = {
+  title?: string;
+  badge?: string;
+  approachesTitle?: string;
+  approachesHeaders?: string[];
+  approachesRows?: string[][];
+  keyTradeoffsTitle?: string;
+  keyTradeoffsHeaders?: string[];
+  keyTradeoffsRows?: string[][];
+  failureModesTitle?: string;
+  failureModesHeaders?: string[];
+  failureModesRows?: string[][];
+  trapsTitle?: string;
+  traps?: TrapItem[];
+  tenXTitle?: string;
+  tenXProblems?: string[];
+  avoidTitle?: string;
+  avoidList?: string[];
+};
 
 const TABS = [
   { id: "tradeoffs", label: "Trade-offs & Approaches", badge: "Decisions" },
-  { id: "incidents", label: "Failure Modes & Runbook", badge: "7 Scenarios" },
+  { id: "incidents", label: "Failure Modes & Runbook", badge: "Incident Response" },
   { id: "traps", label: "Classic Traps & 10× Scale", badge: "Safety Guards" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
-export function TradeoffDiagnosticsHub() {
+export function TradeoffDiagnosticsHub({
+  title = "Trade-offs, Failure Runbook & Production Traps",
+  badge = "HIGH DENSITY MATRIX",
+  approachesTitle = "1. Architecture Options & Strategies",
+  approachesHeaders = ["Approach", "Advantage", "Trade-off / Risk"],
+  approachesRows = defaultDualWriteApproaches,
+  keyTradeoffsTitle = "2. Key Architectural Trade-offs",
+  keyTradeoffsHeaders = ["Decision", "Benefit", "Cost / Risk"],
+  keyTradeoffsRows = defaultKeyTradeoffs,
+  failureModesTitle = "Production Failure Modes, Telemetry Detection & Response Runbook",
+  failureModesHeaders = ["Failure Mode", "Detection Signal", "Operational Response"],
+  failureModesRows = defaultFailureModes,
+  trapsTitle = "The 3 Classic Production Traps",
+  traps = DEFAULT_TRAPS,
+  tenXTitle = "What Happens at 10× Scale?",
+  tenXProblems = defaultTenXProblems,
+  avoidTitle = "⚠️ Anti-Patterns & Pitfalls to Avoid:",
+  avoidList = defaultAvoidList,
+}: TradeoffDiagnosticsHubProps) {
   const [activeTab, setActiveTab] = useState<TabId>("tradeoffs");
 
   return (
@@ -30,11 +95,11 @@ export function TradeoffDiagnosticsHub() {
               ⚖️
             </span>
             <span className="font-sans font-bold text-base sm:text-lg text-slate-900 tracking-tight">
-              Trade-offs, Failure Runbook &amp; Production Traps
+              {title}
             </span>
           </div>
           <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded">
-            HIGH DENSITY MATRIX
+            {badge}
           </span>
         </div>
 
@@ -71,57 +136,61 @@ export function TradeoffDiagnosticsHub() {
         {/* Tab 1: Trade-offs */}
         {activeTab === "tradeoffs" && (
           <div className="space-y-6">
-            <div>
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                1. Dual-Write Architecture Options
-              </span>
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Approach</th>
-                      <th>Advantage</th>
-                      <th>Trade-off / Risk</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dualWriteApproaches.map((row, idx) => (
-                      <tr key={idx}>
-                        <td className="font-semibold text-slate-900">{row[0]}</td>
-                        <td className="text-emerald-700">{row[1]}</td>
-                        <td className="text-slate-600">{row[2]}</td>
+            {approachesRows && approachesRows.length > 0 && (
+              <div>
+                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                  {approachesTitle}
+                </span>
+                <div className="overflow-x-auto">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        {approachesHeaders.map((h) => (
+                          <th key={h}>{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {approachesRows.map((row, idx) => (
+                        <tr key={idx}>
+                          <td className="font-semibold text-slate-900">{row[0]}</td>
+                          <td className="text-emerald-700">{row[1]}</td>
+                          <td className="text-slate-600">{row[2]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                2. Key Migration Strategy Trade-offs
-              </span>
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Decision</th>
-                      <th>Benefit</th>
-                      <th>Cost / Risk</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {keyTradeoffs.map((row, idx) => (
-                      <tr key={idx}>
-                        <td className="font-semibold text-slate-900">{row[0]}</td>
-                        <td className="text-slate-700">{row[1]}</td>
-                        <td className="text-slate-600">{row[2]}</td>
+            {keyTradeoffsRows && keyTradeoffsRows.length > 0 && (
+              <div>
+                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                  {keyTradeoffsTitle}
+                </span>
+                <div className="overflow-x-auto">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        {keyTradeoffsHeaders.map((h) => (
+                          <th key={h}>{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {keyTradeoffsRows.map((row, idx) => (
+                        <tr key={idx}>
+                          <td className="font-semibold text-slate-900">{row[0]}</td>
+                          <td className="text-slate-700">{row[1]}</td>
+                          <td className="text-slate-600">{row[2]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -129,19 +198,19 @@ export function TradeoffDiagnosticsHub() {
         {activeTab === "incidents" && (
           <div>
             <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-              Production Failure Modes, Telemetry Detection &amp; Response Runbook
+              {failureModesTitle}
             </span>
             <div className="overflow-x-auto">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Failure Mode</th>
-                    <th>Detection Signal</th>
-                    <th>Automated / Operational Response</th>
+                    {failureModesHeaders.map((h) => (
+                      <th key={h}>{h}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {failureModes.map((row, idx) => (
+                  {failureModesRows.map((row, idx) => (
                     <tr key={idx}>
                       <td className="font-semibold text-rose-700">{row[0]}</td>
                       <td className="font-mono text-xs text-slate-700">{row[1]}</td>
@@ -157,64 +226,63 @@ export function TradeoffDiagnosticsHub() {
         {/* Tab 3: Traps & 10x Scale */}
         {activeTab === "traps" && (
           <div className="space-y-6">
-            <div>
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-3">
-                The 3 Classic Production Migration Traps
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl">
-                  <span className="font-mono text-[10px] font-bold text-rose-600 block mb-1">TRAP 01</span>
-                  <h4 className="font-sans text-sm font-bold text-slate-900 mb-1.5">&ldquo;Why not a 3-hour maintenance window?&rdquo;</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-0">
-                    Maintenance windows always overrun. If a schema migration takes 5 hours instead of 3, you face an agonizing choice: abort and restart next weekend, or extend downtime during peak business hours.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl">
-                  <span className="font-mono text-[10px] font-bold text-rose-600 block mb-1">TRAP 02</span>
-                  <h4 className="font-sans text-sm font-bold text-slate-900 mb-1.5">&ldquo;Why not validate with SELECT COUNT(*)?&rdquo;</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-0">
-                    Row counts only prove quantity, not correctness. Two tables can have exactly 10,000,000 rows while having 50,000 corrupted values, truncated timestamps, or mismatched account balances. Sampled checksums are mandatory.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl">
-                  <span className="font-mono text-[10px] font-bold text-rose-600 block mb-1">TRAP 03</span>
-                  <h4 className="font-sans text-sm font-bold text-slate-900 mb-1.5">&ldquo;Why not decommission DB A immediately?&rdquo;</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-0">
-                    Latent bugs often take 48–72 hours to surface (e.g. weekly reporting queries or end-of-month reconciliations). Keep the legacy database running in read-only reverse sync for at least one full business cycle.
-                  </p>
+            {traps && traps.length > 0 && (
+              <div>
+                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-3">
+                  {trapsTitle}
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  {traps.map((trap, idx) => (
+                    <div key={idx} className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl">
+                      <span className="font-mono text-[10px] font-bold text-rose-600 block mb-1">
+                        {trap.trapNum}
+                      </span>
+                      <h4 className="font-sans text-sm font-bold text-slate-900 mb-1.5">
+                        &ldquo;{trap.question}&rdquo;
+                      </h4>
+                      <p className="text-xs text-slate-600 leading-relaxed mb-0 font-sans">
+                        {trap.explanation}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                What Happens at 10× Scale (100M Writes / Day)?
-              </span>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans text-slate-700">
-                {tenXProblems.map((problem, idx) => (
-                  <li key={idx} className="flex items-start gap-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-lg">
-                    <span className="text-blue-600 font-bold shrink-0">▸</span>
-                    <span>{problem}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {tenXProblems && tenXProblems.length > 0 && (
+              <div>
+                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                  {tenXTitle}
+                </span>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans text-slate-700">
+                  {tenXProblems.map((problem, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-lg"
+                    >
+                      <span className="text-blue-600 font-bold shrink-0">▸</span>
+                      <span>{problem}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl">
-              <span className="font-mono text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-2">
-                ⚠️ Avoid Unless Explicitly Justified:
-              </span>
-              <ul className="space-y-1.5 text-xs text-slate-800">
-                {avoidList.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-rose-600 font-bold shrink-0">✗</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {avoidList && avoidList.length > 0 && (
+              <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl">
+                <span className="font-mono text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-2">
+                  {avoidTitle}
+                </span>
+                <ul className="space-y-1.5 text-xs text-slate-800 font-sans">
+                  {avoidList.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-rose-600 font-bold shrink-0">✗</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>

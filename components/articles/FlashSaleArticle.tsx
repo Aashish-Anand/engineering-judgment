@@ -8,32 +8,56 @@ import { InlineCheck } from "@/components/InlineCheck";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
-import { DecisionTable } from "@/components/DecisionTable";
 import { InsightCard } from "@/components/InsightCard";
 import { ProblemStatement } from "@/components/ProblemStatement";
-import { Timeline } from "@/components/Timeline";
-import { LevelExpectation } from "@/components/LevelExpectation";
 import { RelatedTopics } from "@/components/RelatedTopics";
 import { TableOfContents } from "@/components/TableOfContents";
-import { ExpandableQuestion } from "@/components/ExpandableQuestion";
-import { TermTooltip } from "@/components/TermTooltip";
 import { FailureCallout } from "@/components/doodle/FailureCallout";
-import { WhatBreaksNext } from "@/components/doodle/WhatBreaksNext";
 import { NaiveFlashSaleDiagram } from "@/components/diagrams/NaiveFlashSaleDiagram";
 import { FlashSaleArchitectureDiagram } from "@/components/diagrams/FlashSaleArchitectureDiagram";
 import { InventoryRaceDiagram } from "@/components/diagrams/InventoryRaceDiagram";
 import { ReservationFlowDiagram } from "@/components/diagrams/ReservationFlowDiagram";
 import { FlashSaleLab } from "@/components/FlashSaleLab";
+import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
+import { CareerRubricHub } from "@/components/CareerRubricHub";
 
 import * as article from "@/data/topics/survive-flash-sale";
+
+const FLASH_SALE_TRAPS = [
+  {
+    trapNum: "TRAP 01",
+    question: "Why not rely on Kubernetes Horizontal Pod Autoscaler (HPA)?",
+    explanation:
+      "Kubernetes HPA takes 45–90 seconds to observe metrics and spin up new pod containers. The 10,000 iPhones sell out in 3 seconds. The spike is completely over before the first new pod reaches ready status.",
+  },
+  {
+    trapNum: "TRAP 02",
+    question: "Why not process payments before deducting stock?",
+    explanation:
+      "External payment gateways (Stripe, Adyen) take 1,500–3,000ms per transaction. Bombarding them with 2,000,000 concurrent API calls triggers rate limits and causes thousands of cards to be billed for items that just sold out.",
+  },
+  {
+    trapNum: "TRAP 03",
+    question: "Why not let stock go negative and cancel excess orders?",
+    explanation:
+      "Selling 10,500 items when you only have 10,000 units requires canceling 500 orders post-sale. This creates credit card chargeback penalties, PR outrage, and legal liabilities. Zero overselling must be an inviolable invariant.",
+  },
+];
+
+const FLASH_SALE_WHITEBOARD = [
+  { label: "1. Funnel Edge", color: "bg-rose-50 text-rose-700 border-rose-200" },
+  { label: "2. Queue Token", color: "bg-amber-50 text-amber-800 border-amber-200" },
+  { label: "3. Redis Lua", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { label: "4. Kafka Buffer", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { label: "5. DB Settlement", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  { label: "6. Reconciliation", color: "bg-purple-50 text-purple-700 border-purple-200" },
+];
 
 export function FlashSaleArticle() {
   const {
     meta,
     tocItems,
     scenarioMetrics,
-    difficultyFactors,
-    flashSalePhases,
     inventoryApproaches,
     keyTradeoffs,
     failureModes,
@@ -47,9 +71,9 @@ export function FlashSaleArticle() {
   } = article;
 
   return (
-    <article className="pt-4 pb-16 px-6">
+    <article className="pt-4 pb-16 px-4 sm:px-6">
       <div className="wide-width mx-auto">
-        {/* Breadcrumb — minimal vertical footprint */}
+        {/* Breadcrumb */}
         <Breadcrumb
           items={[
             { label: "Problems", href: "/" },
@@ -58,23 +82,23 @@ export function FlashSaleArticle() {
           ]}
         />
 
-        {/* Article header — 2-column clean layout */}
-        <header className="mb-10 pb-8 border-b border-slate-200">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left side: Metadata, Title, Subtitle, Tags, Annotation */}
+        {/* Editorial Header */}
+        <header className="mb-8 pb-8 border-b border-slate-200">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column */}
             <div className="lg:col-span-8">
-              <div className="flex flex-wrap items-center gap-2.5 mb-3">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
                 <CategoryBadge category={meta.category} size="md" />
-                <span className="font-sans font-semibold text-xs px-2.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-full">
+                <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded">
                   {meta.difficulty}
                 </span>
-                <span className="text-xs text-slate-400">·</span>
-                <span className="font-sans font-medium text-xs text-slate-500">
+                <span className="text-xs text-slate-300">·</span>
+                <span className="font-mono text-xs text-slate-500 font-medium">
                   ⏱️ {meta.readingTime}
                 </span>
               </div>
 
-              <h1 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight mb-3">
+              <h1 className="font-sans text-2xl sm:text-3xl lg:text-[2.25rem] font-bold text-slate-900 leading-[1.2] tracking-tight mb-3">
                 {meta.title}
               </h1>
 
@@ -82,18 +106,11 @@ export function FlashSaleArticle() {
                 &ldquo;{meta.subtitle}&rdquo;
               </p>
 
-              {/* Side / Subtitle Architectural takeaway banner */}
-              <div className="mb-4 inline-flex items-center gap-2 px-3.5 py-2 bg-blue-50/80 border border-blue-200/80 rounded-lg text-xs sm:text-sm text-blue-950 font-medium">
-                <span>
-                  This isn&apos;t an inventory decrement. It&apos;s an admission control &amp; reservation problem.
-                </span>
-              </div>
-
               <div className="flex flex-wrap gap-1.5">
                 {meta.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="font-sans text-xs font-semibold px-2.5 py-1 bg-white rounded border border-slate-200 text-slate-600 shadow-2xs"
+                    className="font-mono text-xs font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200"
                   >
                     #{tag}
                   </span>
@@ -101,38 +118,38 @@ export function FlashSaleArticle() {
               </div>
             </div>
 
-            {/* Right side: Architecture Context Card */}
+            {/* Right Column: Context Summary Card */}
             <div className="lg:col-span-4">
               <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
                 <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
-                  <span className="font-sans font-bold text-xs text-slate-500 uppercase tracking-wider">
-                    Architecture Context
+                  <span className="font-sans font-bold text-xs uppercase tracking-wider text-slate-500">
+                    Production Context
                   </span>
-                  <span className="font-sans font-bold text-xs px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded">
-                    Extreme Traffic
+                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded">
+                    Extreme Traffic Surge
                   </span>
                 </div>
 
                 <div className="space-y-2.5 text-xs font-sans">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500 font-medium">Event Scale</span>
-                    <span className="font-bold text-slate-900">10M Users · 10K Items</span>
+                    <span className="text-slate-500">Event Scale</span>
+                    <span className="font-bold text-slate-900">10M Users · 10K Units</span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500 font-medium">Peak Throughput</span>
+                    <span className="text-slate-500">Peak Burst</span>
                     <span className="font-semibold text-slate-900">~2,000,000 RPS (0–5s)</span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500 font-medium">Target SLA</span>
+                    <span className="text-slate-500">Target Invariant</span>
                     <span className="font-semibold text-emerald-600">Zero Overselling</span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500 font-medium">Primary Strategy</span>
-                    <span className="font-semibold text-slate-900">Virtual Queue + Redis Lua</span>
+                    <span className="text-slate-500">Primary Strategy</span>
+                    <span className="font-semibold text-slate-800">Virtual Queue + Redis Lua</span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500 font-medium">Admission Drip</span>
-                    <span className="font-semibold text-slate-900">10,000 users / sec</span>
+                    <span className="text-slate-500">Admission Rate</span>
+                    <span className="font-semibold text-blue-600">10,000 req / sec Drip</span>
                   </div>
                 </div>
               </div>
@@ -140,198 +157,180 @@ export function FlashSaleArticle() {
           </div>
         </header>
 
+        {/* 30-Second Executive Blueprint */}
         <ExecutiveBlueprint
           timeToRead="30-Second Architecture Blueprint"
-          bottleneck="10M users hit 1 inventory row at 12:00:00 PM (~2M RPS). Relational row locks (SELECT FOR UPDATE) serialize, starving connection pools in 5ms."
-          solution="Multi-Tier Admission Funnel: Edge Virtual Waiting Room sheds 99% ➔ In-memory atomic Redis Lua script decrements stock with 10m TTL ➔ Kafka buffers DB settlement."
-          goldenRule="Never allow user requests to touch relational storage during the sale; decouple in-memory reservation from asynchronous payment settlement."
+          bottleneck="10M concurrent users hit a single inventory counter at 12:00:00 PM (~2M RPS). Relational row locks serialize, starving database connection pools in 5ms."
+          solution="Multi-Tier Admission Funnel: Edge Virtual Waiting Room sheds 99.5% ➔ In-memory atomic Redis Lua script reserves stock with 10m TTL ➔ Kafka buffers DB settlement."
+          goldenRule="Never allow incoming traffic to touch relational storage during the sale; decouple in-memory reservation from asynchronous payment settlement."
           keyMetrics={[
             { label: "Available Stock", value: "Strictly 10,000 units (0 overselling)" },
             { label: "Edge Admission Drip", value: "10,000 req/s to backend" },
-            { label: "Reservation TTL", value: "10 minutes before auto-restock" },
+            { label: "Reservation TTL", value: "10 minutes auto-restock" },
           ]}
         />
 
-        {/* Main content area with sticky TOC */}
-        <div className="flex gap-10">
-          {/* Sticky TOC - desktop only */}
+        {/* Main Content Layout with Sticky TOC */}
+        <div className="flex gap-10 items-start">
+          {/* Sticky TOC */}
           <TableOfContents items={tocItems} />
 
-          {/* Article body */}
-          <div className="flex-1 min-w-0 prose-width">
-            {/* ── 01 — The Problem ─────────────────────────────── */}
-            <SectionHeader
-              number="01"
-              title="What are we trying to do?"
-              id="the-problem"
-              annotation="Scale: 10M users / 10K items"
-            />
-            <ProblemStatement>
-              <p>
-                An e-commerce retailer is launching a high-profile flash sale: <strong>10,000 discounted iPhone units</strong> made available to a waiting audience of <strong>10 million users</strong> at exactly 12:00:00 PM.
-              </p>
-              <p>
-                The business requirement is non-negotiable: <strong>zero overselling</strong>. Selling 10,001 units creates legal and reputation liabilities. The site must remain responsive — crashing under connection exhaustion is as bad as overselling.
-              </p>
-              <p className="font-sans text-base sm:text-lg text-slate-900 font-bold italic border-l-2 border-blue-500 pl-3 my-2">
-                &ldquo;When 10 million concurrent buyers hit one row, the database isn&apos;t slow — it&apos;s mathematically serialized.&rdquo;
-              </p>
-            </ProblemStatement>
-            <MetricTable rows={scenarioMetrics} sideNote="10,000 items sold in under 3 seconds. The challenge is 9.99M rejections without taking down the infrastructure." />
+          {/* Article Main Column */}
+          <div className="flex-1 min-w-0 prose-width space-y-10">
+            {/* ── 01 — Problem & Live Simulator ─────────────── */}
+            <section id="the-problem" className="scroll-mt-16">
+              <SectionHeader
+                number="01"
+                title="The Production Constraint & Workload Scale"
+                id="the-problem"
+                annotation="10M Users / 10K Items"
+              />
+              <ProblemStatement>
+                <p>
+                  An e-commerce retailer is launching a high-profile flash sale: <strong>10,000 discounted iPhone units</strong> made available to a waiting audience of <strong>10 million users</strong> at exactly 12:00:00 PM.
+                </p>
+                <p className="font-sans text-base text-slate-900 font-semibold mb-0">
+                  &ldquo;When 10 million concurrent buyers hit one row, the database isn&apos;t slow — it&apos;s mathematically serialized.&rdquo;
+                </p>
+              </ProblemStatement>
 
-            {/* ── 02 — The First Mistake ───────────────────────── */}
-            <SectionHeader
-              number="02"
-              title="What's the obvious approach, and why does it fail?"
-              id="the-mistake"
-            />
-            <p>
-              The most intuitive approach is writing directly to the relational database with an ACID transaction and row-level locking:
-            </p>
-            <CodeBlock
-              language="sql"
-              filename="naive-transaction.sql"
-              code={`BEGIN TRANSACTION;
+              <div className="my-5">
+                <MetricTable
+                  rows={scenarioMetrics}
+                  sideNote="10,000 items sold in under 3 seconds. The challenge is 9.99M rejections without taking down the infrastructure."
+                />
+              </div>
+
+              {/* Interactive Simulator */}
+              <FlashSaleLab />
+            </section>
+
+            {/* ── 02 — The Naive Row-Lock Trap ──────────────── */}
+            <section id="the-mistake" className="scroll-mt-16">
+              <SectionHeader
+                number="02"
+                title="The Obvious Mistake: Relational Row Locking"
+                id="the-mistake"
+              />
+              <p className="text-slate-700 leading-relaxed">
+                The most intuitive approach is writing directly to the relational database with an ACID transaction and row-level locking:
+              </p>
+              <CodeBlock
+                language="sql"
+                filename="naive-transaction.sql"
+                code={`BEGIN TRANSACTION;
 SELECT stock FROM items WHERE id = ? FOR UPDATE;
 -- if stock > 0:
 UPDATE items SET stock = stock - 1 WHERE id = ?;
 INSERT INTO orders (user_id, item_id) VALUES (?, ?);
 COMMIT;`}
-            />
-            <div className="my-6">
-              <ScrollReveal><NaiveFlashSaleDiagram /></ScrollReveal>
-            </div>
-            <FailureCallout title="Wait... lock contention and connection pool exhaustion occur in milliseconds!">
-              Under 2,000,000 incoming requests per second, every single database connection attempts to acquire an exclusive lock on the exact same row. Database connection pools (typically 50–200 connections) are saturated within 5 milliseconds, causing cascading 504 timeouts across every other service sharing the database.
-            </FailureCallout>
+              />
 
-            <InlineCheck
-              question="Architectural Gut Check · The Read Replica Illusion: Why can't we just scale read replicas to absorb the 2,000,000 RPS surge during the flash sale launch?"
-              options={[
-                {
-                  label: "Read replicas solve it, provided you balance incoming requests with round-robin DNS.",
-                  isCorrect: false,
-                  explanation: "Purchasing is fundamentally a WRITE operation! Every buy attempt decrements a shared inventory counter. Read replicas cannot process writes; all 2,000,000 RPS funnel straight to the single primary database writer.",
-                },
-                {
-                  label: "Replicas only scale reads; purchasing is write contention on a single shared row.",
-                  isCorrect: true,
-                  explanation: "Spot on! Ten million buyers are competing to update the exact same row. Read replicas do nothing for write locks. The primary database connection pool exhausts in 5 milliseconds, causing cascading 504 gateway timeouts.",
-                },
-                {
-                  label: "Read replicas cannot execute ACID transactions in PostgreSQL.",
-                  isCorrect: false,
-                  explanation: "Replicas can execute read-only transactions, but they are prohibited from executing row updates.",
-                },
-              ]}
-            />
+              <div className="my-6">
+                <ScrollReveal>
+                  <NaiveFlashSaleDiagram />
+                </ScrollReveal>
+              </div>
 
-            {/* ── 03 — Why it's hard ───────────────────────────── */}
-            <SectionHeader
-              number="03"
-              title="What actually makes a flash sale difficult?"
-              id="why-hard"
-            />
-            <p>
-              The technical difficulty of a flash sale is not handling high throughput in general — it is handling <strong>extreme write contention on a single shared counter</strong> while preventing duplicate claims:
-            </p>
-            <DecisionTable
-              headers={["Bottleneck", "Production Consequence"]}
-              rows={difficultyFactors}
-            />
+              <FailureCallout title="Wait... lock contention and connection pool exhaustion occur in milliseconds!">
+                Under 2,000,000 incoming requests per second, every single database connection attempts to acquire an exclusive lock on the exact same row. Database connection pools (typically 50–200 connections) are saturated within 5 milliseconds, causing cascading 504 timeouts across every other service sharing the database.
+              </FailureCallout>
 
-            {/* ── 04 — Mental Model ────────────────────────────── */}
-            <SectionHeader
-              number="04"
-              title="How should we think about this?"
-              id="mental-model"
-            />
-            <ScrollReveal><InsightCard title="The Mental Model">
-              A flash sale is an <strong>admission control problem</strong> followed by a <strong>reservation reconciliation problem</strong>.
-            </InsightCard></ScrollReveal>
-            <p>
-              Do not let 10 million buyers touch your transaction layer. First, shed 99.9% of traffic at the edge and queue layers using cryptographically signed admissions. Second, serialize the final 10,000 item allocations in memory using an atomic Lua script in Redis. Third, confirm orders asynchronously via decoupled queues.
-            </p>
+              <InlineCheck
+                question="Architectural Gut Check · The Read Replica Illusion: Why can't we just scale read replicas to absorb the 2,000,000 RPS surge during the flash sale launch?"
+                options={[
+                  {
+                    label: "Read replicas solve it, provided you balance incoming requests with round-robin DNS.",
+                    isCorrect: false,
+                    explanation: "Purchasing is fundamentally a WRITE operation! Every buy attempt decrements a shared inventory counter. Read replicas cannot process writes; all 2,000,000 RPS funnel straight to the single primary database writer.",
+                  },
+                  {
+                    label: "Replicas only scale reads; purchasing is write contention on a single shared row.",
+                    isCorrect: true,
+                    explanation: "Spot on! Ten million buyers are competing to update the exact same row. Read replicas do nothing for write locks. The primary database connection pool exhausts in 5 milliseconds, causing cascading 504 gateway timeouts.",
+                  },
+                  {
+                    label: "Read replicas cannot execute ACID transactions in PostgreSQL.",
+                    isCorrect: false,
+                    explanation: "Replicas can execute read-only transactions, but they are prohibited from executing row updates.",
+                  },
+                ]}
+              />
+            </section>
 
-            {/* ── 05 — Flash Sale Funnel Architecture ──────────── */}
-            <SectionHeader
-              number="05"
-              title="What does the recommended architecture look like?"
-              id="architecture"
-              annotation="Traffic Funnel Filter"
-            />
-            <p>
-              The diagram below illustrates the progressive filtering funnel. Each layer sheds an order of magnitude of pressure before requests ever touch relational storage:
-            </p>
-            <div className="my-6">
-              <ScrollReveal><FlashSaleArchitectureDiagram /></ScrollReveal>
-            </div>
-            <p>
-              Traffic is funneled through 5 distinct protection barriers: Edge WAF, Virtual Waiting Room, In-memory Lua stock reservation, Kafka ordering buffer, and batched background Postgres settlement.
-            </p>
+            {/* ── 03 — Core Mental Model ────────────────────── */}
+            <section id="mental-model" className="scroll-mt-16">
+              <SectionHeader
+                number="03"
+                title="The Core Mental Model: Admission First, Settle Later"
+                id="mental-model"
+              />
+              <ScrollReveal>
+                <InsightCard title="The Architectural Invariant">
+                  A flash sale is an <strong>admission control problem</strong> followed by a <strong>reservation reconciliation problem</strong>.
+                </InsightCard>
+              </ScrollReveal>
+              <p className="text-slate-700 leading-relaxed">
+                Do not let 10 million buyers touch your transaction layer. First, shed 99.5% of traffic at the edge and queue layers using cryptographically signed admission tokens. Second, serialize the final 10,000 item allocations in memory using an atomic Lua script in Redis. Third, confirm orders asynchronously via decoupled Kafka queues.
+              </p>
+            </section>
 
-            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">
-              Key Architectural Strategies
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-              {saleStrategies.map((s) => (
-                <div
-                  key={s.name}
-                  className="p-4 bg-white border border-slate-200 rounded-xl shadow-xs hover:border-blue-200 hover:shadow-sm transition-all"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                    <h4 className="font-sans text-base sm:text-lg font-bold text-slate-900 m-0">{s.name}</h4>
+            {/* ── 04 — Funnel Pipeline & Lua Gate ───────────── */}
+            <section id="architecture" className="scroll-mt-16">
+              <SectionHeader
+                number="04"
+                title="Funnel Architecture & Atomic Lua Reservation"
+                id="architecture"
+                annotation="Zero Overselling Pipeline"
+              />
+              <p className="text-slate-700 leading-relaxed mb-4">
+                The diagram below illustrates the progressive filtering funnel. Each layer sheds an order of magnitude of pressure before requests ever touch relational storage:
+              </p>
+
+              <div className="my-6">
+                <ScrollReveal>
+                  <FlashSaleArchitectureDiagram />
+                </ScrollReveal>
+              </div>
+
+              {/* 4 Clean Strategy Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+                {saleStrategies.map((s) => (
+                  <div
+                    key={s.name}
+                    className="p-4 bg-white border border-slate-200 rounded-xl shadow-xs"
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                      <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 m-0">
+                        {s.name}
+                      </h4>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-0 font-sans">
+                      {s.description}
+                    </p>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-0 font-sans">{s.description}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Interactive Flash Sale Simulator */}
-            <FlashSaleLab />
+              {/* 10-Minute Hold Lifecycle */}
+              <div className="my-6">
+                <ScrollReveal>
+                  <ReservationFlowDiagram />
+                </ScrollReveal>
+              </div>
 
-            {/* ── 06 — Phases ──────────────────────────────────── */}
-            <SectionHeader number="06" title="What are the flash sale phases?" id="phases" />
-            <p>
-              A flash sale execution spans multiple hours before and after the 30-second buying window:
-            </p>
-            <ScrollReveal><Timeline phases={flashSalePhases} /></ScrollReveal>
+              {/* Concurrency Interleaving & Lua Solution */}
+              <div className="my-6">
+                <ScrollReveal>
+                  <InventoryRaceDiagram />
+                </ScrollReveal>
+              </div>
 
-            <h3 className="font-sans text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-3">
-              How does the 10-Minute Reservation Lifecycle work?
-            </h3>
-            <div className="my-6">
-              <ScrollReveal><ReservationFlowDiagram /></ScrollReveal>
-            </div>
-            <p>
-              When a user successfully decrements the Redis counter, their stock is <strong>temporarily reserved with a 10-minute TTL</strong>. If the user completes payment within 10 minutes, the order is permanently confirmed. If the user abandons or payment fails, background reconciliation restores the item to the stock pool.
-            </p>
-
-            {/* ── 07 — Inventory Approaches & Race Conditions ───── */}
-            <SectionHeader
-              number="07"
-              title="How do you guarantee zero overselling under concurrency?"
-              id="inventory"
-              annotation="Atomic Lua Guarantee"
-            />
-            <p>
-              When multiple requests arrive concurrently, thread interleaving in naive implementations creates race conditions that result in negative stock. The comparison below illustrates why atomic Redis Lua script execution is mandatory:
-            </p>
-            <div className="my-6">
-              <ScrollReveal><InventoryRaceDiagram /></ScrollReveal>
-            </div>
-
-            <h4 className="font-sans text-lg sm:text-xl font-bold text-slate-900 mt-6 mb-2">
-              The Atomic Lua Script: Zero Interleaving, Zero Overselling
-            </h4>
-            <p>
-              Because Redis runs a single-threaded event loop, an entire Lua script executes as an indivisible atomic instruction. No other command can read or modify the counter mid-script:
-            </p>
-            <CodeBlock
-              language="lua"
-              filename="redis-atomic-gate.lua"
-              code={`-- KEYS[1]: 'stock:iphone_16'
+              <CodeBlock
+                language="lua"
+                filename="redis-atomic-gate.lua"
+                code={`-- KEYS[1]: 'stock:iphone_16'
 -- KEYS[2]: 'reservation:user:' .. user_id
 -- ARGV[1]: user_id
 -- ARGV[2]: ttl_seconds (600 = 10 minutes)
@@ -350,236 +349,114 @@ if current_stock and current_stock > 0 then
 else
     return 0 -- Sold out: shed request immediately
 end`}
-            />
+              />
 
-            <DecisionTable
-              headers={["Approach", "Advantage", "Trade-off / Risk"]}
-              rows={inventoryApproaches}
-            />
+              <InlineCheck
+                question="Architectural Gut Check · The Redis Failover Trap: Redis handles the 10,000 decrements in memory. If your Redis Primary crashes and Sentinel promotes a replica, what risk emerges?"
+                options={[
+                  {
+                    label: "No risk — Redis replication is synchronous and guarantees zero data loss.",
+                    isCorrect: false,
+                    explanation: "Standard Redis replication is asynchronous for maximum write speed. If the primary crashes before in-flight replication packets reach the replica, the promoted replica will still show available stock, leading to duplicate allocations and overselling.",
+                  },
+                  {
+                    label: "Asynchronous replication lag between master and replica can resurrect sold stock, causing overselling.",
+                    isCorrect: true,
+                    explanation: "Spot on! If the primary decrements from 1 to 0 and crashes before replicating to the standby, the replica is promoted with stock = 1. A new buyer claims that unit, resulting in 10,001 sold units. Real production systems maintain a safety buffer (e.g. allocate only 9,800 units) or use Redis WAIT.",
+                  },
+                  {
+                    label: "Redis Sentinel locks all client connections until the primary reboots.",
+                    isCorrect: false,
+                    explanation: "Sentinel promotes the replica to become the new primary immediately, without waiting for the crashed node to reboot.",
+                  },
+                ]}
+              />
+            </section>
 
-            <InlineCheck
-              question="Architectural Gut Check · The Redis Failover Trap: Redis handles the 10,000 decrements in memory. If your Redis Primary crashes and Sentinel promotes a replica, what risk emerges?"
-              options={[
-                {
-                  label: "No risk — Redis replication is synchronous and guarantees zero data loss.",
-                  isCorrect: false,
-                  explanation: "Standard Redis replication is asynchronous for maximum write speed. If the primary crashes before in-flight replication packets reach the replica, the promoted replica will still show available stock, leading to duplicate allocations and overselling.",
-                },
-                {
-                  label: "Asynchronous replication lag between master and replica can resurrect sold stock, causing overselling.",
-                  isCorrect: true,
-                  explanation: "Spot on! If the primary decrements from 1 to 0 and crashes before replicating to the standby, the replica is promoted with stock = 1. A new buyer claims that unit, resulting in 10,001 sold units. Real production systems maintain a safety buffer (e.g. allocate only 9,800 units) or use Redis WAIT.",
-                },
-                {
-                  label: "Redis Sentinel locks all client connections until the primary reboots.",
-                  isCorrect: false,
-                  explanation: "Sentinel promotes the replica to become the new primary immediately, without waiting for the crashed node to reboot.",
-                },
-              ]}
-            />
-
-            {/* ── 08 — Trade-offs ──────────────────────────────── */}
-            <SectionHeader
-              number="08"
-              title="What are the key trade-offs?"
-              id="trade-offs"
-            />
-            <p>
-              Every engineering decision in high-traffic architecture trades one guarantee for another. Understanding what you give up is what defines senior judgment:
-            </p>
-            <DecisionTable
-              headers={["Decision", "Benefit", "Cost / Risk"]}
-              rows={keyTradeoffs}
-            />
-
-            {/* ── 09 — Failure Modes ───────────────────────────── */}
-            <SectionHeader
-              number="09"
-              title="What can go wrong?"
-              id="failure-modes"
-              annotation="Production Traps"
-            />
-            <p>
-              Flash sale outages typically arise from unmonitored queues, memory eviction policies, or edge bypasses:
-            </p>
-            <DecisionTable
-              headers={["Failure Mode", "Detection Signal", "Mitigation & Response"]}
-              rows={failureModes}
-            />
-
-            {/* ── 10 — What happens at 10× & What Breaks Next? ──── */}
-            <SectionHeader
-              number="10"
-              title="What happens if the scale becomes 10× larger (100M users)?"
-              id="ten-x"
-            />
-            <p>
-              At 100M users and 100,000 units, even a single Redis cluster primary faces physical network NIC saturation:
-            </p>
-            <InsightCard title="10× Scale Trap">
-              At 100M global users, single-instance in-memory counters saturate their network interfaces (~200K packets/sec). You must shard inventory or partition tokens across edge clusters.
-            </InsightCard>
-            <ul className="space-y-2 my-4">
-              {tenXProblems.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm sm:text-base text-slate-700">
-                  <span className="font-sans text-sm text-blue-600 font-bold shrink-0 select-none mt-0.5">▸</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-
-            {/* Signature Recurring What Breaks Next Element */}
-            <ScrollReveal><WhatBreaksNext
-              solved="Zero overselling achieved via single-cluster Redis Lua & Kafka"
-              nextIssue="Multi-Region Split-Brain & Global Inventory Partitioning"
-              steps={[
-                "100M Global Users Across 3 Continents",
-                "Cross-Region WAN Replication Latency (>120ms)",
-                "Local Edge Stock Partition Desynchronization",
-                "Stranded Unsold Units in Secondary Regions",
-              ]}
-              explanation="Partitioning 10,000 units across US, EU, and APAC (e.g. 5K/3K/2K) solves the single Redis NIC limit, but causes units to sit unsold in one region while another region sells out in 200ms. Dynamic cross-region stock stealing introduces distributed locking latency."
-            /></ScrollReveal>
-
-            {/* ── 11 — What to avoid ───────────────────────────── */}
-            <SectionHeader number="11" title="What would I avoid: the 3 classic flash sale traps" id="avoid" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
-              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
-                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 01</span>
-                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not rely on Kubernetes HPA?&rdquo;</h4>
-                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
-                  Kubernetes HPA takes 45–90 seconds to observe CPU metrics and spin up new pod containers. The 10,000 iPhones sell out in 3 seconds. The spike is completely over before the first new pod reaches ready status.
-                </p>
-              </div>
-
-              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
-                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 02</span>
-                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not process payments first?&rdquo;</h4>
-                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
-                  External payment gateways (Stripe, Adyen) take 1,500–3,000ms per transaction. Subjecting payment gateways to 2,000,000 concurrent API calls triggers rate limits and causes thousands of cards to be billed for out-of-stock items.
-                </p>
-              </div>
-
-              <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-xl shadow-2xs">
-                <span className="font-mono text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">TRAP 03</span>
-                <h4 className="font-sans text-sm sm:text-base font-bold text-slate-900 mb-1.5">&ldquo;Why not let stock go negative?&rdquo;</h4>
-                <p className="font-sans text-xs sm:text-sm text-slate-600 leading-relaxed mb-0">
-                  Selling 10,500 items when you only have 10,000 units requires canceling 500 orders post-sale. This creates credit card chargeback fees, social media outrage, and severe reputational damage. Zero overselling must be an inviolable invariant.
-                </p>
-              </div>
-            </div>
-
-            <div className="my-4 p-4 sm:p-5 bg-rose-50/40 border border-rose-200 rounded-xl shadow-2xs">
-              <p className="font-sans font-bold text-sm sm:text-base text-rose-900 mb-2 flex items-center gap-2">
-                <span>⚠️ Anti-patterns that guarantee production outages:</span>
+            {/* ── 05 — Trade-offs, Runbook & Traps Hub ──────── */}
+            <section id="tradeoffs-hub" className="scroll-mt-16">
+              <SectionHeader
+                number="05"
+                title="Trade-offs, Incident Runbook & Production Traps"
+                id="tradeoffs-hub"
+                annotation="Decision Matrix"
+              />
+              <p className="text-slate-700 leading-relaxed mb-4">
+                Compare concurrency primitives, study the top failure modes under load, and review the anti-patterns that take down high-volume events:
               </p>
-              <ul className="space-y-1.5 pl-0 list-none m-0">
-                {avoidList.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-slate-700">
-                    <span className="text-rose-600 font-bold shrink-0 select-none">✗</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
 
-            {/* ── 12 — Interview Answer ────────────────────────── */}
-            <SectionHeader
-              number="12"
-              title="How would I explain this in an interview?"
-              id="interview"
-              annotation="Interviewer's Notebook"
-            />
-            <p>
-              A staff-level interview response structures the problem as an admission filter before discussing storage primitives:
-            </p>
-            <div className="my-4 p-5 sm:p-6 bg-blue-50/50 border border-blue-200 rounded-xl shadow-xs">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-blue-200/60">
-                <span className="font-sans font-bold text-sm sm:text-base text-blue-950">
-                  🎙️ Candidate 30–60 Second Synthesis:
-                </span>
-              </div>
-              <div className="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-sans">
-                {interviewAnswer}
-              </div>
-            </div>
-
-            {/* Whiteboard reasoning chain */}
-            <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl my-4 shadow-2xs">
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">
-                Whiteboard Reasoning Chain:
-              </span>
-              <div className="flex flex-wrap items-center gap-2">
-                {[
-                  { label: "1. Funnel Edge" },
-                  { label: "2. Queue Token" },
-                  { label: "3. Redis Lua" },
-                  { label: "4. Kafka Buffer" },
-                  { label: "5. DB Settlement" },
-                  { label: "6. Reconciliation" },
-                ].map((step, idx, arr) => (
-                  <span key={step.label} className="inline-flex items-center gap-1.5">
-                    <span className="font-sans font-semibold text-xs px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 shadow-2xs">
-                      {step.label}
-                    </span>
-                    {idx < arr.length - 1 && (
-                      <span className="text-slate-400 select-none text-xs">→</span>
-                    )}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* ── 13 — Level Expectations ──────────────────────── */}
-            <SectionHeader
-              number="13"
-              title="What is the interviewer testing at each level?"
-              id="expectations"
-            />
-            <p>
-              Different levels are evaluated on whether they treat this as a caching problem or an organizational traffic defense system:
-            </p>
-            <LevelExpectation levels={levelExpectations} />
-
-            {/* ── 14 — Interviewer Follow-ups ──────────────────── */}
-            <SectionHeader
-              number="14"
-              title="What follow-up questions should I expect?"
-              id="follow-ups"
-            />
-            <p>
-              Interviewers use these follow-ups to test if you understand edge cases like payment webhook delays and Lua script deadlocks:
-            </p>
-            <div className="my-4 bg-white border border-slate-200 rounded-xl px-5 shadow-xs divide-y divide-slate-100">
-              {followUpQuestions.map((qa) => (
-                <ExpandableQuestion
-                  key={qa.question}
-                  question={qa.question}
-                  answer={qa.answer}
-                />
-              ))}
-            </div>
-
-            {article.judgmentQuiz && (
               <ScrollReveal>
-                <JudgmentQuiz
-                  title="Test Your Judgment: The 10M-User Flash Sale"
-                  questions={article.judgmentQuiz}
+                <TradeoffDiagnosticsHub
+                  approachesTitle="1. Inventory Concurrency Approches"
+                  approachesHeaders={["Approach", "Advantage", "Trade-off / Risk"]}
+                  approachesRows={inventoryApproaches}
+                  keyTradeoffsTitle="2. Key Architectural Trade-offs"
+                  keyTradeoffsHeaders={["Decision", "Benefit", "Cost / Risk"]}
+                  keyTradeoffsRows={keyTradeoffs}
+                  failureModesTitle="Flash Sale Failure Modes & Operational Responses"
+                  failureModesHeaders={["Failure Mode", "Detection Signal", "Mitigation & Response"]}
+                  failureModesRows={failureModes}
+                  trapsTitle="The 3 Classic Flash Sale Traps"
+                  traps={FLASH_SALE_TRAPS}
+                  tenXTitle="What Happens at 10× Scale (100M Users / 100K Units)?"
+                  tenXProblems={tenXProblems}
+                  avoidTitle="⚠️ Anti-patterns that guarantee production outages:"
+                  avoidList={avoidList}
                 />
               </ScrollReveal>
+            </section>
+
+            {/* ── 06 — Staff+ Interview & Career Rubric ─────── */}
+            <section id="career-rubric" className="scroll-mt-16">
+              <SectionHeader
+                number="06"
+                title="Engineering Level Rubric & Interview Synthesis"
+                id="career-rubric"
+                annotation="L4 to Staff Evaluation"
+              />
+              <p className="text-slate-700 leading-relaxed mb-4">
+                How interviewers evaluate high-traffic system design across engineering levels, complete with verbal synthesis and follow-up probing questions:
+              </p>
+
+              <ScrollReveal>
+                <CareerRubricHub
+                  interviewAnswer={interviewAnswer}
+                  levelExpectations={levelExpectations}
+                  followUpQuestions={followUpQuestions}
+                  whiteboardChain={FLASH_SALE_WHITEBOARD}
+                />
+              </ScrollReveal>
+            </section>
+
+            {/* ── 07 — Judgment Quiz ───────────────────────── */}
+            {article.judgmentQuiz && (
+              <section id="judgment-quiz" className="scroll-mt-16">
+                <SectionHeader
+                  number="07"
+                  title="Test Your Judgment: The 10M-User Flash Sale"
+                  id="judgment-quiz"
+                />
+                <ScrollReveal>
+                  <JudgmentQuiz
+                    title="Flash Sale Concurrency Judgment Test"
+                    questions={article.judgmentQuiz}
+                  />
+                </ScrollReveal>
+              </section>
             )}
 
-            {/* ── 15 — Related Problems ────────────────────────── */}
-            <SectionHeader
-              number="15"
-              title="What should I understand next?"
-              id="related"
-            />
-            <p>
-              High-concurrency flash sales connect closely to idempotency, distributed <TermTooltip termKey="rate limiting">rate limiting</TermTooltip>, and backpressure:
-            </p>
-            <RelatedTopics topics={relatedTopics} />
-            <ArticleNav currentId="flash-sale" />
+            {/* ── 08 — Related Architectures ───────────────── */}
+            <section id="related" className="scroll-mt-16 pt-4">
+              <SectionHeader
+                number="08"
+                title="Related System Architecture Deep Dives"
+                id="related"
+              />
+              <RelatedTopics topics={relatedTopics} />
+              <div className="mt-8">
+                <ArticleNav currentId="flash-sale" />
+              </div>
+            </section>
           </div>
         </div>
       </div>
