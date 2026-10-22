@@ -169,3 +169,7 @@ The header’s sun/moon button switches light and dark mode. The first visit fol
 Shared editorial styles use semantic `--theme-*` colors with their original light colors as fallbacks. Dark colors and compatibility rules for the existing Tailwind and SVG diagrams live in `app/theme.css`. Add theme-aware colors when introducing new surfaces or diagrams.
 
 Category accents are defined in `app/category-colors.css`. Cards, category links, and the five shared-shell articles use `data-category` to inherit a matching accent, background wash, and border color. The palette supplies separate light and dark values. Article headings, diagrams, workbenches, runbooks, tables, and quiz invitations reuse those tokens while body text stays neutral.
+
+## Website icons
+
+`app/icon.svg` is the editable layered-architecture mark, using cream and sage on a dark green background. Next.js automatically supplies it as the scalable browser icon, alongside `app/favicon.ico` (16, 32, 48, and 64 px) and `app/apple-icon.png` (180 px, full-bleed background for iOS masking). After editing the SVG, run `node scripts/generate-icons.mjs` to regenerate the raster formats using the installed Sharp package.

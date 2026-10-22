@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <title>Engineering Judgment</title>
+  <rect x="1" y="1" width="62" height="62" rx="14" fill="#263D35" stroke="#81A38D" stroke-width="2"/>
+  <path d="M32 12 12 22 32 32 52 22 32 12Z" fill="#EDF5EE"/>
+  <path d="m12 32 20 10 20-10" stroke="#A7D0B6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m12 42 20 10 20-10" stroke="#EDF5EE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
