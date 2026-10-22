@@ -1,6 +1,7 @@
+import { productionCatalog } from "./production-catalog";
 import type { TopicMeta } from "@/data/types";
 
-export type TopicId = "database-migration" | "flash-sale" | "hot-partition" | "transactional-outbox";
+export type TopicId = "database-migration" | "flash-sale" | "hot-partition" | "transactional-outbox" | "idempotent-api" | "poison-messages" | "retry-storm" | "connection-pool" | "schema-evolution";
 
 export type TopicCatalogEntry = {
   id: TopicId;
@@ -78,6 +79,7 @@ export const topicCatalog: readonly TopicCatalogEntry[] = [
       readingTime: "12 min read",
     },
   },
+  ...productionCatalog,
 ];
 
 export function getTopicById(id: TopicId) {

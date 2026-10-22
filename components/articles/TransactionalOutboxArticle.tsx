@@ -84,8 +84,8 @@ const OUTBOX_AVOID = [
 ];
 
 export function TransactionalOutboxArticle() {
-  const relatedTopics = ["database-migration", "flash-sale"].map((id) => {
-    const topic = getTopicById(id as "database-migration" | "flash-sale");
+  const relatedTopics = (["database-migration", "flash-sale", "idempotent-api", "poison-messages"] as const).map((id) => {
+    const topic = getTopicById(id);
     return { title: topic.meta.title, category: topic.meta.category, href: topic.href };
   });
 

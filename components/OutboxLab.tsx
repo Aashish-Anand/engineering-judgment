@@ -64,7 +64,7 @@ export function OutboxLab() {
         <div>
           <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
             <span>Primary DB Write Throughput:</span>
-            <span className="font-mono text-blue-600 font-bold">{wps.toLocaleString()} orders/sec</span>
+            <span className="font-mono text-blue-600 font-bold">{wps.toLocaleString("en-US")} orders/sec</span>
           </div>
           <input
             type="range"
@@ -191,7 +191,7 @@ export function OutboxLab() {
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
           <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Relay Drain Capacity</span>
           <span className={`font-sans text-base sm:text-lg font-extrabold ${isBacklogged ? "text-red-700" : "text-blue-700"}`}>
-            {maxRelayCapacityWps.toLocaleString()} WPS
+            {maxRelayCapacityWps.toLocaleString("en-US")} WPS
           </span>
           <p className="text-[11px] text-slate-500 m-0 mt-0.5">{isBacklogged ? "⚠️ Outbox backlog growing" : "Sufficient headroom"}</p>
         </div>
@@ -199,7 +199,7 @@ export function OutboxLab() {
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
           <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Duplicates Intercepted</span>
           <span className="font-sans text-base sm:text-lg font-extrabold text-amber-700">
-            {duplicateEventsPerMin.toLocaleString()} / min
+            {duplicateEventsPerMin.toLocaleString("en-US")} / min
           </span>
           <p className="text-[11px] text-slate-500 m-0 mt-0.5">Deduplicated at consumer</p>
         </div>
@@ -218,7 +218,7 @@ export function OutboxLab() {
         <strong className="text-blue-900 font-bold block mb-1">💡 Architecture Synthesis:</strong>
         {relayType === "poll" ? (
           <>
-            With <strong>Polling Relay (SKIP LOCKED)</strong>, {workerCount} workers drain up to {maxRelayCapacityWps.toLocaleString()} WPS. Because the outbox query uses a partial index (<code>WHERE published_at IS NULL</code>), table scans remain fast. Consumers must still store idempotency keys to drop the ~{duplicateEventsPerMin.toLocaleString()} duplicate re-deliveries every minute.
+            With <strong>Polling Relay (SKIP LOCKED)</strong>, {workerCount} workers drain up to {maxRelayCapacityWps.toLocaleString("en-US")} WPS. Because the outbox query uses a partial index (<code>WHERE published_at IS NULL</code>), table scans remain fast. Consumers must still store idempotency keys to drop the ~{duplicateEventsPerMin.toLocaleString("en-US")} duplicate re-deliveries every minute.
           </>
         ) : (
           <>

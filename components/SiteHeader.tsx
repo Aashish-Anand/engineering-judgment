@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandPalette } from "@/components/CommandPalette";
 
 const navItems = [
-  { label: "Blueprints", href: "/#problems" },
+  { label: "Library", href: "/library" },
   { label: "Workbench", href: "/#labs" },
   { label: "About", href: "/#about" },
 ];
@@ -22,7 +23,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all shadow-2xs">
-      <div className="page-shell h-18 flex items-center justify-between gap-4">
+      <div className="page-shell site-header-row h-18 flex items-center justify-between gap-4">
         {/* Left: Clean Brand Identity */}
         <Link
           href="/"
@@ -72,6 +73,7 @@ export function SiteHeader() {
 
         {/* Right: Search & Mobile Toggle */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <ThemeToggle />
           <CommandPalette />
 
           {/* Mobile Menu Button */}

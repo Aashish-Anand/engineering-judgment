@@ -12,12 +12,17 @@ The recurring reasoning chain is:
 
 ## Current Scope
 
-Four complete topics are available:
+Nine complete topics are available:
 
 1. Safely migrating a high-traffic production database
 2. Surviving a 10-million-user flash sale for 10,000 items
 3. Fixing a hot partition receiving 70% of traffic after a hypothetical Taylor Swift post
 4. Publishing an event only if the database transaction succeeds (transactional outbox)
+5. Retrying a payment safely after an ambiguous timeout
+6. Handling poison messages with durable quarantine and controlled replay
+7. Stopping retry storms and cascading dependency failures
+8. Diagnosing database connection pool exhaustion
+9. Evolving database schemas across mixed application versions
 
 The homepage advertises several additional categories and problems, but those are currently placeholders.
 
@@ -134,3 +139,22 @@ Latest full rewrite verification: lint, all eight tests, TypeScript, diff whites
 Content should be understandable from junior to senior level. Introduce ideas with plain language and concrete examples; define terms on first use. The user prefers the continuous, substantive walkthrough structure of Database Migration and Flash Sale over many short lessons with the essential reasoning hidden in expandable notes. The hot-partition article was reworked into the same 15-section arc: scenario, failed first fix, diagnosis, mental model, architecture, incident response, worked reaction design, trade-offs, failures, next bottleneck, interview guidance, and follow-ups. Core DB request-gate, reaction-key, retry, migration, and comment-paging examples are inline. The interactive lab uses isolated read-only/write-only teaching workloads, not mixed-operation production benchmarks. Use “partition” or “DB node,” not vague “destination” or “traffic lane”; distinguish post-like actions from the verb “like.”
 
 Preserve the project's strongest characteristic: it is opinionated editorial teaching material, not a generic component showcase. Refactors should make new topics easier to add without flattening the topic-specific reasoning or diagrams.
+
+
+## Content expansion — 2026-10-22
+
+Added five blueprints with 15-section walkthroughs, worked code examples, architecture flows, production runbooks, interactive labs, primary references, and five questions each. New articles use a shared server-rendered shell, with topic-specific prose in `data/topics/production-blueprints.ts` and worked examples in `data/topics/blueprint-examples.ts`. Registered discovery, quizzes, navigation, and previously unavailable related-topic links. Existing four article layouts remain in place. No commit or push requested.
+
+Validation: 29 tests, ESLint, TypeScript, and production webpack build pass. Reviewed desktop and mobile article layouts and exercised workbench controls and a dedicated quiz in the browser. Google Fonts required a network-enabled build initially; subsequent builds used the cache.
+
+## Scalable navigation — 2026-10-22
+
+Implemented a six-card curated homepage, category links, and a dedicated `/library` with URL-backed search/filter/sort/page state and 12-item pagination. Replaced the shared TableOfContents with a collapsible desktop navigator and native mobile dialog, offering current-article sections and category/search access to all articles. Header/footer link to Library; Cmd+K shares symptom matching. Production metadata is separated from prose to keep client navigation imports small. Search and 101-item pagination are covered by regression tests.
+
+## Appearance toggle — 2026-10-22
+
+Added a header sun/moon toggle, OS preference default, local-storage persistence, and cross-tab synchronization. The root layout initializes the theme before hydration using Next Script. Shared CSS now uses semantic theme variables with original light colors as fallbacks; `app/theme.css` supplies dark surfaces, utility compatibility, and SVG text/fill colors. Print keeps the light palette. Theme initialization has four regression tests, including blocked storage and system changes. Legacy simulator number formatting now specifies en-US so server/browser locale differences cannot trigger hydration recovery that resets appearance. Verified desktop and narrow mobile layouts, reload persistence, library, article sidebar, migration diagrams, and quiz feedback in the browser.
+
+## Category color refinement — 2026-10-23
+
+Added category-specific accent/wash/border tokens for both themes. Homepage and full-library cards now have subtle tinted backgrounds, colored category badges, and edge accents; category links and search controls also have restrained color. Applied the same identities to all five new articles through their shared shell: framed headers, numbered section markers, diagrams, labs, runbooks, tables, interview quotes, engineering-level cards, and quiz invitations. Checked light/dark desktop layouts and mobile article wrapping. Category labels retain at least 4.5:1 contrast against their washes in both palettes.

@@ -313,8 +313,8 @@ export const relatedTopics: RelatedTopicData[] = [
   { title: "Cache Stampede Prevention",   category: "PERFORMANCE" },
   { title: "Hot Partitions",              category: "DATA" },
   { title: "Backpressure",                category: "MESSAGING" },
-  { title: "Circuit Breakers",            category: "RELIABILITY" },
-  { title: "Idempotent Write APIs",       category: "CORRECTNESS" },
+  { title: "Circuit Breakers",            category: "RELIABILITY", href: "/topics/reliability/stop-retry-storms" },
+  { title: "Idempotent Write APIs",       category: "CORRECTNESS", href: "/topics/correctness/retry-payments-safely" },
   { title: "Graceful Degradation",        category: "RELIABILITY" },
 ];
 

@@ -10,10 +10,10 @@ Constraint → Bottleneck → Decision → Trade-off → Failure → What breaks
 
 ## What’s included
 
-- Four published architecture blueprints with explanations, diagrams, code examples, incident runbooks, and engineering-level rubrics.
+- Nine published architecture blueprints with explanations, diagrams, code examples, incident runbooks, and engineering-level rubrics.
 - Interactive workbenches for exploring database cutover, traffic spikes, inventory reservations, and hot partitions. Their numbers are illustrative models, not production benchmarks.
-- Seven inline concept checks embedded in the articles. Select a response and explicitly check it to reveal the reasoning; these checkpoints are unscored.
-- A dedicated five-scenario quiz for each article: 20 scenarios in total, with explanations for every option, progress, a scored review, and retry.
+- Twelve inline concept checks embedded in the articles. Select a response and explicitly check it to reveal the reasoning; these checkpoints are unscored.
+- A dedicated five-scenario quiz for each article: 45 scenarios in total, with explanations for every option, progress, a scored review, and retry.
 - Quiz entry points near the end of each article and a dismissible invitation after sufficient reading progress.
 - Search with `Cmd+K` or `Ctrl+K`, article navigation, responsive tables of contents, reading progress, and back-to-top controls.
 - Static article and quiz routes, canonical metadata, a sitemap, and robots metadata.
@@ -28,6 +28,16 @@ These links use the local development server at `http://localhost:3000`.
 | [Migrate a production database](http://localhost:3000/topics/database/safely-migrate-production-database) | Snapshot, CDC, validation, controlled cutover, and rollback after new writes. | [Quiz](http://localhost:3000/topics/database/safely-migrate-production-database/quiz) |
 | [Survive a flash sale](http://localhost:3000/topics/traffic/survive-flash-sale) | Admission control, atomic inventory reservations, asynchronous settlement, and idempotent payments. | [Quiz](http://localhost:3000/topics/traffic/survive-flash-sale/quiz) |
 | [Use a transactional outbox](http://localhost:3000/topics/correctness/transactional-outbox) | Commit state and event intent together, relay reliably, and handle duplicate delivery. | [Quiz](http://localhost:3000/topics/correctness/transactional-outbox/quiz) |
+
+Five additional blueprints are available, each with an interactive failure workbench and five-scenario quiz:
+
+- [Retry payments safely](http://localhost:3000/topics/correctness/retry-payments-safely)
+- [Handle poison messages](http://localhost:3000/topics/messaging/handle-poison-messages)
+- [Stop retry storms](http://localhost:3000/topics/reliability/stop-retry-storms)
+- [Diagnose connection pool exhaustion](http://localhost:3000/topics/performance/database-connection-pool-exhaustion)
+- [Change schemas without downtime](http://localhost:3000/topics/deployment/change-schema-without-downtime)
+
+Their topic-specific prose, runbooks, trade-offs, references, and questions live in `data/topics/production-blueprints.ts`. Worked code examples live in `data/topics/blueprint-examples.ts`; `ProductionBlueprintArticle` supplies their shared reading layout. `ProductionPressureLab` provides the controls, with deterministic teaching calculations in `data/pressure-models.ts`.
 
 Each quiz lives at its article’s URL with `/quiz` appended.
 
@@ -143,3 +153,19 @@ Before changing Next.js code, follow `AGENTS.md` and read the relevant version-s
 ## License
 
 MIT © [Aashish Anand](https://github.com/Aashish-Anand)
+
+## Library navigation
+
+The homepage shows six explicitly curated blueprints from `featuredIds` in `data/library.ts`. The `/library` page searches titles, summaries, tags, topic identifiers, prompts, and curated symptom aliases. It supports category filters, recommended/newest/title sorting, and 12 results per page. Query, category, sort, and page are encoded in the URL; browser Back returns to the filtered results.
+
+Every article shares a collapsible desktop navigator with “This article” and “Library” tabs. The library tab groups articles by category, expands the current category, highlights the current article, and searches all categories. Mobile readers use a modal drawer with the same controls. Escape closes the drawer; native dialog behavior contains keyboard focus and restores it to the trigger.
+
+When adding a topic, also add its compact title, symptom aliases, and unique increasing `addedOrder` to `libraryDetails`. The newest sort uses that editorial addition order, not a claimed publication date. Categories and counts derive from the catalog. For the five shared-shell blueprints, metadata is in `data/topics/production-catalog.ts`; article prose stays in `production-blueprints.ts` so navigation does not import all article content. Featured selection is explicit and remains capped at six.
+
+## Appearance
+
+The header’s sun/moon button switches light and dark mode. The first visit follows the operating system; an explicit choice is saved under `engineering-judgment-theme` in local storage and synchronized across open tabs. The root layout applies the preference before the first paint. If storage is unavailable, toggling still works for the current page. Print styling retains the light palette.
+
+Shared editorial styles use semantic `--theme-*` colors with their original light colors as fallbacks. Dark colors and compatibility rules for the existing Tailwind and SVG diagrams live in `app/theme.css`. Add theme-aware colors when introducing new surfaces or diagrams.
+
+Category accents are defined in `app/category-colors.css`. Cards, category links, and the five shared-shell articles use `data-category` to inherit a matching accent, background wash, and border color. The palette supplies separate light and dark values. Article headings, diagrams, workbenches, runbooks, tables, and quiz invitations reuse those tokens while body text stays neutral.

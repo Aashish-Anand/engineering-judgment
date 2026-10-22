@@ -237,13 +237,13 @@ export const followUpQuestions: ExpandableQA[] = [
 
 export const relatedTopics: RelatedTopicData[] = [
   { title: "Surviving a Flash Sale",      category: "TRAFFIC", href: "/topics/traffic/survive-flash-sale" },
-  { title: "Idempotent Write APIs",       category: "CORRECTNESS" },
+  { title: "Idempotent Write APIs",       category: "CORRECTNESS", href: "/topics/correctness/retry-payments-safely" },
   { title: "Reconciliation Strategies",   category: "DATA" },
   { title: "Backpressure",                category: "MESSAGING" },
-  { title: "Poison Messages",             category: "MESSAGING" },
+  { title: "Poison Messages",             category: "MESSAGING", href: "/topics/messaging/handle-poison-messages" },
   { title: "Hot Partitions",              category: "DATA" },
   { title: "Graceful Cutover",            category: "DEPLOYMENT" },
-  { title: "Schema Evolution",            category: "DEPLOYMENT" },
+  { title: "Schema Evolution",            category: "DEPLOYMENT", href: "/topics/deployment/change-schema-without-downtime" },
 ];
 
 export const migrationStrategies = [

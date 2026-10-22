@@ -151,7 +151,7 @@ export function CapacitySizingLab() {
             Avg / Peak Writes
           </span>
           <span className="font-mono text-base sm:text-lg font-bold text-slate-900 block">
-            {avgWps.toLocaleString()} / <span className="text-blue-600">{peakWps.toLocaleString()} WPS</span>
+            {avgWps.toLocaleString("en-US")} / <span className="text-blue-600">{peakWps.toLocaleString("en-US")} WPS</span>
           </span>
           <span className="text-[10px] text-slate-500">Peak write burst rate</span>
         </div>
@@ -163,7 +163,7 @@ export function CapacitySizingLab() {
           <span className="font-mono text-base sm:text-lg font-bold text-amber-600 block">
             {walGbPerHour} GB / hr
           </span>
-          <span className="text-[10px] text-slate-500">~{walKbPerSec.toLocaleString()} KB/s continuous</span>
+          <span className="text-[10px] text-slate-500">~{walKbPerSec.toLocaleString("en-US")} KB/s continuous</span>
         </div>
 
         <div className="p-2.5 bg-white border border-slate-200/80 rounded-lg">
@@ -191,7 +191,7 @@ export function CapacitySizingLab() {
       <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-lg flex items-start gap-2 text-xs font-sans text-slate-700 leading-relaxed">
         <span className="text-blue-600 shrink-0 font-bold">💡 Staff Takeaway:</span>
         <span>
-          At <strong>{dailyWrites.toLocaleString()} writes/day</strong>, the source primary produces <strong>{walGbPerHour} GB/hr</strong> of write-ahead logs. The CDC pipeline (Debezium + Kafka) must guarantee a consumption rate of at least <strong>{(peakWps * 1.5).toFixed(0)} WPS</strong> to drain lag spikes without buffering on disk.
+          At <strong>{dailyWrites.toLocaleString("en-US")} writes/day</strong>, the source primary produces <strong>{walGbPerHour} GB/hr</strong> of write-ahead logs. The CDC pipeline (Debezium + Kafka) must guarantee a consumption rate of at least <strong>{(peakWps * 1.5).toFixed(0)} WPS</strong> to drain lag spikes without buffering on disk.
         </span>
       </div>
     </div>

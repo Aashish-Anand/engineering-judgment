@@ -1,0 +1,21 @@
+/* Category identity: quiet washes in light mode, muted pigments in dark mode. */
+[data-category] {
+  --category-accent:#416b94;
+  --category-wash:#f0f5fb;
+  --category-line:#bed0e0;
+}
+[data-category="CORRECTNESS"] { --category-accent:#47765d; --category-wash:#f0f7f1; --category-line:#bdd5c3; }
+[data-category="TRAFFIC"] { --category-accent:#90651f; --category-wash:#fbf6e9; --category-line:#dfcda8; }
+[data-category="MESSAGING"] { --category-accent:#79619b; --category-wash:#f6f2fb; --category-line:#d1c4e2; }
+[data-category="RELIABILITY"] { --category-accent:#3f7977; --category-wash:#eff7f6; --category-line:#b7d5d2; }
+[data-category="PERFORMANCE"] { --category-accent:#5266a4; --category-wash:#f1f4fc; --category-line:#c4cdea; }
+[data-category="DEPLOYMENT"] { --category-accent:#925a6c; --category-wash:#fcf3f5; --category-line:#e2c5ce; }
+@media screen {
+  html[data-theme="dark"] [data-category] { --category-accent:#aac9ec; --category-wash:#1c2b38; --category-line:#405d77; }
+  html[data-theme="dark"] [data-category="CORRECTNESS"] { --category-accent:#abd1b6; --category-wash:#20362a; --category-line:#486b52; }
+  html[data-theme="dark"] [data-category="TRAFFIC"] { --category-accent:#e5c38a; --category-wash:#342e21; --category-line:#75613e; }
+  html[data-theme="dark"] [data-category="MESSAGING"] { --category-accent:#cab4e6; --category-wash:#2d263b; --category-line:#65537d; }
+  html[data-theme="dark"] [data-category="RELIABILITY"] { --category-accent:#9bccc6; --category-wash:#1e3332; --category-line:#426e68; }
+  html[data-theme="dark"] [data-category="PERFORMANCE"] { --category-accent:#bac7f3; --category-wash:#252e44; --category-line:#52658d; }
+  html[data-theme="dark"] [data-category="DEPLOYMENT"] { --category-accent:#e2b0c1; --category-wash:#382931; --category-line:#805a6a; }
+}

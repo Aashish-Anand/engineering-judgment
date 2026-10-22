@@ -1,0 +1,1126 @@
+import { productionCatalog } from "./production-catalog";
+import type { QuizQuestion } from "@/components/JudgmentQuiz";
+import type { TopicId } from "./catalog";
+import type { TopicMeta } from "@/data/types";
+
+export type ProductionBlueprint = {
+ id: TopicId; href: `/topics/${string}/${string}`; prompt: string; meta: TopicMeta; shortTitle: string; flow: string[]; diagramCaption: string;
+ sections: { id: string; title: string; paragraphs: string[] }[]; runbook: string[]; tradeoffs: string[][]; failures: string[][]; interview: string; levels: string[]; followups: string[]; related: TopicId[]; sources: string[][]; questions: QuizQuestion[];
+};
+
+const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] = [
+  {
+    "id": "idempotent-api",
+    "shortTitle": "Retry a payment without charging twice",
+    "flow": [
+      "Client: one payment key",
+      "API: durable intent + request hash",
+      "Provider: same stable key",
+      "Reconciler: resolve unknown result",
+      "API: replay stored outcome"
+    ],
+    "diagramCaption": "The provider call is outside the local database transaction. A timeout leaves an unresolved intent; it does not prove the provider rejected the payment.",
+    "sections": [
+      {
+        "id": "problem",
+        "title": "One timeout, two possible realities",
+        "paragraphs": [
+          "An order costs ₹2,000. Your API asks the payment provider to charge it. The provider accepts the charge, but the response disappears on the way back. Your client sees a timeout and presses Pay again. From the client’s perspective this is a retry; from the provider’s perspective it could be a second payment.",
+          "The requirement is one charge per payment intent, even when clients retry, requests arrive concurrently, or a worker crashes. A customer can intentionally buy twice, so deduplicating by customer and amount is wrong. We need an identity for this specific business operation, not for a similar-looking payload."
+        ]
+      },
+      {
+        "id": "naive",
+        "title": "Why checking for an existing payment is insufficient",
+        "paragraphs": [
+          "Two API replicas can both query the database, find no payment, and call the provider. A check followed by an insert is not an atomic claim. Disabling the button only protects one browser tab. A local mutex only protects one process.",
+          "Putting the provider call inside a SQL transaction does not make the remote charge roll back with the database. It also holds a connection while waiting for the network. The difficult boundary remains: a provider may commit while your process cannot record the answer."
+        ]
+      },
+      {
+        "id": "mental-model",
+        "title": "Separate the identity from the outcome",
+        "paragraphs": [
+          "An idempotency key names one attempt to achieve a business effect. Repeating the same intent with the same key must not create another effect. Scope the key to the authenticated account and operation. Persist a canonical request fingerprint, status, provider reference, and replayable result under a unique constraint.",
+          "Use explicit states such as pending, succeeded, definitively_failed, and unknown. A timeout is unknown, not definitively_failed. Return a conflict when a caller reuses the same key with a different amount or currency. Authenticate every lookup; possession of a key is not authorization to see a payment."
+        ]
+      },
+      {
+        "id": "architecture",
+        "title": "Claim locally, deduplicate remotely",
+        "paragraphs": [
+          "First insert the payment intent in a short database transaction. The unique key selects one owner; concurrent callers find the existing intent and receive its stored result or an in-progress response. Commit before making the provider call. Send a stable provider idempotency key derived from the durable intent, so crash recovery uses the same identity.",
+          "On a confirmed result, update the intent and order together. Use an outbox if another service must receive an event. When the result is ambiguous, reconciliation queries the provider by reference or safely repeats the same keyed operation under the provider’s contract. If the provider offers neither deduplication nor lookup, local records alone cannot guarantee one remote charge."
+        ]
+      },
+      {
+        "id": "worked-example",
+        "title": "Walk the crash window",
+        "paragraphs": [
+          "At t=0, request K creates intent P. At t=1, the provider accepts K and creates charge C. At t=2, your worker crashes before saving C. At t=3, another request arrives with K. It must not create a new intent or choose a fresh provider key. A recovery worker takes responsibility for P and resolves K with the provider.",
+          "If the original worker resumes after its lease expires, both workers may still contact the provider. A lease reduces duplicated work; provider deduplication protects the effect. Conditional local updates prevent a stale worker from overwriting a confirmed terminal result. A signed webhook can resolve P too, but webhook deliveries need deduplication and must agree with the expected amount and account."
+        ]
+      },
+      {
+        "id": "scale",
+        "title": "What breaks at ten times the volume?",
+        "paragraphs": [
+          "The intent table becomes a retention and lookup workload. Index by scoped key and maintain an index for unresolved intents. Monitor unresolved age, provider lookup failures, key conflicts, and reconciliation throughput. Avoid a full-table scan every minute.",
+          "Key expiry is a business decision: deleting the record can turn a late retry into a new charge. Align client retry windows, provider retention, and local retention. After the provider’s safe retry window closes, use lookup or manual reconciliation rather than blindly submitting again. Multi-region active writers also need a single authoritative claim or equivalent globally coordinated uniqueness."
+        ]
+      }
+    ],
+    "runbook": [
+      "Preserve the original intent and provider key when a timeout occurs; show pending status instead of declaring failure.",
+      "Inspect provider references, signed webhooks, and unresolved age. Reconcile through lookup or the same key within its supported window.",
+      "Persist the confirmed result and order transition atomically. Emit downstream work through an outbox.",
+      "Alert on old unknown intents and route irreducible ambiguity to an owned reconciliation workflow."
+    ],
+    "tradeoffs": [
+      [
+        "Store full responses",
+        "Reliable replay costs storage and requires careful handling of sensitive payment data."
+      ],
+      [
+        "Wait or return pending",
+        "Waiting simplifies the client but consumes request time; pending responses require status polling or notifications."
+      ],
+      [
+        "Keep records longer",
+        "Longer retention protects late retries but increases data and operational costs."
+      ]
+    ],
+    "failures": [
+      [
+        "Same key, different payload",
+        "Reject the mismatch. Silently returning an unrelated result conceals a caller bug."
+      ],
+      [
+        "Crash after remote success",
+        "Recover the persisted intent with the same provider identity. Never infer failure from silence."
+      ],
+      [
+        "Provider retention expired",
+        "Stop blind resubmission; resolve through durable references or manual review."
+      ]
+    ],
+    "interview": "I would name the business intent before calling the provider, atomically claim that key locally, and reuse the same provider key across recovery. Unknown outcomes remain pending until reconciliation. This provides an effectively single business effect only within the provider’s deduplication and retention contract.",
+    "levels": [
+      "Explain why a timeout is ambiguous and why a unique constraint beats check-then-insert.",
+      "Design concurrent request handling, request fingerprints, terminal-state updates, and recovery.",
+      "Define provider contracts, retention windows, regional ownership, auditability, and reconciliation operations."
+    ],
+    "followups": [
+      "What should a caller see while the first request is still running?",
+      "How do refunds receive independent identities?",
+      "What evidence permits deleting an idempotency record?"
+    ],
+    "related": [
+      "flash-sale",
+      "transactional-outbox",
+      "retry-storm"
+    ],
+    "sources": [
+      [
+        "AWS: Making retries safe with idempotent APIs",
+        "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/"
+      ]
+    ],
+    "questions": [
+      {
+        "scenario": "The provider times out after a charge request. What status should you record?",
+        "options": [
+          {
+            "text": "Unknown, pending reconciliation",
+            "explanation": "A missing response cannot distinguish rejection from committed success.",
+            "isCorrect": true
+          },
+          {
+            "text": "Failed; submit a new payment",
+            "explanation": "A new identity can create a second charge.",
+            "isCorrect": false
+          },
+          {
+            "text": "Succeeded immediately",
+            "explanation": "A timeout is not evidence that the provider accepted the charge.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "Two replicas receive the same payment key concurrently. What chooses the owner?",
+        "options": [
+          {
+            "text": "A read before writing",
+            "explanation": "Both reads can observe absence.",
+            "isCorrect": false
+          },
+          {
+            "text": "Disable the browser button",
+            "explanation": "Other clients and concurrent network retries bypass it.",
+            "isCorrect": false
+          },
+          {
+            "text": "A database unique constraint on the scoped key",
+            "explanation": "The claim is atomic across replicas.",
+            "isCorrect": true
+          }
+        ]
+      },
+      {
+        "scenario": "A caller reuses a key with a different currency. What should happen?",
+        "options": [
+          {
+            "text": "Charge again with the same local key",
+            "explanation": "This breaks the key’s one-intent contract.",
+            "isCorrect": false
+          },
+          {
+            "text": "Reject the payload mismatch",
+            "explanation": "One key must name one intent; compare the stored fingerprint.",
+            "isCorrect": true
+          },
+          {
+            "text": "Return the previous result silently",
+            "explanation": "This conceals a materially different request.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "A worker crashes after provider success but before saving it locally. How do you recover?",
+        "options": [
+          {
+            "text": "Resolve the existing intent using its original provider key or reference",
+            "explanation": "Recovery must preserve remote identity.",
+            "isCorrect": true
+          },
+          {
+            "text": "Generate a new key",
+            "explanation": "A new key may authorize another charge.",
+            "isCorrect": false
+          },
+          {
+            "text": "Delete the pending row",
+            "explanation": "Deleting the record loses the evidence needed for safe recovery.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "An unresolved intent is older than the provider’s deduplication window. What next?",
+        "options": [
+          {
+            "text": "Retry because the key string is unchanged",
+            "explanation": "The provider may have expired its deduplication record.",
+            "isCorrect": false
+          },
+          {
+            "text": "Assume the charge failed",
+            "explanation": "Age alone does not establish the outcome.",
+            "isCorrect": false
+          },
+          {
+            "text": "Use durable lookup or manual reconciliation before another submission",
+            "explanation": "The old key may no longer protect a new remote call.",
+            "isCorrect": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "poison-messages",
+    "shortTitle": "Keep a poison message from blocking the queue",
+    "flow": [
+      "Queue: durable event ID",
+      "Consumer: validate + classify",
+      "Transient: bounded delayed retry",
+      "Permanent: durable quarantine",
+      "Replayer: repair + rate limit"
+    ],
+    "diagramCaption": "Retry and quarantine are alternative outcomes, not sequential processing stages. Acknowledge only after a durable effect or confirmed durable handoff.",
+    "sections": [
+      {
+        "id": "problem",
+        "title": "One malformed event holds up an order stream",
+        "paragraphs": [
+          "An order consumer receives event 41 containing an unsupported currency value. Its handler throws, the message becomes available again, and the same exception repeats. Healthy events accumulate behind it. Adding workers increases errors but does not make this payload valid.",
+          "Your goals are to keep independent orders moving, retain the failed event for repair, and avoid applying an order transition out of sequence. These goals can conflict. A dead-letter queue, or DLQ, is a durable holding area for failures that need attention; moving a message there does not mean its business work is complete."
+        ]
+      },
+      {
+        "id": "naive",
+        "title": "Why infinite retry and silent skipping both fail",
+        "paragraphs": [
+          "Retry helps when a database is briefly unavailable. It does not fix invalid data, missing required fields, or a handler that cannot read the event version. Immediate retries spend consumer capacity on work that cannot succeed. Logging and acknowledging the message restores throughput by losing the business operation.",
+          "A broad exception handler that acknowledges every error is particularly dangerous: the queue looks healthy while orders stop advancing. A DLQ without an owner and replay procedure creates the same outcome more slowly. Queue depth alone cannot tell you whether the application completed its obligations."
+        ]
+      },
+      {
+        "id": "mental-model",
+        "title": "Classify failure before choosing recovery",
+        "paragraphs": [
+          "Distinguish transient dependency failures from permanent payload failures and unknown application defects. Retry transient failures with delay and a bounded attempt or age budget. Quarantine invalid payloads early with the original event, event ID, schema version, error reason, attempt count, and timestamps.",
+          "A consumer must also tolerate duplicates. If the effect commits and the process dies before acknowledging, the broker can deliver the event again. Store the processed event ID and business update in the same local transaction, or use an equivalent idempotent state transition. External side effects need their own durable intent and deduplication contract."
+        ]
+      },
+      {
+        "id": "architecture",
+        "title": "Make every acknowledgement defensible",
+        "paragraphs": [
+          "The success path validates, applies the business effect durably, and then acknowledges. The transient-failure path uses broker-supported delayed redelivery or a durable retry mechanism. The permanent-failure path confirms a durable quarantine handoff before acknowledging the source. If that publish fails, leave the source unacknowledged.",
+          "This handoff can duplicate messages if the process crashes after publishing to quarantine but before acknowledging. Preserve the event ID so the quarantine store and replay path can deduplicate. Broker-managed DLQ semantics vary; verify receive counts, retention, visibility timeouts, and delivery guarantees for your broker."
+        ]
+      },
+      {
+        "id": "worked-example",
+        "title": "Ordering changes the answer",
+        "paragraphs": [
+          "Suppose event 41 reserves an order and event 42 ships it. If 41 is quarantined and 42 proceeds, the consumer may attempt to ship an unreserved order. For strict per-order transitions, pause or quarantine that order’s stream until repair, while allowing unrelated order IDs to continue.",
+          "For independent email notifications, skipping the failed notification into quarantine may be acceptable. Decide ordering at the business aggregate, such as one order, rather than freezing every customer’s work. Moving an event to a DLQ preserves evidence but can break the original processing order; replay is not automatically a return to its old position."
+        ]
+      },
+      {
+        "id": "scale",
+        "title": "What breaks when the queue is ten times larger?",
+        "paragraphs": [
+          "A dependency outage can push thousands of healthy messages past the same retry threshold. Distinguish a system-wide outage from isolated bad data before filling quarantine. Reduce intake or pause consumers when the dependency is unavailable, and watch oldest unprocessed age alongside throughput.",
+          "Replay must compete fairly with live traffic. Start with a small inspected sample, retain stable event IDs, cap replay rate, and stop if errors rise. Track unresolved business work and quarantine age, not just DLQ count. Provision retention long enough for detection, repair, and replay; expired messages cannot be recovered by an excellent runbook."
+        ]
+      }
+    ],
+    "runbook": [
+      "Inspect a sample and determine whether the failure is isolated data, a handler regression, or a dependency outage.",
+      "Stop hot-loop retries. Apply bounded delayed retry or durable quarantine, preserving event IDs and diagnostic context.",
+      "Decide whether subsequent events for the same order must pause; continue independent groups where safe.",
+      "Repair the handler or data, replay a canary batch at a controlled rate, verify business state, then drain gradually."
+    ],
+    "tradeoffs": [
+      [
+        "Quarantine early",
+        "Protects throughput but requires reliable diagnosis and repair ownership."
+      ],
+      [
+        "Preserve strict order",
+        "Protects state transitions but blocks the affected group until recovery."
+      ],
+      [
+        "Retry longer",
+        "Absorbs longer transient outages but delays detection of permanently broken work."
+      ]
+    ],
+    "failures": [
+      [
+        "Quarantine publish fails",
+        "Do not acknowledge the source until the handoff is durable."
+      ],
+      [
+        "Replay duplicates an effect",
+        "Preserve IDs and atomically deduplicate with the business mutation."
+      ],
+      [
+        "All messages fail together",
+        "Treat a dependency outage or deployment regression before classifying every payload as poison."
+      ]
+    ],
+    "interview": "I would classify the failure, bound retry effort, and quarantine permanent failures durably before acknowledgement. I would preserve event identity, protect per-order invariants, and assign an owner to controlled replay. Moving a message to a DLQ is an operational state, not business success.",
+    "levels": [
+      "Distinguish retryable failures from invalid messages and explain acknowledgement timing.",
+      "Design durable handoff, duplicate handling, group ordering, and replay limits.",
+      "Set ownership, retention, audit requirements, and outage policies across producer and consumer teams."
+    ],
+    "followups": [
+      "Can an invalid event be repaired without changing its business identity?",
+      "What happens if the quarantine destination is unavailable?",
+      "How do you prove replay restored the missing business state?"
+    ],
+    "related": [
+      "transactional-outbox",
+      "retry-storm",
+      "idempotent-api"
+    ],
+    "sources": [
+      [
+        "Amazon SQS: Dead-letter queues",
+        "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html"
+      ],
+      [
+        "Amazon SQS: FIFO delivery logic",
+        "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-understanding-logic.html"
+      ]
+    ],
+    "questions": [
+      {
+        "scenario": "An event always fails validation because its required amount is missing. What next?",
+        "options": [
+          {
+            "text": "Quarantine it durably with its failure reason",
+            "explanation": "Retry cannot supply a missing field; retain evidence for repair.",
+            "isCorrect": true
+          },
+          {
+            "text": "Retry immediately forever",
+            "explanation": "This consumes capacity without changing the input.",
+            "isCorrect": false
+          },
+          {
+            "text": "Acknowledge and discard it",
+            "explanation": "This loses the business obligation.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "Publishing to quarantine failed. Should you acknowledge the original?",
+        "options": [
+          {
+            "text": "Yes; the error is logged",
+            "explanation": "Logs do not establish a durable recovery workflow.",
+            "isCorrect": false
+          },
+          {
+            "text": "Yes; a replay worker will find it",
+            "explanation": "A replay worker cannot find an event that never reached quarantine.",
+            "isCorrect": false
+          },
+          {
+            "text": "No; retain the source until durable handoff succeeds",
+            "explanation": "Acknowledging now could lose the only durable copy.",
+            "isCorrect": true
+          }
+        ]
+      },
+      {
+        "scenario": "Event 41 reserves stock; event 42 ships the same order. Event 41 is quarantined. What next?",
+        "options": [
+          {
+            "text": "Stop all orders permanently",
+            "explanation": "Independent order groups can continue safely.",
+            "isCorrect": false
+          },
+          {
+            "text": "Pause or guard this order’s subsequent transitions",
+            "explanation": "Continuing blindly can violate the order state machine.",
+            "isCorrect": true
+          },
+          {
+            "text": "Ship anyway because a DLQ preserves ordering",
+            "explanation": "Quarantine does not restore missing business state.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "A replay follows a crash after the business update committed. What prevents a duplicate effect?",
+        "options": [
+          {
+            "text": "Deduplicate the stable event ID atomically with the business update",
+            "explanation": "The acknowledgement gap can cause redelivery.",
+            "isCorrect": true
+          },
+          {
+            "text": "Assign a fresh event ID on every replay",
+            "explanation": "This defeats deduplication.",
+            "isCorrect": false
+          },
+          {
+            "text": "Trust the receive count",
+            "explanation": "Delivery count does not prove whether the business effect committed.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "Every event starts failing after the database becomes unavailable. What should you do first?",
+        "options": [
+          {
+            "text": "Delete every failed message",
+            "explanation": "The business work remains outstanding.",
+            "isCorrect": false
+          },
+          {
+            "text": "Double consumers without a limit",
+            "explanation": "More concurrent failures can overload the recovering dependency.",
+            "isCorrect": false
+          },
+          {
+            "text": "Treat the shared outage and reduce processing pressure",
+            "explanation": "A common dependency failure is not evidence that every payload is corrupt.",
+            "isCorrect": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "retry-storm",
+    "shortTitle": "Stop retries from turning a slowdown into an outage",
+    "flow": [
+      "Caller: absolute deadline",
+      "API: bounded concurrency",
+      "One layer: retry budget",
+      "Dependency: timed attempt",
+      "Fallback or explicit rejection"
+    ],
+    "diagramCaption": "A failed attempt loops back only if it is safe, retryable, within deadline, and within budget. A circuit breaker can stop new attempts while a separate concurrency limit bounds work already in flight.",
+    "sections": [
+      {
+        "id": "problem",
+        "title": "A small slowdown consumes the whole service",
+        "paragraphs": [
+          "Your API normally makes one inventory call per request. The inventory service slows from 50 milliseconds to two seconds. Incoming traffic stays constant, but each request now occupies resources much longer. Threads, connection slots, and request memory accumulate before CPU necessarily reaches its limit.",
+          "Clients retry the API, which retries inventory, whose SDK also retries. The dependency receives repeated work from the same original requests while trying to recover. The incident spreads from one slow service into unrelated API endpoints sharing the same resources."
+        ]
+      },
+      {
+        "id": "naive",
+        "title": "Why more retries can reduce successful work",
+        "paragraphs": [
+          "Three layers allowing three total attempts each can generate up to 27 bottom-level calls per original operation in an all-fail case. That is an upper-bound teaching example; actual traffic depends on which layer fails, when attempts stop, and the available deadline.",
+          "Increasing every timeout keeps more work in flight. Lowering them indiscriminately creates false failures and extra retries. Exponential backoff spreads attempts over time, but synchronized callers can still wake up together. Randomizing the delay, called jitter, reduces alignment; it does not create dependency capacity."
+        ]
+      },
+      {
+        "id": "mental-model",
+        "title": "Budget time and work separately",
+        "paragraphs": [
+          "A deadline is the latest time a caller can use the result. Each downstream attempt must fit inside the remaining deadline, including connection setup, response time, and any delay before a retry. A retry budget caps additional work, for example through a token bucket replenished relative to successful or original traffic.",
+          "A concurrency limit bounds outstanding calls. A circuit breaker temporarily rejects new calls after evidence of failure and later admits limited probes. A bulkhead isolates resources for one dependency or workload so that it cannot consume everything. These controls address different failure paths and need coordinated settings."
+        ]
+      },
+      {
+        "id": "architecture",
+        "title": "Choose one retry owner",
+        "paragraphs": [
+          "Choose one layer with enough context to retry the operation. Disable or account for retries in lower SDKs and proxies. Retry only failures that may recover, only when the operation is safe to repeat, and only if sufficient time and retry tokens remain. A payment timeout still requires idempotency; reliability controls do not resolve an ambiguous charge.",
+          "Combine bounded concurrency and bounded waiting with per-attempt timeouts. Propagate cancellation where supported and measure whether downstream work actually stops. When the limit is reached, reject promptly or use a truthful fallback: stale product details may be acceptable, but inventing a successful inventory reservation is not."
+        ]
+      },
+      {
+        "id": "worked-example",
+        "title": "Calculate the pressure before changing settings",
+        "paragraphs": [
+          "At 200 requests per second and 50 milliseconds per call, a stable system averages roughly 10 calls in flight. At two seconds, the same arrival rate requires roughly 400. This is Little’s Law applied to a stable average, not a latency prediction for an overloaded queue. Once arrivals exceed service capacity, backlog grows instead of settling at a safe number.",
+          "If inventory can support only 80 concurrent calls, admitting 400 does not help it. Enforce a limit, bound the waiting time, and reject excess requests with a clear overload response. Reserve a small probe allowance for recovery. Do not open every breaker client at once and then release all waiting requests when one probe succeeds."
+        ]
+      },
+      {
+        "id": "scale",
+        "title": "What breaks at ten times the callers?",
+        "paragraphs": [
+          "A local retry budget or concurrency limit is multiplied by the number of replicas. Ten replicas with 80 slots can send 800 calls. Allocate a dependency-wide budget across callers, or use admission at the dependency with caller-specific fairness. Include background jobs and retries in that accounting.",
+          "Observe original request rate, attempt rate, deadline expirations, rejected work, in-flight calls, and successful business operations. Recovery should ramp gradually. A low error rate after rejecting most traffic does not mean users recovered; evaluate completed work and user-visible latency together."
+        ]
+      }
+    ],
+    "runbook": [
+      "Reduce retry amplification at the chosen owner; preserve safe retries for truly transient failures.",
+      "Apply dependency-specific concurrency limits and short bounded queues. Shed excess work before shared resources fill.",
+      "Use truthful degradation and limited probes while watching dependency latency and successful business work.",
+      "Restore traffic gradually, then tune deadlines and retry budgets from measured latency and capacity."
+    ],
+    "tradeoffs": [
+      [
+        "Fail fast",
+        "Protects the system but returns errors during brief recoverable disturbances."
+      ],
+      [
+        "Serve stale data",
+        "Maintains some availability but needs an explicit freshness contract."
+      ],
+      [
+        "Isolate resources",
+        "Limits blast radius but strands capacity and adds configuration work."
+      ]
+    ],
+    "failures": [
+      [
+        "Retries in hidden layers",
+        "Inventory SDK, proxy, API, and caller attempts multiply unless one owner accounts for them."
+      ],
+      [
+        "Timeout without cancellation",
+        "The caller may leave while the dependency continues spending resources."
+      ],
+      [
+        "Breaker recovery surge",
+        "Bound half-open probes and ramp traffic instead of releasing a synchronized flood."
+      ]
+    ],
+    "interview": "I would first distinguish a slow dependency from extra original demand. I would cap concurrent work, select one retry owner, propagate deadlines, and admit retries only within a work budget and safe-operation contract. I would degrade honestly and restore traffic through limited recovery probes.",
+    "levels": [
+      "Explain how slow requests hold resources and why jitter reduces synchronization.",
+      "Combine deadlines, retry safety, budgets, concurrency limits, and recovery probes.",
+      "Allocate budgets across services and replicas, define degradation contracts, and test systemic recovery."
+    ],
+    "followups": [
+      "Who owns retries when an SDK retries internally?",
+      "Can the dependency cancel work after the caller times out?",
+      "How do you keep one tenant from consuming the recovery budget?"
+    ],
+    "related": [
+      "idempotent-api",
+      "connection-pool",
+      "poison-messages"
+    ],
+    "sources": [
+      [
+        "AWS: Timeouts, retries, and backoff with jitter",
+        "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/"
+      ]
+    ],
+    "questions": [
+      {
+        "scenario": "Three layers each permit three total attempts. What is the worst-case bottom-level attempt count?",
+        "options": [
+          {
+            "text": "27 per original operation",
+            "explanation": "Three nested attempt loops can multiply: 3 × 3 × 3.",
+            "isCorrect": true
+          },
+          {
+            "text": "9 per original operation",
+            "explanation": "Adding or partly multiplying misses the nested third layer.",
+            "isCorrect": false
+          },
+          {
+            "text": "3 per original operation",
+            "explanation": "This would require a single retry owner.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "A request has 100 ms remaining, but the next attempt needs up to 300 ms. What next?",
+        "options": [
+          {
+            "text": "Reset the deadline for this attempt",
+            "explanation": "This breaks the end-to-end time budget.",
+            "isCorrect": false
+          },
+          {
+            "text": "Queue it indefinitely",
+            "explanation": "Waiting adds work whose result the caller may no longer use.",
+            "isCorrect": false
+          },
+          {
+            "text": "Stop and return the appropriate failure or fallback",
+            "explanation": "The result cannot be expected within the caller’s usable deadline.",
+            "isCorrect": true
+          }
+        ]
+      },
+      {
+        "scenario": "Why add jitter to delayed retries?",
+        "options": [
+          {
+            "text": "To increase dependency capacity",
+            "explanation": "Randomness does not add serving resources.",
+            "isCorrect": false
+          },
+          {
+            "text": "To reduce clients retrying at the same instant",
+            "explanation": "Randomized delay spreads synchronized attempt bursts.",
+            "isCorrect": true
+          },
+          {
+            "text": "To make duplicate payment effects impossible",
+            "explanation": "Only an appropriate idempotency contract addresses that risk.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "A circuit breaker opens, but many slow calls are already running. What bounds those calls?",
+        "options": [
+          {
+            "text": "Concurrency limits and effective timeouts or cancellation",
+            "explanation": "A breaker stops new admissions; existing work needs separate bounds.",
+            "isCorrect": true
+          },
+          {
+            "text": "The breaker retroactively cancels everything",
+            "explanation": "Opening a circuit alone does not cancel prior calls.",
+            "isCorrect": false
+          },
+          {
+            "text": "An unlimited queue",
+            "explanation": "This increases resource usage and waiting.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "Ten replicas each permit 80 dependency calls. Is the shared dependency protected at 80?",
+        "options": [
+          {
+            "text": "Yes; per-process limits are global",
+            "explanation": "Independent processes do not share a counter automatically.",
+            "isCorrect": false
+          },
+          {
+            "text": "Yes, provided retries have jitter",
+            "explanation": "Jitter does not enforce an aggregate concurrency limit.",
+            "isCorrect": false
+          },
+          {
+            "text": "No; the aggregate can reach 800 calls",
+            "explanation": "Local limits must be allocated against the dependency-wide capacity.",
+            "isCorrect": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "connection-pool",
+    "shortTitle": "Find the real cause of connection pool exhaustion",
+    "flow": [
+      "Request: acquisition deadline",
+      "Replica: bounded local pool",
+      "Database: shared connection budget",
+      "Query or transaction: hold time",
+      "Release: always return connection"
+    ],
+    "diagramCaption": "Every replica has its own pool. The database limit is shared across application replicas, workers, deployment overlap, and operational sessions.",
+    "sections": [
+      {
+        "id": "problem",
+        "title": "The application is waiting, not computing",
+        "paragraphs": [
+          "Requests slow down and logs show pool acquisition timeouts. CPU on the application is low, so autoscaling adds replicas. Each replica starts another connection pool. Soon the database refuses new sessions while existing requests continue waiting. More application capacity has increased competition for the same database.",
+          "Separate acquiring a connection from executing a query. Acquisition time measures how long work waits for a pool slot. Query time measures database work after a slot is acquired. A connection leak, a lock wait, a slow query, and excess legitimate demand can produce similar application symptoms but require different repairs."
+        ]
+      },
+      {
+        "id": "naive",
+        "title": "Why raising every pool limit is risky",
+        "paragraphs": [
+          "A pool protects a finite shared resource. Raising its limit may turn a short application queue into too many active database sessions, increasing memory use and contention. More sessions do not necessarily increase useful query throughput. Raising the database connection ceiling is not a substitute for measuring the resource bottleneck.",
+          "An unlimited acquisition queue is also a resource problem. Requests that wait past the caller deadline retain memory and may execute after the user has retried. Keep the queue bounded, give acquisition a deadline, and reject excess work explicitly. The right limit is a measured budget, not a universal connections-per-core rule."
+        ]
+      },
+      {
+        "id": "mental-model",
+        "title": "Account for every owner of a connection",
+        "paragraphs": [
+          "Suppose the application is allowed 160 connections after reserving capacity for administration, workers, and other services. Eight replicas with pools of 20 use that entire allowance at their maximum. Sixteen replicas with the same pool size could demand 320. Include old and new replicas during rolling deployment; steady-state counts can hide the peak.",
+          "A connection is occupied from checkout until release. That interval can include idle time inside a transaction and remote calls made by the application. Always release it through structured cleanup, including error and cancellation paths. A short query inside a long transaction still holds the session and can retain locks."
+        ]
+      },
+      {
+        "id": "architecture",
+        "title": "Bound demand and shorten hold time",
+        "paragraphs": [
+          "Allocate a database-wide session budget, then divide it across the maximum expected replicas and background workers. Add headroom for deployments and operational access. Use a pooler when appropriate, but understand whether it pools sessions or transactions; transaction pooling can affect session-local settings and application features.",
+          "Instrument acquisition latency, checked-out sessions, idle-in-transaction sessions, query latency, and lock waits. Apply statement and transaction limits suited to the workload. Move remote HTTP calls outside database transactions when correctness permits. Optimize the expensive query or lock pattern before assuming another connection will make it faster."
+        ]
+      },
+      {
+        "id": "worked-example",
+        "title": "Estimate occupancy, then identify the missing time",
+        "paragraphs": [
+          "At a stable 400 database operations per second, an average checkout duration of 40 milliseconds implies about 16 occupied connections. If the average rises to 400 milliseconds, the same work implies about 160. With a budget of 160 there is no headroom for variance, so queueing becomes a serious concern even before average demand exceeds capacity.",
+          "This estimate assumes one checkout per operation and a stable workload. Multiple queries sharing one checkout count as one hold interval. Bursts, lock contention, and long-tail transactions require more careful measurement. If query execution remains 20 milliseconds while checkout duration reaches 400, inspect application-side work and idle transactions rather than only query plans."
+        ]
+      },
+      {
+        "id": "scale",
+        "title": "What breaks at ten times the demand?",
+        "paragraphs": [
+          "At ten times the arrival rate, even a well-managed pool cannot invent database execution capacity. Use caching for safe repeated reads, batch work where semantics allow it, and rate-limit background jobs. A read replica can serve eligible reads but changes freshness and routing decisions; it does not remove write contention.",
+          "Define fairness between interactive requests, exports, and batch workers. Separate their admission budgets so a report cannot consume every session. Autoscaling should respect the shared connection budget and deployment overlap. Validate capacity using representative query mixes and tail latency rather than a benchmark of trivial queries."
+        ]
+      }
+    ],
+    "runbook": [
+      "Inspect database activity and pool metrics together: acquisition wait, hold duration, query time, and lock waits.",
+      "Reduce nonessential work and cap application concurrency. Preserve operational access to the database.",
+      "Cancel or repair the specific runaway query, lock chain, idle transaction, or connection leak under an owned incident procedure.",
+      "Recalculate budgets for peak replicas and deployment overlap, then verify representative throughput before increasing limits."
+    ],
+    "tradeoffs": [
+      [
+        "Smaller pools",
+        "Protect the database but require admission control to keep waiting bounded."
+      ],
+      [
+        "Transaction pooling",
+        "Reuses sessions efficiently but changes assumptions about session state."
+      ],
+      [
+        "Separate workload budgets",
+        "Protects interactive traffic but may leave some reserved capacity idle."
+      ]
+    ],
+    "failures": [
+      [
+        "Leaked checkout",
+        "Use structured release on success, error, and cancellation; observe connections that never return."
+      ],
+      [
+        "Idle transaction",
+        "Remove remote waits and enforce transaction boundaries; a low query count can hide held resources."
+      ],
+      [
+        "Autoscaling surge",
+        "Budget for all replicas and rolling deployment overlap, not just the current pod count."
+      ]
+    ],
+    "interview": "I would separate pool acquisition time from query and checkout duration. I would inspect leaks, idle transactions, and lock waits, then allocate the shared database budget across peak replicas. Scaling the application only helps if it does not overload the database; admission control must bound waiting.",
+    "levels": [
+      "Explain pool acquisition, connection checkout, and database execution as separate intervals.",
+      "Diagnose occupancy with metrics, model replica budgets, and bound acquisition waits.",
+      "Coordinate budgets across teams, deployment overlap, workload fairness, and database capacity planning."
+    ],
+    "followups": [
+      "How does a rolling deployment change the connection budget?",
+      "Which session features break under transaction pooling?",
+      "What metric distinguishes a leak from a legitimately slow transaction?"
+    ],
+    "related": [
+      "retry-storm",
+      "hot-partition",
+      "database-migration"
+    ],
+    "sources": [
+      [
+        "PostgreSQL: Connections and authentication",
+        "https://www.postgresql.org/docs/current/runtime-config-connection.html"
+      ],
+      [
+        "PgBouncer: Feature compatibility",
+        "https://www.pgbouncer.org/features.html"
+      ]
+    ],
+    "questions": [
+      {
+        "scenario": "Eight replicas have pool size 20. Autoscaling doubles the replicas. What is the new maximum application demand?",
+        "options": [
+          {
+            "text": "320 connections",
+            "explanation": "Sixteen independent pools can each request 20 sessions.",
+            "isCorrect": true
+          },
+          {
+            "text": "160 connections",
+            "explanation": "That was the budget before doubling replicas.",
+            "isCorrect": false
+          },
+          {
+            "text": "20 connections",
+            "explanation": "Pool limits are local unless explicitly coordinated.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "Acquisition wait rises while query duration is stable. What should you inspect?",
+        "options": [
+          {
+            "text": "Only database CPU",
+            "explanation": "Low CPU does not reveal how sessions are occupied.",
+            "isCorrect": false
+          },
+          {
+            "text": "Only HTTP response compression",
+            "explanation": "This does not diagnose session ownership.",
+            "isCorrect": false
+          },
+          {
+            "text": "Checkout duration, leaks, and idle transactions",
+            "explanation": "Connections may be held while no query executes.",
+            "isCorrect": true
+          }
+        ]
+      },
+      {
+        "scenario": "At a stable 400 checkouts/s and average hold time 0.4 seconds, what is average occupancy?",
+        "options": [
+          {
+            "text": "10 connections",
+            "explanation": "That would require a much shorter hold interval.",
+            "isCorrect": false
+          },
+          {
+            "text": "160 connections",
+            "explanation": "Little’s Law gives 400 × 0.4 = 160 under the stable-workload assumptions.",
+            "isCorrect": true
+          },
+          {
+            "text": "1,000 connections",
+            "explanation": "Dividing rate by time does not give occupancy.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "Pool acquisition can wait indefinitely. What is the risk?",
+        "options": [
+          {
+            "text": "Work can outlive caller deadlines and consume unbounded resources",
+            "explanation": "Bound queue size and waiting time to avoid accumulating useless work.",
+            "isCorrect": true
+          },
+          {
+            "text": "The database automatically adds capacity",
+            "explanation": "A queue does not create execution capacity.",
+            "isCorrect": false
+          },
+          {
+            "text": "It prevents every timeout",
+            "explanation": "Callers can still time out while the server keeps waiting.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "A database budget fits steady-state replicas exactly. What else must be counted?",
+        "options": [
+          {
+            "text": "Only application CPU cores",
+            "explanation": "CPU count alone does not enumerate session owners.",
+            "isCorrect": false
+          },
+          {
+            "text": "Only the number of tables",
+            "explanation": "Tables are not connection owners.",
+            "isCorrect": false
+          },
+          {
+            "text": "Rolling deployment overlap, workers, and operational headroom",
+            "explanation": "These sessions compete with the same shared budget.",
+            "isCorrect": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "schema-evolution",
+    "shortTitle": "Change a schema without breaking mixed versions",
+    "flow": [
+      "Expand: add compatible schema",
+      "Bridge: preserve both representations",
+      "Backfill: bounded + resumable",
+      "Switch: validate new readers",
+      "Contract: remove old after rollback window"
+    ],
+    "diagramCaption": "Each arrow is a separately verified phase. Deploying new code does not prove old workers, reports, or rollback versions have stopped using the old column.",
+    "sections": [
+      {
+        "id": "problem",
+        "title": "A rolling deployment is a mixed-version system",
+        "paragraphs": [
+          "Your orders table stores delivery_instructions in an old column. You want to move that value to a new fulfillment_note column. Millions of existing rows need copying, and application replicas deploy gradually. Old code continues reading and writing delivery_instructions while new code starts using fulfillment_note.",
+          "A direct rename makes one version’s queries fail. A one-time copy misses writes arriving after the copy. The real requirement is a compatibility period in which every active application version can operate correctly while data moves. Schema changes are deployment protocols, not just SQL files."
+        ]
+      },
+      {
+        "id": "naive",
+        "title": "Why a rename and redeploy is not atomic",
+        "paragraphs": [
+          "The database migration and the application rollout do not commit together. Even if all web replicas update quickly, scheduled jobs, delayed consumers, administrative scripts, and a rollback image may still reference the old name. Dropping it turns these hidden dependencies into production errors.",
+          "A giant update in one transaction can create long lock holds, large write-ahead logs, replica lag, and difficult recovery. A migration tool reporting success proves that its statements completed; it does not prove compatibility across live code, data, and rollback versions."
+        ]
+      },
+      {
+        "id": "mental-model",
+        "title": "Treat schema evolution as expanding and narrowing a contract",
+        "paragraphs": [
+          "Expand means adding a representation without removing what current code needs. A bridge release understands both representations and preserves the old contract. Backfill copies historical state while protecting concurrent writes. Switch means moving readers after evidence supports the new path. Contract means retiring the old representation after its consumers and rollback obligations are gone.",
+          "For a rename-like change, choose one authoritative representation during each phase. Avoid letting old and new writers independently choose conflicting sources of truth. Keep a compatibility matrix for schema version, reader version, writer version, workers, and the rollback image. Explicitly record which combinations are allowed."
+        ]
+      },
+      {
+        "id": "architecture",
+        "title": "Bridge writes before changing reads",
+        "paragraphs": [
+          "Add the new nullable column using a reviewed DDL operation with a lock timeout appropriate to the database. During the initial mixed rollout, keep the old column authoritative and new readers on the old path. A bridge release writes both columns in the same row transaction. Wait for all old-only writers to drain before relying on application dual writes.",
+          "If old-only writers cannot be drained, use a carefully reviewed database trigger or another synchronizing mechanism until they can. Then backfill under the chosen authority rule. Compare old and new values, verify coverage, and switch reads with an operational flag. Retain dual writes while rollback still needs the old representation. Only contract after consumers and rollback windows have moved."
+        ]
+      },
+      {
+        "id": "worked-example",
+        "title": "A backfill must not overwrite fresher work",
+        "paragraphs": [
+          "For this exact rename, a bounded SQL update can copy delivery_instructions into fulfillment_note on rows whose new value is still null. Advance through a stable primary key in committed chunks, and keep a durable checkpoint. Avoid fetching a value into application memory and writing it later without a version condition: a concurrent writer may have changed it.",
+          "If null is a legitimate new value, it cannot also reliably mean “not migrated.” Use an explicit migration marker or version instead. If the transformation changes meaning rather than just its name, define conflict resolution and prove each write preserves it. Retry-safe batches, reconciliation passes, and mismatch sampling matter more than one impressive completion percentage."
+        ]
+      },
+      {
+        "id": "scale",
+        "title": "What breaks on a table ten times larger?",
+        "paragraphs": [
+          "Backfill throughput competes with live traffic for I/O, locks, log bandwidth, and replica capacity. Throttle by observed latency and replication lag, not only a fixed rows-per-second target. Use short transactions, stable key ranges, and resumable checkpoints. An interrupted backfill should resume without repeating harmful effects.",
+          "Adding a column, validating a constraint, and building an index have different lock and scan behavior. Check your database version and operation. In PostgreSQL, some check and foreign-key constraints can be added NOT VALID and validated later, reducing interference from the historical scan; this is not a universal online-DDL guarantee. Trial the exact operation against realistic data and lock conditions."
+        ]
+      }
+    ],
+    "runbook": [
+      "Inventory web, worker, reporting, and rollback consumers; define old/new compatibility and the authoritative representation.",
+      "Expand the schema, deploy the bridge with old reads, and drain or synchronize old-only writers.",
+      "Backfill in small resumable batches, monitor lock waits and replica lag, and verify coverage plus value agreement.",
+      "Switch reads gradually. Keep rollback-compatible writes until the window closes; contract in a separate reviewed deployment."
+    ],
+    "tradeoffs": [
+      [
+        "Application dual writes",
+        "Can be atomic within one database transaction, but every active writer must participate."
+      ],
+      [
+        "Temporary trigger",
+        "Covers legacy writers centrally but adds hidden behavior and requires careful cleanup."
+      ],
+      [
+        "Long compatibility window",
+        "Supports rollback and slow consumers but prolongs duplicate schema and maintenance."
+      ]
+    ],
+    "failures": [
+      [
+        "Backfill races with live writes",
+        "Use database-side copying or conditional version checks under a documented authority rule."
+      ],
+      [
+        "Contract before old jobs drain",
+        "Old queries fail; enumerate consumers and observe the rollback window before dropping columns."
+      ],
+      [
+        "DDL waits behind a long transaction",
+        "Use a lock timeout and investigate blockers rather than allowing a deployment to queue indefinitely."
+      ]
+    ],
+    "interview": "I would expand first, deploy a compatible bridge, drain or synchronize old writers, then run a resumable backfill under an explicit source-of-truth rule. I would validate before switching readers and preserve the old representation through rollback. Contract is a separate step with evidence that old consumers are gone.",
+    "levels": [
+      "Explain why mixed application versions require backward-compatible schema additions.",
+      "Plan writer transitions, race-safe backfills, validation, and reversible read switching.",
+      "Inventory cross-team consumers, define rollback boundaries, and budget large-table operational costs."
+    ],
+    "followups": [
+      "What is the last point at which the old application can safely roll back?",
+      "How would the plan change for a lossy data transformation?",
+      "How do you detect a monthly report that still reads the old column?"
+    ],
+    "related": [
+      "database-migration",
+      "transactional-outbox",
+      "connection-pool"
+    ],
+    "sources": [
+      [
+        "Prisma: Expand and contract",
+        "https://docs.prisma.io/docs/guides/database/data-migration"
+      ],
+      [
+        "PostgreSQL: ALTER TABLE",
+        "https://www.postgresql.org/docs/current/sql-altertable.html"
+      ]
+    ],
+    "questions": [
+      {
+        "scenario": "Old and new replicas are both running. What is a safe first schema change?",
+        "options": [
+          {
+            "text": "Add the new representation while retaining the old one",
+            "explanation": "Expansion preserves what active old code still requires.",
+            "isCorrect": true
+          },
+          {
+            "text": "Drop the old column immediately",
+            "explanation": "Active old replicas still reference it.",
+            "isCorrect": false
+          },
+          {
+            "text": "Rename the column and hope rollout finishes quickly",
+            "explanation": "Schema and application deployment are not atomic.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "The bridge writes both columns, but old-only writers remain. Can you rely on complete dual-write coverage?",
+        "options": [
+          {
+            "text": "Yes; one new replica is enough",
+            "explanation": "Its writes do not cover operations handled by old replicas.",
+            "isCorrect": false
+          },
+          {
+            "text": "Yes; backfill ran yesterday",
+            "explanation": "Later writes can still invalidate yesterday’s copy.",
+            "isCorrect": false
+          },
+          {
+            "text": "No; drain old writers or synchronize them before relying on the new representation",
+            "explanation": "Old-only updates can leave the new value stale.",
+            "isCorrect": true
+          }
+        ]
+      },
+      {
+        "scenario": "Null is a valid business value in the new column. Can it also reliably mark unmigrated rows?",
+        "options": [
+          {
+            "text": "Yes; exclude null rows permanently",
+            "explanation": "This can leave historical rows unmigrated.",
+            "isCorrect": false
+          },
+          {
+            "text": "No; use an explicit migration marker or version",
+            "explanation": "Business null and missing migration state would be ambiguous.",
+            "isCorrect": true
+          },
+          {
+            "text": "Yes; every null means migration failure",
+            "explanation": "Some nulls are legitimate.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "Backfill causes replication lag and rising API latency. What next?",
+        "options": [
+          {
+            "text": "Throttle or pause resumable batches and inspect pressure",
+            "explanation": "Preserve live traffic and resume from durable checkpoints.",
+            "isCorrect": true
+          },
+          {
+            "text": "Use one larger transaction",
+            "explanation": "That can worsen locks, log pressure, and recovery.",
+            "isCorrect": false
+          },
+          {
+            "text": "Drop validation to finish sooner",
+            "explanation": "That removes evidence of correctness without resolving contention.",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "scenario": "New readers are healthy. When can you drop the old column?",
+        "options": [
+          {
+            "text": "As soon as one canary succeeds",
+            "explanation": "One canary does not cover all consumers.",
+            "isCorrect": false
+          },
+          {
+            "text": "Whenever the backfill progress says 100%",
+            "explanation": "Copied rows do not prove consumer compatibility.",
+            "isCorrect": false
+          },
+          {
+            "text": "After all consumers and required rollback versions no longer depend on it",
+            "explanation": "Read rollout alone does not retire workers, reports, or rollback obligations.",
+            "isCorrect": true
+          }
+        ]
+      }
+    ]
+  }
+];
+
+export const productionBlueprints: ProductionBlueprint[] = blueprintContent.map(content => ({ ...content, ...productionCatalog.find(topic => topic.id === content.id)! }));

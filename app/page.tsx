@@ -1,31 +1,21 @@
 import Link from "next/link";
-import { DepthLink } from "@/components/DepthLink";
+import { LibraryCards } from "@/components/LibraryCards";
+import { featuredIds, libraryCategories, libraryHref } from "@/data/library";
+import styles from "@/components/Library.module.css";
 import { Hero } from "@/components/Hero";
 import { ArchitecturePressurePreview } from "@/components/ArchitecturePressurePreview";
 import { topicCatalog } from "@/data/topics/catalog";
-
-const titles: Record<string, string> = {
-  "database-migration": "Migrate without losing writes",
-  "hot-partition": "When one partition takes the heat",
-  "flash-sale": "Ten million buyers. Ten thousand items.",
-  "transactional-outbox": "Commit the write. Deliver the event.",
-};
 
 export default function Home() {
   return (
     <div className="editorial-home">
       <Hero />
       <section id="problems" className="page-shell home-section">
-        <div className="section-intro"><div><p className="eyebrow">The library / 01</p><h2>Start with a real problem.</h2></div><p>Four blueprints. Each follows a constraint through the decision, the trade-off, and what breaks next.</p></div>
-        <div className="blueprint-list">
-          {topicCatalog.map((topic, index) => (
-            <DepthLink key={topic.id} href={topic.href} className="blueprint-row" tilt={1.5}>
-              <span className="row-number">0{index + 1}</span>
-              <div><span className="eyebrow">{topic.meta.category}</span><h3>{titles[topic.id]}</h3><p>{topic.meta.subtitle}</p></div>
-              <span className="row-meta">{topic.meta.readingTime}<br />{topic.meta.difficulty}</span><span className="row-arrow" aria-hidden="true">↗</span>
-            </DepthLink>
-          ))}
-        </div>
+        <div className="section-intro"><div><p className="eyebrow">The library / 01</p><h2>Find your next engineering problem.</h2></div><p>Six starting points from {topicCatalog.length} blueprints. Follow a problem through its constraints, decisions, and consequences.</p></div>
+        <form action="/library" className={styles.controls} role="search"><label className={styles.search}>Search by problem, failure mode, or concept<input type="search" name="q" placeholder="Try ‘charged twice’ or ‘connection pool’" /></label><button type="submit" className="editorial-button">Search library →</button></form>
+        <nav className={styles.categories} aria-label="Browse by category">{libraryCategories.map(c => <Link data-category={c.label} href={libraryHref("",c.slug)} key={c.slug}>{c.label} · {c.count}</Link>)}</nav>
+        <LibraryCards topics={featuredIds.map(id => topicCatalog.find(t => t.id === id)!)} />
+        <div className={styles.browse}><Link className="editorial-button" href="/library">Browse all {topicCatalog.length} blueprints →</Link></div>
       </section>
       <section id="labs" className="page-shell home-section lab-section">
         <div className="lab-description"><p className="eyebrow">The workbench / 02</p><h2>Change the load.<br />Watch the consequence.</h2><p>Explore how a database migration, flash sale, or hot partition responds to pressure. Compare the steady state with a sudden traffic spike.</p><p className="quiet-note">Illustrative simulations. Open a blueprint for the assumptions and deeper controls.</p></div>

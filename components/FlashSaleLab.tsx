@@ -37,7 +37,7 @@ export function FlashSaleLab() {
         <div>
           <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
             <span>Peak Incoming Concurrency:</span>
-            <span className="font-mono text-blue-600 font-bold">{peakRps.toLocaleString()} RPS</span>
+            <span className="font-mono text-blue-600 font-bold">{peakRps.toLocaleString("en-US")} RPS</span>
           </div>
           <input
             type="range"
@@ -57,7 +57,7 @@ export function FlashSaleLab() {
         <div>
           <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
             <span>Edge Queue Admission Drip:</span>
-            <span className="font-mono text-blue-600 font-bold">{admissionDrip.toLocaleString()} req/s</span>
+            <span className="font-mono text-blue-600 font-bold">{admissionDrip.toLocaleString("en-US")} req/s</span>
           </div>
           <input
             type="range"
@@ -77,7 +77,7 @@ export function FlashSaleLab() {
         <div>
           <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
             <span>Available Inventory Units:</span>
-            <span className="font-mono text-slate-900 font-bold">{totalStock.toLocaleString()} units</span>
+            <span className="font-mono text-slate-900 font-bold">{totalStock.toLocaleString("en-US")} units</span>
           </div>
           <input
             type="range"
@@ -156,7 +156,7 @@ export function FlashSaleLab() {
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
           <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Auto-Restock Wave</span>
           <span className="font-sans text-base sm:text-lg font-extrabold text-amber-700">
-            {abandonedUnits.toLocaleString()} units
+            {abandonedUnits.toLocaleString("en-US")} units
           </span>
           <p className="text-[11px] text-slate-500 m-0 mt-0.5">Recycled at {ttlMinutes}m TTL</p>
         </div>
@@ -173,7 +173,7 @@ export function FlashSaleLab() {
       {/* Senior Engineer Insight */}
       <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-lg text-xs font-sans text-slate-700 leading-relaxed">
         <strong className="text-blue-900 font-bold block mb-1">💡 Architecture Synthesis:</strong>
-        Without the Edge Virtual Queue, {peakRps.toLocaleString()} RPS would saturate PostgreSQL connection pools in under 5ms. With our layered admission gate, exactly {admissionDrip.toLocaleString()} req/s reach Redis Lua, and background settlement to the database is smoothed to ~{Math.round(dbWriteRate)} writes/sec via Kafka.
+        Without the Edge Virtual Queue, {peakRps.toLocaleString("en-US")} RPS would saturate PostgreSQL connection pools in under 5ms. With our layered admission gate, exactly {admissionDrip.toLocaleString("en-US")} req/s reach Redis Lua, and background settlement to the database is smoothed to ~{Math.round(dbWriteRate)} writes/sec via Kafka.
       </div>
     </div>
   );

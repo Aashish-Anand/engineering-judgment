@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { BackToTop } from "@/components/BackToTop";
 import { siteConfig } from "@/data/site";
+import { themeInitScript } from "@/data/theme";
 import "./globals.css";
+import "./theme.css";
+import "./category-colors.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -48,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
+      <head><Script id="appearance-preference" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeInitScript }} /></head>
       <body id="top" className="min-h-screen flex flex-col bg-paper text-ink font-sans antialiased" suppressHydrationWarning>
         <ReadingProgress />
         <SiteHeader />

@@ -1,0 +1,6 @@
+.toggle { display:inline-flex; flex-shrink:0; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid var(--theme-border,#dce3dc); border-radius:8px; color:var(--theme-text,#435c4e); background:var(--theme-surface,#fff); cursor:pointer; }
+.toggle:hover { background:var(--theme-soft,#f0f3ee); }
+.toggle:focus-visible { outline:2px solid var(--theme-link,#315bba); outline-offset:3px; }
+.sun { display:none; }
+:global(html[data-theme="dark"]) .moon { display:none; }
+:global(html[data-theme="dark"]) .sun { display:block; }

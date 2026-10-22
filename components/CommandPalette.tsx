@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { matchesTopic } from "@/data/library";
 import { topicCatalog } from "@/data/topics/catalog";
 import { TERM_GLOSSARY, type TermDef } from "@/components/TermTooltip";
 
@@ -79,12 +80,14 @@ export function CommandPalette() {
 
   // Filter results
   const q = query.toLowerCase().trim();
+  const matchingTopicHrefs = new Set<string>(topicCatalog.filter(t => matchesTopic(t, q)).map(t => t.href));
   const filtered = q
     ? allResults.filter(
         (item) =>
           item.title.toLowerCase().includes(q) ||
           item.subtitle.toLowerCase().includes(q) ||
-          item.badge.toLowerCase().includes(q)
+          item.badge.toLowerCase().includes(q) ||
+          (item.type === "topic" && !!item.href && matchingTopicHrefs.has(item.href))
       )
     : allResults.slice(0, 8); // Default recent/top items
 

@@ -1,0 +1,75 @@
+import { ArticleNav } from "@/components/ArticleNav";
+import { CodeBlock } from "@/components/CodeBlock";
+import { blueprintExamples } from "@/data/topics/blueprint-examples";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { CategoryBadge } from "@/components/CategoryBadge";
+import { SectionHeader } from "@/components/SectionHeader";
+import { TableOfContents } from "@/components/TableOfContents";
+import { RelatedTopics } from "@/components/RelatedTopics";
+import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
+import { InlineCheck } from "@/components/InlineCheck";
+import { ProductionPressureLab, type PressureLabKind } from "@/components/ProductionPressureLab";
+import { getTopicById } from "@/data/topics/catalog";
+import { productionBlueprints } from "@/data/topics/production-blueprints";
+import styles from "./ProductionBlueprintArticle.module.css";
+
+export function ProductionBlueprintArticle({ id }: { id: PressureLabKind }) {
+  const topic = productionBlueprints.find(topic => topic.id === id)!;
+  const example = blueprintExamples[id];
+  const toc = [
+    ...topic.sections.slice(0, 5).map(({ id, title }) => ({ id, label: title })),
+    { id: "workbench", label: "Try the failure scenario" },
+    { id: "runbook", label: "Respond in production" },
+    { id: "tradeoffs", label: "Trade-offs" },
+    { id: "failures", label: "Failure modes" },
+    { id: "scale", label: topic.sections[5].title },
+    { id: "avoid", label: "What to avoid" },
+    { id: "interview", label: "Explain the decision" },
+    { id: "career-rubric", label: "Expectations by level" },
+    { id: "follow-ups", label: "What breaks next?" },
+    { id: "sources", label: "Sources and practice" },
+  ];
+  const check = topic.questions[0];
+  const renderSection = (section: typeof topic.sections[number], index: number) => <section id={section.id} key={section.id}>
+    <SectionHeader number={String(index + 1).padStart(2, "0")} id={section.id} title={section.title} />
+    {section.paragraphs.map(p => <p key={p}>{p}</p>)}
+    {section.id === "architecture" && <figure className={styles.diagram} aria-label={`${topic.shortTitle}: architecture flow`}>
+      <ol>{topic.flow.map((step, i) => <li key={step}><span aria-hidden="true">{i + 1}</span>{step}</li>)}</ol>
+      <figcaption>{topic.diagramCaption}</figcaption>
+    </figure>}
+    {section.id === "worked-example" && <><CodeBlock language={example.language} code={example.code} /><p className={styles.exampleNote}>{example.note}</p></>}
+    {section.id === "worked-example" && <InlineCheck question={check.scenario} options={check.options.map(option => ({ label: option.text, isCorrect: option.isCorrect, explanation: option.explanation }))} />}
+  </section>;
+  return <article data-category={topic.meta.category} className={`pt-4 pb-16 px-4 sm:px-6 ${styles.article}`}>
+    <div className="wide-width mx-auto">
+      <Breadcrumb items={[{ label: "Problems", href: "/#problems" }, { label: topic.meta.category, href: "/#problems" }, { label: topic.shortTitle }]} />
+      <header className={styles.header}>
+        <div className={styles.meta}><CategoryBadge category={topic.meta.category} size="md" /><span>{topic.meta.difficulty} · {topic.meta.readingTime}</span></div>
+        <h1>{topic.meta.title}</h1><p>{topic.meta.subtitle}</p>
+        <div className={styles.tags}>{topic.meta.tags.map(tag => <span key={tag}>{tag}</span>)}</div>
+      </header>
+      <div className="article-layout">
+        <TableOfContents items={toc} />
+        <div className={`flex-1 min-w-0 prose-width ${styles.body}`}>
+          {topic.sections.slice(0, 5).map(renderSection)}
+          <section id="workbench"><SectionHeader number="06" id="workbench" title="Try the failure scenario" /><ProductionPressureLab kind={id} /></section>
+          <section id="runbook" className={styles.runbook}><SectionHeader number="07" id="runbook" title="Respond in production" /><ol>{topic.runbook.map(item => <li key={item}>{item}</li>)}</ol></section>
+          <section id="tradeoffs"><SectionHeader number="08" id="tradeoffs" title="Every safeguard has a cost" /><div className={styles.tableWrap}><table><caption>Decisions and their operational costs</caption><thead><tr><th scope="col">Decision</th><th scope="col">Trade-off</th></tr></thead><tbody>{topic.tradeoffs.map(([label, detail]) => <tr key={label}><th scope="row">{label}</th><td>{detail}</td></tr>)}</tbody></table></div></section>
+          <section id="failures"><SectionHeader number="09" id="failures" title="Failure modes to rehearse" />{topic.failures.map(([title, detail]) => <div key={title} className={styles.failure}><h3>{title}</h3><p>{detail}</p></div>)}</section>
+          {renderSection(topic.sections[5], 9)}
+          <section id="avoid" className={styles.avoid}><SectionHeader number="11" id="avoid" title="What to avoid" /><ul>{example.avoid.map(item => <li key={item}>{item}</li>)}</ul><p>Verify the contracts, workload, and crash recovery boundaries in your own environment. The workbench’s fixed assumptions explain a mechanism; they are not production sizing advice.</p></section>
+          <section id="interview"><SectionHeader number="12" id="interview" title="Explain the decision" /><blockquote>{topic.interview}</blockquote><p>Start with the business invariant, walk one failure boundary, and explain what the recovery mechanism costs. State the assumption that would make you choose a different design.</p></section>
+          <section id="career-rubric" className={styles.rubric}><SectionHeader number="13" id="career-rubric" title="Expectations by engineering level" />{topic.levels.map((text, i) => <div key={text}><h3>{["Mid-level", "Senior", "Staff"][i]}</h3><p>{text}</p></div>)}</section>
+          <section id="follow-ups"><SectionHeader number="14" id="follow-ups" title="What breaks next?" /><ul>{topic.followups.map(question => <li key={question}>{question}</li>)}</ul><RelatedTopics topics={topic.related.map(id => { const t = getTopicById(id); return { title: t.meta.title, category: t.meta.category, href: t.href }; })} /></section>
+          <section id="sources"><SectionHeader number="15" id="sources" title="Sources and practice" /><p>The walkthrough is an illustrative design. Consult these primary references for the underlying mechanisms and product-specific contracts.</p><ul>{topic.sources.map(([label, href]) => <li key={href}><a href={href}>{label}</a></li>)}</ul><div id="judgment-quiz"><ArticleQuizEntry title={topic.shortTitle} questions={topic.questions} quizHref={`${topic.href}/quiz`} /></div><ArticleNav currentId={id} /></section>
+        </div>
+      </div>
+    </div>
+  </article>;
+}
+
+export function IdempotentApiArticle() { return <ProductionBlueprintArticle id="idempotent-api" />; }
+export function PoisonMessagesArticle() { return <ProductionBlueprintArticle id="poison-messages" />; }
+export function RetryStormArticle() { return <ProductionBlueprintArticle id="retry-storm" />; }
+export function ConnectionPoolArticle() { return <ProductionBlueprintArticle id="connection-pool" />; }
+export function SchemaEvolutionArticle() { return <ProductionBlueprintArticle id="schema-evolution" />; }

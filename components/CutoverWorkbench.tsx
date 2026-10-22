@@ -214,10 +214,10 @@ export function CutoverWorkbench() {
                   Primary DB A
                 </text>
                 <text x="75" y="48" textAnchor="middle" className="fill-slate-700 text-[11px] font-mono">
-                  {activeStage === "cutover" ? `Reads: ${state.readsA.toLocaleString()} RPS` : "Reads: 2,300 RPS"}
+                  {activeStage === "cutover" ? `Reads: ${state.readsA.toLocaleString("en-US")} RPS` : "Reads: 2,300 RPS"}
                 </text>
                 <text x="75" y="66" textAnchor="middle" className="fill-slate-700 text-[11px] font-mono">
-                  {activeStage === "cutover" ? `Writes: ${state.writesA.toLocaleString()} WPS` : "Writes: 250 WPS"}
+                  {activeStage === "cutover" ? `Writes: ${state.writesA.toLocaleString("en-US")} WPS` : "Writes: 250 WPS"}
                 </text>
                 <text x="75" y="86" textAnchor="middle" className="fill-emerald-600 text-[10px] font-mono font-bold">
                   {activeStage === "cutover" && percent === 100 ? "Standby / Read-only" : "● Master Source"}
@@ -302,10 +302,10 @@ export function CutoverWorkbench() {
                   Target DB B
                 </text>
                 <text x="75" y="48" textAnchor="middle" className="fill-slate-700 text-[11px] font-mono">
-                  Reads: {state.readsB.toLocaleString()} RPS
+                  Reads: {state.readsB.toLocaleString("en-US")} RPS
                 </text>
                 <text x="75" y="66" textAnchor="middle" className="fill-slate-700 text-[11px] font-mono">
-                  Writes: {state.writesB.toLocaleString()} WPS
+                  Writes: {state.writesB.toLocaleString("en-US")} WPS
                 </text>
                 <text x="75" y="86" textAnchor="middle" className="fill-emerald-600 text-[10px] font-mono font-bold">
                   {percent === 100 ? "● Authoritative Primary" : percent > 0 ? "● Active Split Target" : "Standby Ingest"}

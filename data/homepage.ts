@@ -15,9 +15,9 @@ export const heroContent = {
     { label: "Flash sale", href: flashSaleTopic.href },
     { label: "Hot partition", href: hotPartitionTopic.href },
     { label: "Transactional outbox", href: transactionalOutboxTopic.href },
-    { label: "Idempotency" },
+    { label: "Idempotency", href: "/topics/correctness/retry-payments-safely" },
     { label: "Backpressure" },
-    { label: "Poison messages" },
+    { label: "Poison messages", href: "/topics/messaging/handle-poison-messages" },
   ],
   primaryCta: { label: "Explore Topics →", href: "#problems" },
   secondaryCta: {
@@ -48,9 +48,9 @@ export const exploreCategories: ExploreCategory[] = [
     pastel: "blue",
     problems: [
       { name: "Database migration", href: databaseMigrationTopic.href, available: true },
-      { name: "Schema changes" },
+      { name: "Schema changes", href: "/topics/deployment/change-schema-without-downtime", available: true },
       { name: "Replication & CDC" },
-      { name: "Connection pools" },
+      { name: "Connection pools", href: "/topics/performance/database-connection-pool-exhaustion", available: true },
     ],
   },
   {
@@ -59,7 +59,7 @@ export const exploreCategories: ExploreCategory[] = [
     icon: "🛡️",
     pastel: "green",
     problems: [
-      { name: "Idempotency" },
+      { name: "Idempotency", href: "/topics/correctness/retry-payments-safely", available: true },
       { name: "Transactional outbox", href: transactionalOutboxTopic.href, available: true },
       { name: "Concurrency" },
       { name: "Ordering" },
@@ -71,9 +71,9 @@ export const exploreCategories: ExploreCategory[] = [
     icon: "✉️",
     pastel: "pink",
     problems: [
-      { name: "Poison messages" },
+      { name: "Poison messages", href: "/topics/messaging/handle-poison-messages", available: true },
       { name: "Consumer lag" },
-      { name: "Retries & DLQ" },
+      { name: "Retries & DLQ", href: "/topics/messaging/handle-poison-messages", available: true },
       { name: "Backpressure" },
     ],
   },
@@ -97,7 +97,7 @@ export const exploreCategories: ExploreCategory[] = [
     problems: [
       { name: "Caching" },
       { name: "Batching" },
-      { name: "Connection pools" },
+      { name: "Connection pools", href: "/topics/performance/database-connection-pool-exhaustion", available: true },
       { name: "Async processing" },
     ],
   },
@@ -110,7 +110,7 @@ export const exploreCategories: ExploreCategory[] = [
       { name: "Circuit breakers" },
       { name: "Bulkheads" },
       { name: "Failover" },
-      { name: "Dependency failures" },
+      { name: "Dependency failures", href: "/topics/reliability/stop-retry-storms", available: true },
     ],
   },
   {
@@ -119,7 +119,7 @@ export const exploreCategories: ExploreCategory[] = [
     icon: "🚀",
     pastel: "pink",
     problems: [
-      { name: "Zero-downtime changes" },
+      { name: "Zero-downtime changes", href: "/topics/deployment/change-schema-without-downtime", available: true },
       { name: "Canary releases" },
       { name: "Rollback" },
       { name: "Event versioning" },
@@ -150,12 +150,14 @@ export const problemCards = [
   {
     category: "CORRECTNESS",
     question: "How do you make a write API idempotent?",
-    available: false,
+    href: "/topics/correctness/retry-payments-safely",
+    available: true,
   },
   {
     category: "MESSAGING",
     question: "How do you stop poison messages from retrying forever?",
-    available: false,
+    href: "/topics/messaging/handle-poison-messages",
+    available: true,
   },
   {
     category: "TRAFFIC",
@@ -166,12 +168,14 @@ export const problemCards = [
   {
     category: "PERFORMANCE",
     question: "What happens when your database connection pool is exhausted?",
-    available: false,
+    href: "/topics/performance/database-connection-pool-exhaustion",
+    available: true,
   },
   {
     category: "RELIABILITY",
     question: "How do you prevent retries from taking down the dependency you're trying to recover?",
-    available: false,
+    href: "/topics/reliability/stop-retry-storms",
+    available: true,
   },
 ];
 

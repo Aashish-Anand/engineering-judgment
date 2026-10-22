@@ -9,7 +9,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at var(--light-x, 50%) var(--light-y, 30%), #fff8, transparent 65%);
+  background: radial-gradient(circle at var(--light-x, 50%) var(--light-y, 30%), var(--theme-glow, #fff8), transparent 65%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 220ms ease;

@@ -168,13 +168,13 @@ export function DatabaseCutoverLab() {
               <div className="flex justify-between text-slate-600">
                 <span>Read Throughput:</span>
                 <span className="font-mono font-bold text-slate-900">
-                  {state.readsA.toLocaleString()} RPS
+                  {state.readsA.toLocaleString("en-US")} RPS
                 </span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Write Throughput:</span>
                 <span className="font-mono font-bold text-slate-900">
-                  {state.writesA.toLocaleString()} WPS
+                  {state.writesA.toLocaleString("en-US")} WPS
                 </span>
               </div>
             </div>
@@ -213,13 +213,13 @@ export function DatabaseCutoverLab() {
               <div className="flex justify-between text-slate-600">
                 <span>Read Throughput:</span>
                 <span className="font-mono font-bold text-slate-900">
-                  {state.readsB.toLocaleString()} RPS
+                  {state.readsB.toLocaleString("en-US")} RPS
                 </span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Write Throughput:</span>
                 <span className="font-mono font-bold text-slate-900">
-                  {state.writesB.toLocaleString()} WPS
+                  {state.writesB.toLocaleString("en-US")} WPS
                 </span>
               </div>
             </div>

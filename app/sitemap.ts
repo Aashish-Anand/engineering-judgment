@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 1,
     },
+    { url: `${siteConfig.url}/library`, changeFrequency: "weekly", priority: 0.9 },
     ...topicCatalog.flatMap((topic) => [{
       url: `${siteConfig.url}${topic.href}`,
       changeFrequency: "monthly" as const,
