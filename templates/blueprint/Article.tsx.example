@@ -1,0 +1,59 @@
+// Copy to components/articles/YourTopicArticle.tsx after registering the topic.
+import { BlueprintArticleFrame, BlueprintSection, BlueprintPanel } from "@/components/articles/BlueprintArticleFrame";
+import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
+import { ArticleNav } from "@/components/ArticleNav";
+import { InlineCheck } from "@/components/InlineCheck";
+import { getTopicById, type TopicId } from "@/data/topics/catalog";
+import { topicQuizzes } from "@/data/topics/quizzes";
+import neo from "@/components/Neo.module.css";
+// Import a topic-specific client workbench and diagram when ready.
+
+const TOPIC_ID = "replace-with-registered-topic-id" satisfies TopicId;
+const toc = [
+  { id: "the-problem", label: "Workload and constraints" },
+  { id: "the-mistake", label: "Where the first design fails" },
+  { id: "mental-model", label: "The mental model" },
+  { id: "architecture", label: "The architecture" },
+  { id: "workbench", label: "Try the failure scenario" },
+  { id: "tradeoffs", label: "Trade-offs and recovery" },
+  { id: "judgment-quiz", label: "Test your judgment" },
+  { id: "related", label: "Keep exploring" },
+];
+
+export function YourTopicArticle() {
+  const topic = getTopicById(TOPIC_ID);
+  const questions = topicQuizzes[TOPIC_ID];
+  const checkpoint = questions[0];
+  return <BlueprintArticleFrame topicId={TOPIC_ID} toc={toc}>
+    <BlueprintSection id="the-problem" number="01" title="Workload and constraints">
+      <p>TODO: Describe a concrete production situation, the workload, and the invariant to protect.</p>
+      <p>TODO: State the assumptions and what the reader can change in the experiment.</p>
+    </BlueprintSection>
+    <BlueprintSection id="the-mistake" number="02" title="Where the first design fails">
+      <p>TODO: Walk through a specific failure boundary and its observable consequence.</p>
+      <InlineCheck className={neo.conceptCheck} question={checkpoint.scenario} options={checkpoint.options.map(option => ({ label: option.text, isCorrect: option.isCorrect, explanation: option.explanation }))} />
+    </BlueprintSection>
+    <BlueprintSection id="mental-model" number="03" title="The mental model">
+      <p>TODO: Explain the distinction that makes the problem easier to reason about.</p>
+    </BlueprintSection>
+    <BlueprintSection id="architecture" number="04" title="The architecture">
+      <p>TODO: Trace one successful operation and one failure through the design.</p>
+      <BlueprintPanel kind="diagram">{/* Insert a compact, labeled diagram here; do not stretch it to prose width. */}</BlueprintPanel>
+    </BlueprintSection>
+    <BlueprintSection id="workbench" number="05" title="Try the failure scenario">
+      <p>TODO: Tell the reader which assumption to change and what to observe.</p>
+      <BlueprintPanel>{/* Insert a topic-specific client workbench here. */}</BlueprintPanel>
+    </BlueprintSection>
+    <BlueprintSection id="tradeoffs" number="06" title="Trade-offs and recovery">
+      <p>TODO: Explain the cost, failure signal, recovery action, and the condition under which you would choose another design.</p>
+      <details><summary>Operational runbook</summary><p>TODO: Detection, mitigation, verification, and rollback conditions.</p></details>
+    </BlueprintSection>
+    <BlueprintSection id="judgment-quiz" number="07" title="Test your judgment">
+      <ArticleQuizEntry title={topic.meta.title} questions={questions} quizHref={`${topic.href}/quiz`} />
+    </BlueprintSection>
+    <BlueprintSection id="related" number="08" title="Keep exploring">
+      <p>TODO: Link to relevant published blueprints and primary sources.</p>
+      <ArticleNav currentId={TOPIC_ID} />
+    </BlueprintSection>
+  </BlueprintArticleFrame>;
+}

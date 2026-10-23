@@ -1,0 +1,16 @@
+// Add this entry to articlePresentations in data/topics/presentation.ts.
+import type { ArticlePresentation } from "@/data/topics/presentation";
+
+export const presentation = {
+  number: "010", // Use a unique, stable publication number.
+  shortTitle: "TODO: Short topic name",
+  startId: "the-problem", // Must match a rendered section anchor.
+  overview: "TODO: One paragraph explaining the failure boundary, the central decision, and its cost.",
+  scenario: [
+    { label: "Workload", value: "TODO: Stated assumption" },
+    { label: "Constraint", value: "TODO: Budget or limit" },
+    { label: "Invariant", value: "TODO: What must hold" },
+    { label: "Approach", value: "TODO: Main mechanism" },
+  ],
+  journey: ["Frame the constraint", "Find the failure", "Try the safeguard", "Verify recovery"],
+} satisfies ArticlePresentation;

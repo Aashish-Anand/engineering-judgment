@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useId } from "react";
+import styles from "./LearningWidgets.module.css";
 
 const DAILY_WRITE_PRESETS = [
   { label: "1M", value: 1_000_000 },
@@ -40,160 +41,34 @@ export function CapacitySizingLab() {
   const backfillSeconds = (totalBatches * 35) / 1000; // 35ms per chunk (query + network + delay)
   const backfillHours = (backfillSeconds / 3600).toFixed(1);
 
+  const inputs = [
+    { id: "writes", label: "Daily writes", value: dailyWrites, options: DAILY_WRITE_PRESETS, change: setDailyWrites },
+    { id: "payload", label: "Row payload", value: rowKb, options: ROW_SIZE_PRESETS, change: setRowKb },
+    { id: "burst", label: "Peak multiplier", value: peakMultiplier, options: PEAK_MULTIPLIERS, change: setPeakMultiplier },
+  ];
+
   return (
-    <div
-      className="my-6 bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-xs"
-      aria-labelledby={headingId}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <span className="text-base select-none" aria-hidden="true">
-            🧮
-          </span>
-          <h3 id={headingId} className="font-sans font-bold text-base sm:text-lg text-slate-900 m-0">
-            Live Capacity &amp; Sizing Calculator
-          </h3>
-        </div>
-        <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">
-          BACK-OF-THE-ENVELOPE SIZING
-        </span>
+    <div className={styles.calculator} aria-labelledby={headingId}>
+      <h3 id={headingId}>Capacity &amp; sizing</h3>
+      <p className={styles.description}>Change the workload to estimate write throughput and replication capacity.</p>
+      <div className={styles.inputs}>
+        {inputs.map(input => <label key={input.id} htmlFor={`${headingId}-${input.id}`}>
+          {input.label}
+          <select id={`${headingId}-${input.id}`} value={input.value} onChange={event => input.change(Number(event.target.value))}>
+            {input.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>)}
       </div>
-
-      <p className="font-sans text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">
-        Tweak workload parameters below to compute instantaneous write throughput, continuous WAL generation volume, and the minimum CDC consumer ingestion rate needed to keep replication lag under 1.0s.
-      </p>
-
-      {/* Control sliders/selectors */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-        {/* Daily Writes */}
-        <div>
-          <span className="font-mono text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-            1. Daily Write Volume
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {DAILY_WRITE_PRESETS.map((preset) => {
-              const isSelected = dailyWrites === preset.value;
-              return (
-                <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() => setDailyWrites(preset.value)}
-                  className={`text-xs py-1 px-2.5 rounded font-mono font-medium transition-colors ${
-                    isSelected
-                      ? "bg-blue-600 text-white font-bold"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Row Payload Size */}
-        <div>
-          <span className="font-mono text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-            2. Row Payload Size
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {ROW_SIZE_PRESETS.map((preset) => {
-              const isSelected = rowKb === preset.value;
-              return (
-                <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() => setRowKb(preset.value)}
-                  className={`text-xs py-1 px-2.5 rounded font-mono font-medium transition-colors ${
-                    isSelected
-                      ? "bg-blue-600 text-white font-bold"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Peak Multiplier */}
-        <div>
-          <span className="font-mono text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-            3. Peak Burst Multiplier
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {PEAK_MULTIPLIERS.map((preset) => {
-              const isSelected = peakMultiplier === preset.value;
-              return (
-                <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() => setPeakMultiplier(preset.value)}
-                  className={`text-xs py-1 px-2.5 rounded font-mono font-medium transition-colors ${
-                    isSelected
-                      ? "bg-blue-600 text-white font-bold"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Calculated Telemetry Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4">
-        <div className="p-2.5 bg-white border border-slate-200/80 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-            Avg / Peak Writes
-          </span>
-          <span className="font-mono text-base sm:text-lg font-bold text-slate-900 block">
-            {avgWps.toLocaleString("en-US")} / <span className="text-blue-600">{peakWps.toLocaleString("en-US")} WPS</span>
-          </span>
-          <span className="text-[10px] text-slate-500">Peak write burst rate</span>
-        </div>
-
-        <div className="p-2.5 bg-white border border-slate-200/80 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-            WAL Stream Volume
-          </span>
-          <span className="font-mono text-base sm:text-lg font-bold text-amber-600 block">
-            {walGbPerHour} GB / hr
-          </span>
-          <span className="text-[10px] text-slate-500">~{walKbPerSec.toLocaleString("en-US")} KB/s continuous</span>
-        </div>
-
-        <div className="p-2.5 bg-white border border-slate-200/80 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-            250M Backfill Window
-          </span>
-          <span className="font-mono text-base sm:text-lg font-bold text-emerald-600 block">
-            ~{backfillHours} hours
-          </span>
-          <span className="text-[10px] text-slate-500">Throttled keyset cursor</span>
-        </div>
-
-        <div className="p-2.5 bg-white border border-slate-200/80 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
-            Max CDC Lag Alert
-          </span>
-          <span className="font-mono text-base sm:text-lg font-bold text-indigo-600 block">
-            &lt; 1,000 ms
-          </span>
-          <span className="text-[10px] text-slate-500">Rollback safety margin</span>
-        </div>
-      </div>
-
-      {/* Senior Engineering Insight Pill */}
-      <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-lg flex items-start gap-2 text-xs font-sans text-slate-700 leading-relaxed">
-        <span className="text-blue-600 shrink-0 font-bold">💡 Staff Takeaway:</span>
-        <span>
-          At <strong>{dailyWrites.toLocaleString("en-US")} writes/day</strong>, the source primary produces <strong>{walGbPerHour} GB/hr</strong> of write-ahead logs. The CDC pipeline (Debezium + Kafka) must guarantee a consumption rate of at least <strong>{(peakWps * 1.5).toFixed(0)} WPS</strong> to drain lag spikes without buffering on disk.
-        </span>
-      </div>
+      <dl className={styles.metrics} aria-live="polite">
+        <div><dt>Avg / peak writes</dt><dd>{avgWps.toLocaleString("en-US")} / {peakWps.toLocaleString("en-US")}<small> writes/s</small></dd></div>
+        <div><dt>WAL stream</dt><dd>{walGbPerHour}<small> GB/hr</small></dd></div>
+        <div><dt>250M-row backfill</dt><dd>~{backfillHours}<small> hours</small></dd></div>
+        <div><dt>CDC lag alert</dt><dd>&lt; 1,000<small> ms</small></dd></div>
+      </dl>
+      <details className={styles.notes}>
+        <summary>Capacity assumptions &amp; takeaway</summary>
+        <p>At {dailyWrites.toLocaleString("en-US")} writes/day, the source produces {walGbPerHour} GB/hr of write-ahead logs (~{walKbPerSec.toLocaleString("en-US")} KB/s). A consumer rate of at least {(peakWps * 1.5).toFixed(0)} writes/s provides headroom to drain lag spikes. Backfill assumes 250M rows, 1,000 rows per batch, and 35ms per batch including delay.</p>
+      </details>
     </div>
   );
 }

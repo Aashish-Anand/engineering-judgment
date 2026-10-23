@@ -1,16 +1,15 @@
-import { Breadcrumb } from "@/components/Breadcrumb";
+import { BlueprintArticleFrame, BlueprintPanel } from "./BlueprintArticleFrame";
+import neo from "@/components/Neo.module.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArticleNav } from "@/components/ArticleNav";
 import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
 import { InlineCheck } from "@/components/InlineCheck";
-import { CategoryBadge } from "@/components/CategoryBadge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
 import { InsightCard } from "@/components/InsightCard";
 import { ProblemStatement } from "@/components/ProblemStatement";
 import { RelatedTopics } from "@/components/RelatedTopics";
-import { TableOfContents } from "@/components/TableOfContents";
 import { OutboxDiagram, OutboxRelayFlow } from "@/components/diagrams/OutboxDiagram";
 import {
   OutboxRowLifecycle,
@@ -23,7 +22,6 @@ import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
 import { CareerRubricHub } from "@/components/CareerRubricHub";
 import { getTopicById } from "@/data/topics/catalog";
 import {
-  meta,
   tocItems,
   scenarioMetrics,
   tradeoffs,
@@ -90,94 +88,8 @@ export function TransactionalOutboxArticle() {
   });
 
   return (
-    <article className="pt-4 pb-16 px-4 sm:px-6">
-      <div className="wide-width mx-auto">
-        {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            { label: "Problems", href: "/" },
-            { label: "Correctness", href: "/#problems" },
-            { label: "Transactional Outbox" },
-          ]}
-        />
-
-        {/* Editorial Header */}
-        <header className="mb-8 pb-8 border-b border-slate-200">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column */}
-            <div className="lg:col-span-8">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <CategoryBadge category={meta.category} size="md" />
-                <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded">
-                  {meta.difficulty}
-                </span>
-                <span className="text-xs text-slate-300">·</span>
-                <span className="font-mono text-xs text-slate-500 font-medium">
-                  ⏱️ {meta.readingTime}
-                </span>
-              </div>
-
-              <h1 className="font-sans text-2xl sm:text-3xl lg:text-[2.25rem] font-bold text-slate-900 leading-[1.2] tracking-tight mb-3">
-                {meta.title}
-              </h1>
-
-              <p className="font-sans text-base sm:text-lg text-slate-600 leading-relaxed mb-4">
-                &ldquo;{meta.subtitle}&rdquo;
-              </p>
-
-              <div className="flex flex-wrap gap-1.5">
-                {meta.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="font-mono text-xs font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Column: Context Summary Card */}
-            <div className="lg:col-span-4">
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-                <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
-                  <span className="font-sans font-bold text-xs uppercase tracking-wider text-slate-500">
-                    Production Context
-                  </span>
-                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded">
-                    Data Correctness
-                  </span>
-                </div>
-
-                <div className="space-y-2.5 text-xs font-sans">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Service</span>
-                    <span className="font-bold text-slate-900">Order Processing</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Peak Write Rate</span>
-                    <span className="font-semibold text-slate-900">5,000 orders / sec</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Target Invariant</span>
-                    <span className="font-semibold text-emerald-600">Zero Lost / Ghost Events</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Primary Strategy</span>
-                    <span className="font-semibold text-slate-800">Atomic Outbox + Relay</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Availability</span>
-                    <span className="font-semibold text-blue-600">Broker Decoupled</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* 30-Second Executive Blueprint */}
-        <ExecutiveBlueprint
+    <BlueprintArticleFrame topicId="transactional-outbox" toc={tocItems} brief={
+      <ExecutiveBlueprint
           timeToRead="30-Second Architecture Blueprint"
           bottleneck="Writing to PostgreSQL and publishing to Kafka in the same HTTP request is an uncoordinated dual write. Crashes cause silent data loss (lost events) or phantom records (ghost events)."
           solution="Transactional Outbox Pattern: Insert the event payload into an outbox table in the exact same database transaction as the business entity ➔ Asynchronously relay via Polling or Debezium CDC ➔ Deduplicate at consumer with event IDs."
@@ -188,14 +100,8 @@ export function TransactionalOutboxArticle() {
             { label: "Consumer Safety", value: "100% Idempotent de-duplication" },
           ]}
         />
+    }>
 
-        {/* Main Content Layout with Sticky TOC */}
-        <div className="article-layout">
-          {/* Sticky TOC */}
-          <TableOfContents items={tocItems} />
-
-          {/* Article Main Column */}
-          <div className="flex-1 min-w-0 prose-width space-y-10">
             {/* ── 01 — The Dual-Write Problem & Live Simulator ── */}
             <section id="the-problem" className="scroll-mt-16">
               <SectionHeader
@@ -218,7 +124,7 @@ export function TransactionalOutboxArticle() {
               </div>
 
               {/* Interactive Polling vs CDC Simulator */}
-              <OutboxLab />
+              <BlueprintPanel id="workbench"><OutboxLab /></BlueprintPanel>
             </section>
 
             {/* ── 02 — The Obvious Mistake & Gut Check ───────── */}
@@ -234,17 +140,18 @@ export function TransactionalOutboxArticle() {
 
               <div className="my-6">
                 <ScrollReveal>
-                  <OutboxDiagram />
+                  <BlueprintPanel kind="diagram"><OutboxDiagram /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
               <div className="my-6">
                 <ScrollReveal>
-                  <DualWriteCrashTimeline />
+                  <BlueprintPanel kind="diagram"><DualWriteCrashTimeline /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
               <InlineCheck
+                className={neo.conceptCheck}
                 question="Architectural Gut Check: Why can't we just call kafka.publish() inside our DB transaction so that if Kafka fails, the DB rolls back?"
                 options={[
                   {
@@ -297,29 +204,30 @@ export function TransactionalOutboxArticle() {
 
               <div className="my-6">
                 <ScrollReveal>
-                  <OutboxDiagram resolved={true} />
+                  <BlueprintPanel kind="diagram"><OutboxDiagram resolved={true} /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
               <div className="my-6">
                 <ScrollReveal>
-                  <OutboxSchemaExample />
+                  <BlueprintPanel kind="diagram"><OutboxSchemaExample /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
               <div className="my-6">
                 <ScrollReveal>
-                  <OutboxRowLifecycle />
+                  <BlueprintPanel kind="diagram"><OutboxRowLifecycle /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
               <div className="my-6">
                 <ScrollReveal>
-                  <OutboxRelayFlow />
+                  <BlueprintPanel kind="diagram"><OutboxRelayFlow /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
               <InlineCheck
+                className={neo.conceptCheck}
                 question="Architectural Gut Check: Why not just poll the outbox table with SELECT * FROM outbox WHERE published_at IS NULL ORDER BY id ASC LIMIT 100?"
                 options={[
                   {
@@ -342,7 +250,7 @@ export function TransactionalOutboxArticle() {
 
               <div className="my-6">
                 <ScrollReveal>
-                  <IdempotentConsumerExample />
+                  <BlueprintPanel kind="diagram"><IdempotentConsumerExample /></BlueprintPanel>
                 </ScrollReveal>
               </div>
             </section>
@@ -360,7 +268,7 @@ export function TransactionalOutboxArticle() {
               </p>
 
               <ScrollReveal>
-                <TradeoffDiagnosticsHub
+                <BlueprintPanel kind="detail"><TradeoffDiagnosticsHub
                   approachesTitle="1. Outbox Relay Architecture Options"
                   approachesHeaders={["Relay Approach", "Advantage", "Trade-off / Operational Risk"]}
                   approachesRows={tradeoffs}
@@ -380,7 +288,7 @@ export function TransactionalOutboxArticle() {
                   tenXProblems={OUTBOX_TEN_X}
                   avoidTitle="⚠️ Anti-patterns that cause data loss or pool exhaustion:"
                   avoidList={OUTBOX_AVOID}
-                />
+                /></BlueprintPanel>
               </ScrollReveal>
             </section>
 
@@ -397,12 +305,13 @@ export function TransactionalOutboxArticle() {
               </p>
 
               <ScrollReveal>
-                <CareerRubricHub
+                <BlueprintPanel kind="detail"><CareerRubricHub
+                  initiallyExpanded={false}
                   interviewAnswer={OUTBOX_INTERVIEW_SYNTHESIS}
                   levelExpectations={expectations}
                   followUpQuestions={followUps}
                   whiteboardChain={OUTBOX_WHITEBOARD}
-                />
+                /></BlueprintPanel>
               </ScrollReveal>
             </section>
 
@@ -436,9 +345,6 @@ export function TransactionalOutboxArticle() {
                 <ArticleNav currentId="transactional-outbox" />
               </div>
             </section>
-          </div>
-        </div>
-      </div>
-    </article>
+    </BlueprintArticleFrame>
   );
 }

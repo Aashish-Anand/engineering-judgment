@@ -1,10 +1,9 @@
-import { Breadcrumb } from "@/components/Breadcrumb";
+import { BlueprintArticleFrame } from "./BlueprintArticleFrame";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArticleNav } from "@/components/ArticleNav";
 import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { SectionHeader } from "@/components/SectionHeader";
 import { RelatedTopics } from "@/components/RelatedTopics";
-import { TableOfContents } from "@/components/TableOfContents";
 import { InlineCheck } from "@/components/InlineCheck";
 import { NaiveMigrationDiagram } from "@/components/diagrams/NaiveMigrationDiagram";
 import { CapacitySizingLab } from "@/components/CapacitySizingLab";
@@ -13,45 +12,17 @@ import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
 import { CareerRubricHub } from "@/components/CareerRubricHub";
 
 import * as article from "@/data/topics/safely-migrate-production-database";
+import neo from "@/components/Neo.module.css";
 
 export function DatabaseMigrationArticle() {
   const {
-    meta,
     tocItems,
     relatedTopics,
   } = article;
 
   return (
-    <article className="migration-article page-shell pt-6 pb-20">
-      <div className="wide-width mx-auto">
-        {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            { label: "Problems", href: "/" },
-            { label: "Data", href: "/#problems" },
-            { label: "Database Migration" },
-          ]}
-        />
+    <BlueprintArticleFrame topicId="database-migration" toc={tocItems}>
 
-        <header className="migration-header">
-          <div><p className="eyebrow">Data / Blueprint 01 · {meta.readingTime}</p>
-            <h1>{meta.title}</h1>
-            <p className="article-deck">Keep the system available while you synchronize, validate, and transfer ownership of production writes.</p>
-          </div>
-          <aside className="scenario-context" aria-label="Scenario assumptions">
-            <span className="eyebrow">The scenario</span>
-            <dl><div><dt>Daily reads</dt><dd>100 million</dd></div><div><dt>Daily writes</dt><dd>10 million</dd></div><div><dt>Downtime budget</dt><dd>Zero</dd></div><div><dt>Approach</dt><dd>Snapshot + CDC</dd></div></dl>
-          </aside>
-        </header>
-        <div className="article-thesis"><span className="eyebrow">The central idea</span><p>A snapshot copies the database at one moment. Production writes continue afterward, so the target immediately falls behind. The migration has two jobs: keep the databases synchronized, then transfer traffic while preserving a way back.</p></div>
-
-        {/* Main Content Layout with Sticky TOC */}
-        <div className="article-layout">
-          {/* Sticky TOC */}
-          <TableOfContents items={tocItems} />
-
-          {/* Article Main Reading Column */}
-          <div className="article-content min-w-0 space-y-12">
             {/* ── 01 — The Problem & Live Capacity Calculator ──── */}
             <section id="the-problem" className="scroll-mt-28">
               <SectionHeader
@@ -64,7 +35,7 @@ export function DatabaseMigrationArticle() {
               <p className="scenario-note">The cutover workbench later uses a separate illustrative load of 2,300 reads and 250 writes per second. Calculator inputs do not change that simulation.</p>
 
               {/* Interactive Sizing Widget */}
-              <CapacitySizingLab />
+              <div className={neo.labPanel}><CapacitySizingLab /></div>
             </section>
 
             {/* ── 02 — The Naive Snapshot Trap & Gut Check ─────── */}
@@ -78,13 +49,14 @@ export function DatabaseMigrationArticle() {
                 The initial instinct is often: <strong>dump the database using pg_dump and restore it on the target</strong>. It seems intuitive—export everything, import into the new system, switch DNS. But in an active production system, the target will be missing writes received after the snapshot began.
               </p>
 
-              <div className="my-6">
+              <div className={neo.articleFigure}>
                 <ScrollReveal>
                   <NaiveMigrationDiagram />
                 </ScrollReveal>
               </div>
 
               <InlineCheck
+                className={neo.conceptCheck}
                 question="Architectural Gut Check: Your database is 2 TB. You take a pg_dump starting at 2:00 AM, which finishes at 6:00 AM. Can you flip production DNS to DB B at 6:01 AM?"
                 options={[
                   {
@@ -117,6 +89,7 @@ export function DatabaseMigrationArticle() {
               <p className="text-slate-700 leading-relaxed">
                 First, bring the target to identical state with the source while traffic flows freely. Then, move traffic gradually without serving stale reads or losing in-flight writes. Conflating these two stages is where most migrations fail.
               </p>
+              <div className={neo.decisionNote}><span className="eyebrow">A decision to carry forward</span><h3>Copied ≠ caught up.<br />Caught up ≠ safe to switch.</h3><p>Verify the data, drain in-flight writes, and protect the rollback path before transferring ownership.</p></div>
             </section>
 
             {/* ── 04 — Interactive Migration Workbench ─────────── */}
@@ -131,7 +104,9 @@ export function DatabaseMigrationArticle() {
               </p>
 
               <ScrollReveal>
+                <div className={neo.labPanel}>
                 <CutoverWorkbench />
+                </div>
               </ScrollReveal>
             </section>
 
@@ -147,7 +122,7 @@ export function DatabaseMigrationArticle() {
               </p>
 
               <ScrollReveal>
-                <TradeoffDiagnosticsHub />
+                <div className={neo.detailPanel}><TradeoffDiagnosticsHub /></div>
               </ScrollReveal>
             </section>
 
@@ -163,7 +138,7 @@ export function DatabaseMigrationArticle() {
               </p>
 
               <ScrollReveal>
-                <CareerRubricHub />
+                <div className={neo.detailPanel}><CareerRubricHub initiallyExpanded={false} /></div>
               </ScrollReveal>
             </section>
 
@@ -197,9 +172,6 @@ export function DatabaseMigrationArticle() {
                 <ArticleNav currentId="database-migration" />
               </div>
             </section>
-          </div>
-        </div>
-      </div>
-    </article>
+    </BlueprintArticleFrame>
   );
 }

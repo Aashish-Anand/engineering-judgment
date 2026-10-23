@@ -1,0 +1,49 @@
+/* Compact learning tools: readable labels, shared spacing, bounded diagrams. */
+.calculator,.cutover { font-size:14px; line-height:1.6; }
+.calculator { padding:16px; }
+.calculator h3,.workbenchHeader h3 { font-size:18px; font-weight:700; line-height:1.35; margin:0; letter-spacing:-.02em; }
+.calculator .description { font-size:14px; line-height:1.6; margin:6px 0 16px; color:var(--neo-muted); }
+.inputs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.inputs label { font-size:12px; font-weight:600; color:var(--neo-muted); }
+.inputs select { display:block; width:100%; margin-top:6px; padding:8px 10px; min-height:38px; border:1px solid var(--neo-ink); border-radius:0; background:var(--neo-surface); color:var(--neo-ink); font:400 14px/1.5 var(--font-sans); }
+.metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; border-block:1px solid var(--neo-grid); padding-block:14px; margin:16px 0 0; }
+.metrics dt { font-size:12px; color:var(--neo-muted); margin-bottom:4px; }
+.metrics dd { font-size:18px; font-weight:700; color:var(--neo-ink); font-variant-numeric:tabular-nums; }
+.metrics small { font-size:12px; font-weight:400; white-space:nowrap; }
+.notes { font-size:14px; border-top:1px solid var(--neo-grid); }
+.calculator .notes { border-top:0; }
+.notes summary { padding-block:12px 0; cursor:pointer; font-size:13px; font-weight:600; color:var(--neo-ink); }
+.notes p { margin:10px 0 0; font-size:14px; line-height:1.65; color:var(--neo-muted); }
+.workbenchHeader { padding:14px 16px; border-bottom:1px solid var(--neo-grid); }
+.stageTabs { display:flex; gap:6px; margin-top:12px; overflow:auto; padding-bottom:4px; }
+.stageTabs button { min-height:36px; }
+.workbenchBody { display:grid; gap:12px; padding:16px; }
+.topology { padding:12px; background:var(--theme-soft,#f5f6f3); border:1px solid var(--neo-grid); }
+.topology > div:first-child { flex-wrap:wrap; gap:8px; padding-bottom:8px; margin-bottom:4px; }
+.topology svg { max-width:760px; }
+.controls { border-top:1px solid var(--neo-grid); padding-top:12px; }
+.controlGrid { display:grid; grid-template-columns:1.2fr 1fr; gap:16px; }
+.controlGrid > div:first-child > div { margin-bottom:12px; }
+.faultControls { display:flex; flex-wrap:wrap; align-content:start; align-items:start; gap:8px; border-left:1px solid var(--neo-grid); padding-left:20px; }
+.faultControls button { margin-left:0; }
+.cutover button { font-size:13px; line-height:1.5; min-height:36px; cursor:pointer; }
+.cutover :is([class*="text-[10px]"],[class*="text-[11px]"]) { font-size:12px; }
+.phaseNotes { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+.phaseNotes > div { padding:12px; }
+@media(max-width:767px) {
+  .inputs { gap:10px; }
+  .metrics { grid-template-columns:1fr 1fr; gap:14px; }
+  .controlGrid { grid-template-columns:1fr; gap:0; }
+  .faultControls { border-left:0; padding:0; }
+  .phaseNotes { grid-template-columns:1fr; }
+  .workbenchBody { padding:12px; }
+}
+@media(max-width:480px) {
+  .inputs { grid-template-columns:1fr; gap:10px; }
+  .inputs label { display:grid; grid-template-columns:110px minmax(0,1fr); align-items:center; gap:8px; }
+  .inputs select { margin-top:0; }
+  .calculator { padding:14px; }
+  .metrics dd { font-size:17px; }
+}
+.metrics small { margin-left:4px; }
+@media(max-width:767px) { .topology::after { content:"Scroll diagram sideways →"; display:block; margin-top:6px; font-size:12px; color:var(--neo-muted); } }

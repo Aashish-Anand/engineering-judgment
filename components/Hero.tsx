@@ -1,24 +1,37 @@
+"use client";
+
 import Link from "next/link";
-import { DepthLink } from "./DepthLink";
+import { useState } from "react";
+import styles from "./Home.module.css";
 
 export function Hero() {
+  const [pressure, setPressure] = useState(false);
   return (
-    <section className="home-hero page-shell">
-      <div>
-        <p className="eyebrow">Architecture under pressure</p>
-        <h1>Understand the system.<br /><span>Make the call.</span></h1>
-        <p className="hero-description">A field guide to the decisions that matter when systems reach their limits. Real constraints, considered trade-offs, and room to experiment.</p>
-        <Link href="#problems" className="editorial-button">Explore the blueprints <span aria-hidden="true">↗</span></Link>
+    <section className={styles.hero}>
+      <div className={styles.heroCopy}>
+        <p className={styles.eyebrow}><span className={styles.statusDot} /> A field guide to architecture under pressure</p>
+        <h1>Understand<br />the system.<br /><span>Make the call.</span></h1>
+        <p className={styles.heroDescription}>Production gets messy. Build the judgment to handle it. Explore real constraints, break a few assumptions, and see what your decisions cost.</p>
+        <div className={styles.actions}><Link className={styles.button} href="#problems">Find your next problem <span aria-hidden="true">↗</span></Link><Link className={styles.secondaryLink} href="#labs">Try the workbench ↓</Link></div>
+        <p className={styles.heroNote}>Read the problem. Challenge the design. Own the trade-off.</p>
       </div>
-      <DepthLink className="hero-feature" href="/topics/database/safely-migrate-production-database">
-        <span className="eyebrow">Start here · Database migration</span>
-        <h2>Keep the writes.<br />Move the database.</h2>
-        <p>How to synchronize two systems, validate the result, and switch traffic with a way back.</p>
-        <div className="migration-preview" aria-label="Source database streams changes to target database">
-          <span>Source<br /><small>Serving traffic</small></span><span className="migration-connection">CDC →</span><span>Target<br /><small>Catching up</small></span>
+      <div className={styles.heroVisual}>
+        <div className={styles.console}>
+          <div className={styles.consoleBar}><span><span className={styles.statusDot} /> SYSTEM IN THE MAKING</span><span>LAB / 001</span></div>
+          <div className={styles.consoleBody}>
+            <h2>Move the database.<br />Keep every write.</h2>
+            <div className={styles.flow} aria-label="Source database streams changes through CDC to target database">
+              <div className={styles.database}><strong>Source / A</strong><small>Serving production</small></div>
+              <div className={styles.connector}><span>CDC</span><b aria-hidden="true">→</b></div>
+              <div className={`${styles.database} ${styles.target}`}><strong>Target / B</strong><small>Catching up</small></div>
+            </div>
+            <div className={styles.liveReadout} aria-live="polite"><span>REPLICATION LAG</span><strong>{pressure ? "680" : "14"}<small> ms</small></strong><div className={styles.meter}><span style={{ width: pressure ? "84%" : "12%" }} /></div><p>{pressure ? "Writes surge. The target falls behind." : "Writes keep flowing. The target keeps up."}</p></div>
+            <button className={styles.spikeButton} type="button" aria-pressed={pressure} onClick={() => setPressure(value => !value)}>{pressure ? "↺ Reset the load" : "↗ Turn up the pressure"}<span>{pressure ? "2,400" : "250"} writes/s</span></button>
+            <p className={styles.simulationNote}>Illustrative states · Assumptions in the blueprint.</p>
+          </div>
+          <Link className={styles.consoleLink} href="/topics/database/safely-migrate-production-database">Start with database migration <span aria-hidden="true">↗</span></Link>
         </div>
-        <span className="feature-link">Read the blueprint <span aria-hidden="true">↗</span></span>
-      </DepthLink>
+      </div>
     </section>
   );
 }

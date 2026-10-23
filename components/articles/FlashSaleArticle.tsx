@@ -1,17 +1,16 @@
-import { Breadcrumb } from "@/components/Breadcrumb";
+import { BlueprintArticleFrame, BlueprintPanel } from "./BlueprintArticleFrame";
+import neo from "@/components/Neo.module.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArticleNav } from "@/components/ArticleNav";
 import { CodeBlock } from "@/components/CodeBlock";
 import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
 import { InlineCheck } from "@/components/InlineCheck";
-import { CategoryBadge } from "@/components/CategoryBadge";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
 import { InsightCard } from "@/components/InsightCard";
 import { ProblemStatement } from "@/components/ProblemStatement";
 import { RelatedTopics } from "@/components/RelatedTopics";
-import { TableOfContents } from "@/components/TableOfContents";
 import { FailureCallout } from "@/components/doodle/FailureCallout";
 import { NaiveFlashSaleDiagram } from "@/components/diagrams/NaiveFlashSaleDiagram";
 import { FlashSaleArchitectureDiagram } from "@/components/diagrams/FlashSaleArchitectureDiagram";
@@ -55,7 +54,6 @@ const FLASH_SALE_WHITEBOARD = [
 
 export function FlashSaleArticle() {
   const {
-    meta,
     tocItems,
     scenarioMetrics,
     inventoryApproaches,
@@ -71,94 +69,8 @@ export function FlashSaleArticle() {
   } = article;
 
   return (
-    <article className="pt-4 pb-16 px-4 sm:px-6">
-      <div className="wide-width mx-auto">
-        {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            { label: "Problems", href: "/" },
-            { label: "Traffic", href: "/#problems" },
-            { label: "Flash Sale" },
-          ]}
-        />
-
-        {/* Editorial Header */}
-        <header className="mb-8 pb-8 border-b border-slate-200">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column */}
-            <div className="lg:col-span-8">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <CategoryBadge category={meta.category} size="md" />
-                <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded">
-                  {meta.difficulty}
-                </span>
-                <span className="text-xs text-slate-300">·</span>
-                <span className="font-mono text-xs text-slate-500 font-medium">
-                  ⏱️ {meta.readingTime}
-                </span>
-              </div>
-
-              <h1 className="font-sans text-2xl sm:text-3xl lg:text-[2.25rem] font-bold text-slate-900 leading-[1.2] tracking-tight mb-3">
-                {meta.title}
-              </h1>
-
-              <p className="font-sans text-base sm:text-lg text-slate-600 leading-relaxed mb-4">
-                &ldquo;{meta.subtitle}&rdquo;
-              </p>
-
-              <div className="flex flex-wrap gap-1.5">
-                {meta.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="font-mono text-xs font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Column: Context Summary Card */}
-            <div className="lg:col-span-4">
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-                <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
-                  <span className="font-sans font-bold text-xs uppercase tracking-wider text-slate-500">
-                    Production Context
-                  </span>
-                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded">
-                    Extreme Traffic Surge
-                  </span>
-                </div>
-
-                <div className="space-y-2.5 text-xs font-sans">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Event Scale</span>
-                    <span className="font-bold text-slate-900">10M Users · 10K Units</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Peak Burst</span>
-                    <span className="font-semibold text-slate-900">~2,000,000 RPS (0–5s)</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Target Invariant</span>
-                    <span className="font-semibold text-emerald-600">Zero Overselling</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Primary Strategy</span>
-                    <span className="font-semibold text-slate-800">Virtual Queue + Redis Lua</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-slate-500">Admission Rate</span>
-                    <span className="font-semibold text-blue-600">10,000 req / sec Drip</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* 30-Second Executive Blueprint */}
-        <ExecutiveBlueprint
+    <BlueprintArticleFrame topicId="flash-sale" toc={tocItems} brief={
+      <ExecutiveBlueprint
           timeToRead="30-Second Architecture Blueprint"
           bottleneck="10M concurrent users hit a single inventory counter at 12:00:00 PM (~2M RPS). Relational row locks serialize, starving database connection pools in 5ms."
           solution="Multi-Tier Admission Funnel: Edge Virtual Waiting Room sheds 99.5% ➔ In-memory atomic Redis Lua script reserves stock with 10m TTL ➔ Kafka buffers DB settlement."
@@ -169,14 +81,8 @@ export function FlashSaleArticle() {
             { label: "Reservation TTL", value: "10 minutes auto-restock" },
           ]}
         />
+    }>
 
-        {/* Main Content Layout with Sticky TOC */}
-        <div className="article-layout">
-          {/* Sticky TOC */}
-          <TableOfContents items={tocItems} />
-
-          {/* Article Main Column */}
-          <div className="flex-1 min-w-0 prose-width space-y-10">
             {/* ── 01 — Problem & Live Simulator ─────────────── */}
             <section id="the-problem" className="scroll-mt-16">
               <SectionHeader
@@ -202,7 +108,7 @@ export function FlashSaleArticle() {
               </div>
 
               {/* Interactive Simulator */}
-              <FlashSaleLab />
+              <BlueprintPanel id="workbench"><FlashSaleLab /></BlueprintPanel>
             </section>
 
             {/* ── 02 — The Naive Row-Lock Trap ──────────────── */}
@@ -228,7 +134,7 @@ COMMIT;`}
 
               <div className="my-6">
                 <ScrollReveal>
-                  <NaiveFlashSaleDiagram />
+                  <BlueprintPanel kind="diagram"><NaiveFlashSaleDiagram /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
@@ -237,6 +143,7 @@ COMMIT;`}
               </FailureCallout>
 
               <InlineCheck
+                className={neo.conceptCheck}
                 question="Architectural Gut Check · The Read Replica Illusion: Why can't we just scale read replicas to absorb the 2,000,000 RPS surge during the flash sale launch?"
                 options={[
                   {
@@ -289,7 +196,7 @@ COMMIT;`}
 
               <div className="my-6">
                 <ScrollReveal>
-                  <FlashSaleArchitectureDiagram />
+                  <BlueprintPanel kind="diagram"><FlashSaleArchitectureDiagram /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
@@ -316,14 +223,14 @@ COMMIT;`}
               {/* 10-Minute Hold Lifecycle */}
               <div className="my-6">
                 <ScrollReveal>
-                  <ReservationFlowDiagram />
+                  <BlueprintPanel kind="diagram"><ReservationFlowDiagram /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
               {/* Concurrency Interleaving & Lua Solution */}
               <div className="my-6">
                 <ScrollReveal>
-                  <InventoryRaceDiagram />
+                  <BlueprintPanel kind="diagram"><InventoryRaceDiagram /></BlueprintPanel>
                 </ScrollReveal>
               </div>
 
@@ -352,6 +259,7 @@ end`}
               />
 
               <InlineCheck
+                className={neo.conceptCheck}
                 question="Architectural Gut Check · The Redis Failover Trap: Redis handles the 10,000 decrements in memory. If your Redis Primary crashes and Sentinel promotes a replica, what risk emerges?"
                 options={[
                   {
@@ -386,7 +294,7 @@ end`}
               </p>
 
               <ScrollReveal>
-                <TradeoffDiagnosticsHub
+                <BlueprintPanel kind="detail"><TradeoffDiagnosticsHub
                   approachesTitle="1. Inventory Concurrency Approches"
                   approachesHeaders={["Approach", "Advantage", "Trade-off / Risk"]}
                   approachesRows={inventoryApproaches}
@@ -402,7 +310,7 @@ end`}
                   tenXProblems={tenXProblems}
                   avoidTitle="⚠️ Anti-patterns that guarantee production outages:"
                   avoidList={avoidList}
-                />
+                /></BlueprintPanel>
               </ScrollReveal>
             </section>
 
@@ -419,12 +327,13 @@ end`}
               </p>
 
               <ScrollReveal>
-                <CareerRubricHub
+                <BlueprintPanel kind="detail"><CareerRubricHub
+                  initiallyExpanded={false}
                   interviewAnswer={interviewAnswer}
                   levelExpectations={levelExpectations}
                   followUpQuestions={followUpQuestions}
                   whiteboardChain={FLASH_SALE_WHITEBOARD}
-                />
+                /></BlueprintPanel>
               </ScrollReveal>
             </section>
 
@@ -458,9 +367,6 @@ end`}
                 <ArticleNav currentId="flash-sale" />
               </div>
             </section>
-          </div>
-        </div>
-      </div>
-    </article>
+    </BlueprintArticleFrame>
   );
 }

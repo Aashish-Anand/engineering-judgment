@@ -16,6 +16,7 @@ type WhiteboardStep = {
 
 type CareerRubricHubProps = {
   title?: string;
+  initiallyExpanded?: boolean;
   badge?: string;
   interviewAnswer?: string;
   levelExpectations?: LevelData[];
@@ -33,6 +34,7 @@ const DEFAULT_WHITEBOARD_CHAIN: WhiteboardStep[] = [
 
 export function CareerRubricHub({
   title = "Engineering Level Expectations & Interview Synthesis",
+  initiallyExpanded = true,
   badge = "STAFF+ EVALUATION",
   interviewAnswer = defaultInterviewAnswer,
   levelExpectations = defaultLevelExpectations,
@@ -42,7 +44,7 @@ export function CareerRubricHub({
   const [selectedLevelIdx, setSelectedLevelIdx] = useState<number>(
     Math.min(2, levelExpectations.length - 1)
   );
-  const [showSynthesis, setShowSynthesis] = useState<boolean>(true);
+  const [showSynthesis, setShowSynthesis] = useState<boolean>(initiallyExpanded);
 
   const currentLevel = levelExpectations[selectedLevelIdx] ?? levelExpectations[0];
 

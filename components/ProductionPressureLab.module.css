@@ -23,3 +23,10 @@
 .lab [role="status"] { margin-top:16px; padding:12px 16px; border:1px solid var(--category-line,var(--theme-border,#cbd5e1)); border-radius:8px; background:var(--theme-surface,#fff); }
 .lab button { border-color:var(--category-line,var(--theme-border,#94a3b8)); }
 .lab button:hover:not(:disabled) { background:var(--category-wash,var(--theme-soft,#f0f6f1)); }
+/* The published blueprint frame supplies the outer panel and shared type scale. */
+.lab label { margin:12px 0; }
+.lab input[type="range"] { margin-top:8px; }
+.lab select,.lab button,.lab [role="status"] { border-radius:0; }
+.lab [role="status"] p { margin:8px 0; }
+.lab [role="status"] p:first-child { margin-top:0; }
+.lab [role="status"] p:last-child { margin-bottom:0; }

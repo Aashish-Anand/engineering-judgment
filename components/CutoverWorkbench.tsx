@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useId, useRef } from "react";
+import styles from "./LearningWidgets.module.css";
 import { calculateCutoverState, type CutoverState } from "@/data/cutover-model";
 
 const WORKBENCH_STAGES = [
@@ -43,7 +44,7 @@ const STAGE_PRESETS = [
   { label: "1% Canary", value: 1 },
   { label: "20% Ramp", value: 20 },
   { label: "50% Split", value: 50 },
-  { label: "100% Full Cutover", value: 100 },
+  { label: "100% Cutover", value: 100 },
 ];
 
 export function CutoverWorkbench() {
@@ -83,11 +84,11 @@ export function CutoverWorkbench() {
 
   return (
     <div
-      className="my-8 bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden"
+      className={`my-8 bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden ${styles.cutover}`}
       aria-labelledby={headingId}
     >
       {/* Workbench Header */}
-      <div className="p-5 sm:p-6 border-b border-slate-100 bg-slate-50/70">
+      <div className={styles.workbenchHeader}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 id={headingId} className="font-sans font-bold text-xl sm:text-2xl text-slate-900 m-0 tracking-tight">
@@ -119,7 +120,7 @@ export function CutoverWorkbench() {
         </div>
 
         {/* Stepped Phase Tabs */}
-        <div className="mt-5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className={styles.stageTabs}>
           {WORKBENCH_STAGES.map((stage) => {
             const isActive = activeStage === stage.id;
             return (
@@ -148,9 +149,9 @@ export function CutoverWorkbench() {
       </div>
 
       {/* Main Workbench Body */}
-      <div className="p-5 sm:p-6 space-y-6">
+      <div className={styles.workbenchBody}>
         {/* Dynamic Architecture Topology Diagram */}
-        <div className="p-4 sm:p-5 bg-slate-50 border border-slate-200 rounded-xl">
+        <div className={styles.topology}>
           <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-200/80">
             <span className="font-mono text-xs font-bold text-slate-600 uppercase tracking-wider">
               Live Topology · {WORKBENCH_STAGES.find((s) => s.id === activeStage)?.label}
@@ -163,7 +164,7 @@ export function CutoverWorkbench() {
           {/* Clean SVG Vector Diagram */}
           <div className="w-full py-2 overflow-x-auto">
             <svg
-              viewBox="0 0 760 170"
+              viewBox="0 20 760 130"
               className="w-full min-w-[600px] max-w-[760px] h-auto select-none font-sans text-xs"
               aria-label="Migration Topology Visualizer"
             >
@@ -315,31 +316,6 @@ export function CutoverWorkbench() {
           </div>
         </div>
 
-        {/* Phase Context & Senior Intuition */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-            <span className="font-mono text-[11px] uppercase font-bold text-slate-500 block mb-1">
-              Operational Focus · {WORKBENCH_STAGES.find((s) => s.id === activeStage)?.label}
-            </span>
-            <p className="font-sans text-xs sm:text-sm text-slate-800 leading-relaxed mb-0">
-              {WORKBENCH_STAGES.find((s) => s.id === activeStage)?.summary}
-            </p>
-          </div>
-
-          <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-xl">
-            <span className="font-mono text-[11px] uppercase font-bold text-blue-800 block mb-1">
-              Senior Engineering Rule
-            </span>
-            <p className="font-sans text-xs sm:text-sm text-slate-900 leading-relaxed mb-0">
-              {activeStage === "baseline" && "Never perform a cold dump without verifying historical snapshot consistency and disk I/O headroom on the source."}
-              {activeStage === "cdc" && "Verify Kafka retention windows. If CDC consumer dies for 4 hours, source WAL must not run out of disk space before recovery."}
-              {activeStage === "backfill" && "Never use OFFSET pagination. Always use an indexed keyset cursor (WHERE id > $last_id LIMIT 1000) with a 25ms throttle sleep."}
-              {activeStage === "shadow" && "Shadow reads must run asynchronously in background microtasks. A timeout or failure in DB B must NEVER degrade customer response times."}
-              {activeStage === "cutover" && "Never shift live writes to DB B until Reverse CDC is actively syncing back to DB A to preserve a zero-data-loss rollback path."}
-            </p>
-          </div>
-        </div>
-
         {/* Phase Implementation Code / Details */}
         {activeStage === "backfill" && (
           <div className="p-4 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs overflow-x-auto">
@@ -382,7 +358,7 @@ queueMicrotask(async () => {
         )}
 
         {/* Cutover Simulation Controls (Live in Stage 5, and telemetry summary in all stages) */}
-        <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl">
+        <div className={styles.controls}>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <span className="font-sans font-bold text-sm text-slate-900">
               Migration Cutover Gate &amp; Blast Radius Control
@@ -393,6 +369,7 @@ queueMicrotask(async () => {
             </span>
           </div>
 
+          <div className={styles.controlGrid}><div>
           {/* Gate preset buttons */}
           <div className="flex flex-wrap gap-2 mb-4">
             {STAGE_PRESETS.map((preset) => {
@@ -434,8 +411,9 @@ queueMicrotask(async () => {
             />
           </div>
 
+          </div>
           {/* Chaos & Safety Controls Row */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-3 border-t border-slate-200/80">
+          <div className={styles.faultControls}>
             <button
               type="button"
               onClick={() => setInjectLag((p) => !p)}
@@ -472,7 +450,32 @@ queueMicrotask(async () => {
               {isRolledBack ? "↺ Reverse CDC Active · Click to Resume" : "🚨 Emergency Rollback (0% B)"}
             </button>
           </div>
+          </div>
         </div>
+        {/* Phase Context & Senior Intuition */}
+        <details className={styles.notes}><summary>Phase notes &amp; rollback safety</summary><div className={styles.phaseNotes}>
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+            <span className="font-mono text-[11px] uppercase font-bold text-slate-500 block mb-1">
+              Operational Focus · {WORKBENCH_STAGES.find((s) => s.id === activeStage)?.label}
+            </span>
+            <p className="font-sans text-xs sm:text-sm text-slate-800 leading-relaxed mb-0">
+              {WORKBENCH_STAGES.find((s) => s.id === activeStage)?.summary}
+            </p>
+          </div>
+
+          <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-xl">
+            <span className="font-mono text-[11px] uppercase font-bold text-blue-800 block mb-1">
+              Senior Engineering Rule
+            </span>
+            <p className="font-sans text-xs sm:text-sm text-slate-900 leading-relaxed mb-0">
+              {activeStage === "baseline" && "Never perform a cold dump without verifying historical snapshot consistency and disk I/O headroom on the source."}
+              {activeStage === "cdc" && "Verify Kafka retention windows. If CDC consumer dies for 4 hours, source WAL must not run out of disk space before recovery."}
+              {activeStage === "backfill" && "Never use OFFSET pagination. Always use an indexed keyset cursor (WHERE id > $last_id LIMIT 1000) with a 25ms throttle sleep."}
+              {activeStage === "shadow" && "Shadow reads must run asynchronously in background microtasks. A timeout or failure in DB B must NEVER degrade customer response times."}
+              {activeStage === "cutover" && "Never shift live writes to DB B until Reverse CDC is actively syncing back to DB A to preserve a zero-data-loss rollback path."}
+            </p>
+          </div>
+        </div></details>
       </div>
     </div>
   );

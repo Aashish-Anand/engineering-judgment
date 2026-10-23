@@ -1,0 +1,7 @@
+# Article layout and authoring
+
+All published articles must use `BlueprintArticleFrame` from `./BlueprintArticleFrame.tsx` and the shared visual system in `../Neo.module.css`. Do not recreate headers, scenario cards, chapter navigation, content widths, or quiz layout in individual articles.
+
+Use `BlueprintSection` for new sections, and `BlueprintPanel` for diagrams, experiments, and detail hubs. Preserve readable prose and compact tools: body 16px, controls 14px, labels at least 12px. Keep long supporting explanations expandable. Keep chapter IDs and header links aligned with the rendered content. The article layout spans the same outer width as the journey bar, with chapter navigation on the left and content filling the remaining width. Paragraphs, code, tables, quizzes, and labs share that responsive content column owned by the frame. Diagrams are the deliberate exception: align them to the content’s left edge, cap SVG panels at 720px, HTML diagrams at 800px, and simple illustrations at 640px. Preserve proportions and readable labels; reflow tall flows into compact layouts instead of stretching them to prose width. Do not add independent width caps to other body blocks.
+
+Use the saved examples in `../../templates/blueprint/` for a new article. Follow `../../docs/ARTICLE_AUTHORING.md` for metadata, presentation, library, registry, quiz, and publication checks. The root AGENTS.md Next.js instructions still apply.

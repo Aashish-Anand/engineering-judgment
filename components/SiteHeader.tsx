@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import neo from "./Neo.module.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandPalette } from "@/components/CommandPalette";
 
@@ -20,9 +22,11 @@ const quickTopics = [
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const path = usePathname();
+  const redesigned = path === "/" || path.startsWith("/topics/");
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all shadow-2xs">
+    <header className={`sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all shadow-2xs ${redesigned ? neo.header : ""}`}>
       <div className="page-shell site-header-row h-18 flex items-center justify-between gap-4">
         {/* Left: Clean Brand Identity */}
         <Link
