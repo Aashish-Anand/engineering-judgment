@@ -88,6 +88,29 @@ Open [localhost:3000](http://localhost:3000). Development uses Next.js’s defau
 
 The Google fonts configured in `app/layout.tsx` require network access during the build.
 
+### Running the checks
+
+CI (`.github/workflows/ci.yml`) runs on every pull request and on pushes to `main`. To run the same checks locally:
+
+```bash
+npm ci
+npx next typegen
+npx tsc --noEmit
+npx eslint .
+npx vitest run
+npx playwright test
+```
+
+`npx next typegen` generates the route types (`LayoutProps`, `PageProps`) that a fresh checkout lacks; `next dev` and `next build` also create them. Playwright builds the site and serves it on port 3200. It checks layout overflow, full-page screenshots at 390, 768 and 1440 px, and axe accessibility in light and dark themes.
+
+Screenshot baselines are per platform: `*-darwin.png` for macOS and `*-linux.png` for CI. Update the macOS set with `npm run test:e2e:update`. CI runs Playwright inside the official `mcr.microsoft.com/playwright` image whose tag matches the `@playwright/test` version in `package-lock.json`, so the Linux set must come from that image:
+
+- **Changed screenshots:** run the CI workflow manually (Actions → CI → Run workflow, or `gh workflow run ci.yml --ref <branch>`). Its *Regenerate Linux baselines* job uploads a `linux-snapshots` artifact. Unzip it into `e2e/layout.spec.ts-snapshots/` and commit it. Manual runs need the workflow on `main`.
+- **New pages:** a CI run that creates baselines fails and uploads the new files as a `linux-snapshots` artifact. Commit them the same way. This is also how the first Linux set is created.
+- **With Docker:** `docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v<version>-noble sh -c "npm ci && npx playwright test e2e/layout.spec.ts --update-snapshots=all"` produces the same files. Run it from a separate clone, because `npm ci` replaces `node_modules` with Linux binaries.
+
+When a CI run fails, the `playwright-report` (HTML report) and `test-results` (diff images and traces) artifacts hold the details.
+
 ### Site URL
 
 For deployment, set `NEXT_PUBLIC_SITE_URL` to the public origin before building:
