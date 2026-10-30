@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
+import { socialMetadata } from "@/data/site";
 import { LearningPaths } from "@/components/learning/LearningPaths";
 import neo from "@/components/Neo.module.css";
 import styles from "@/components/learning/Learning.module.css";
 
-export const metadata: Metadata = {
-  title: "Learning paths",
-  description: "Ordered tracks through the blueprints, from core ideas to advanced production scenarios.",
-  alternates: { canonical: "/paths" },
-};
+const title = "Learning paths";
+const description = "Ordered tracks through the blueprints, from core ideas to advanced production scenarios.";
+export const metadata: Metadata = { title, description, ...socialMetadata({ title, description, path: "/paths" }) };
 
 export default function PathsPage() {
   return (

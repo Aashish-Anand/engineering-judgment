@@ -1,11 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { socialMetadata } from "@/data/site";
 import { LibraryBrowser } from "@/components/LibraryBrowser";
 import neo from "@/components/Neo.module.css";
 import styles from "@/components/Library.module.css";
 
-export const metadata: Metadata = { title: "Blueprint library", description: "Find production architecture decisions by problem, category, or failure mode.", alternates: { canonical: "/library" } };
+const title = "Blueprint library";
+const description = "Find production architecture decisions by problem, category, or failure mode.";
+export const metadata: Metadata = { title, description, ...socialMetadata({ title, description, path: "/library" }) };
 
 export default function LibraryPage() {
   return (
