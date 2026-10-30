@@ -2,9 +2,26 @@
 
 All nine existing articles use `components/articles/BlueprintArticleFrame.tsx`, the shared sections in `components/articles/BlueprintSections.tsx`, and the shared neo-brutalist styles in `components/Neo.module.css`. Reuse that frame for every new article. The frame owns the breadcrumb, title, scenario brief, four-step journey, central idea, chapter navigation, and content width. Dedicated quiz pages inherit the same visual system automatically.
 
-## Start from the saved template
+New articles are written in MDX. Four articles (hot partition, transactional outbox, flash sale, database migration) already work this way; the five data-driven ones in `data/topics/production-blueprints.ts` still render through `ProductionBlueprintArticle`.
 
-Copy `templates/blueprint/Article.tsx.example` to `components/articles/YourTopicArticle.tsx`. Copy the entry in `templates/blueprint/presentation.ts.example` into `data/topics/presentation.ts`, under the new topic ID. These example files are deliberately excluded from application compilation and publishing. Replace every TODO before registering a published article.
+## How an MDX article is built
+
+| Part | File | Holds |
+|---|---|---|
+| Prose, sections 01–05 | `content/blueprints/<topic-id>.mdx` | Markdown plus the MDX components below |
+| Frontmatter | the same file | `topic`, the six topic-specific headings, optional `brief`, `sources` |
+| Sections 06–12 | `data/topics/<topic>.ts`, `export const blueprint: BlueprintTail` | Runbook, trade-off tables, failure modes, scale list, interview corner, follow-ups, quiz, related topics |
+| Rendering | `components/articles/BlueprintMdx.tsx` | The MDX component map, `mdxBlueprintData`, and `MdxBlueprintArticle` |
+
+[Velite](https://velite.js.org) 0.4.0 (pinned in `package.json`) validates the frontmatter against `velite.config.ts` and compiles each MDX file into `.velite/`, which is generated and gitignored. Import it as `#site/content`. It is rebuilt by `next dev` (watching for changes), `next build`, `npm test` (a Vitest global setup), and `npm install` (postinstall). After editing content outside those, run `npm run content`, for example before `npx tsc --noEmit`. A frontmatter mistake fails the build with the file and field named.
+
+## Start from the saved templates
+
+1. Copy `templates/blueprint/article.mdx.example` to `content/blueprints/<topic-id>.mdx`.
+2. Copy `templates/blueprint/blueprint-data.ts.example` into the topic's data file in `data/topics/`, and add the topic to `mdxBlueprintData` in `components/articles/BlueprintMdx.tsx`.
+3. Copy the entry in `templates/blueprint/presentation.ts.example` into `data/topics/presentation.ts`, under the new topic ID.
+
+These example files are deliberately excluded from compilation and publishing. Replace every TODO before registering a published article.
 
 Every blueprint has the same twelve sections, in this order. They are defined once in `data/topics/article-format.ts`, and `tests/article-layout.test.ts` fails if an article is missing one or orders them differently.
 
@@ -23,13 +40,13 @@ Every blueprint has the same twelve sections, in this order. They are defined on
 | 11 | `follow-ups` | What breaks next? |
 | 12 | `sources` | Sources and practice, followed by the quiz entry and related reading |
 
-Headings use sentence case. Build the chapter navigation with `articleToc()`, which takes only the six topic-specific titles. Sections 06–12 come from `components/articles/BlueprintSections.tsx`; pass them data rather than writing their markup. Extra worked examples or diagrams go inside sections 01–05. Do not pad a short topic to match another article's length.
+Headings use sentence case. In MDX, the six topic-specific titles live in the frontmatter `sections`; `<Section id="…">` numbers and titles itself from them, and `articleToc()` builds the chapter navigation from the same titles, so they cannot drift apart. Sections 06–12 come from `components/articles/BlueprintSections.tsx`; give them data in the `blueprint` export rather than writing their markup. Extra worked examples or diagrams go inside sections 01–05. Do not pad a short topic to match another article's length.
 
 ## Register the content
 
 1. Add the stable ID to `TopicId` and its metadata/route to `topicCatalog` in `data/topics/catalog.ts`. Existing data-driven topics live in `data/topics/production-catalog.ts` and are merged into that catalog.
 2. Add a presentation entry in `data/topics/presentation.ts`: a unique publication number, short title, central idea, four concise scenario facts, four journey steps, and the first section ID. Facts must agree with the article and experiment. Label illustrative assumptions clearly.
-3. Add the component to `components/articles/registry.ts`. Keep the ID consistent with the catalog and presentation entry.
+3. Add the topic to `components/articles/registry.ts` as `() => createElement(MdxBlueprintArticle, { topicId: "<topic-id>" })`. Keep the ID consistent with the catalog, presentation entry, and the MDX `topic`. `tests/blueprint-mdx.test.ts` fails if an MDX file and `mdxBlueprintData` disagree.
 4. Add its library title, search aliases, and order to `libraryDetails` in `data/library.ts`. The library discovers registered topics automatically; homepage featured IDs are an explicit editorial choice.
 5. Add at least five scenario questions to `topicQuizzes` in `data/topics/quizzes.ts`, using the `QuizQuestion` type. Each question needs at least three distinct options, exactly one correct answer, and an explanation for every option. Vary the correct option’s position across the set.
 
@@ -38,6 +55,38 @@ Headings use sentence case. Build the chapter navigation with `articleToc()`, wh
 
 The topic route, quiz route, static parameters, sitemap, and end-of-article path navigation are generated from the catalog and paths. Do not create a separate route layout for the new topic.
 
+## Write sections 01–05 in MDX
+
+Write ordinary Markdown: paragraphs, `**bold**`, `*emphasis*`, inline code, lists, and `###` subheadings. Each becomes the same element the shared article CSS already styles, so do not add classes to prose. Keep a block component's children on one line (`<InsightCard title="…">Text with **bold**.</InsightCard>`) when they should stay inline, and surround them with blank lines when they are paragraphs or a list. Use straight `'` for apostrophes unless the text deliberately uses `’`. Escape `<` and `{` in prose (or put them in code); MDX reads them as JSX.
+
+A fenced code block with a filename becomes the copyable `CodeBlock` panel:
+
+````md
+```typescript filename="reaction-sharder.ts"
+const bucket = stableHash(userId) % BUCKET_COUNT;
+```
+````
+
+Components every MDX article can use (defined in `components/articles/BlueprintMdx.tsx`):
+
+| Component | Use |
+|---|---|
+| `<Section id="problem">` … `</Section>` | One per section 01–05, in order. Takes its number and heading from the frontmatter. |
+| `<ProblemStatement>` with `<Pullquote>` | The opening scenario card and its bold closing quote. |
+| `<ScenarioMetrics sideNote="…" />` | The workload table, from the topic's `scenarioMetrics` in `mdxBlueprintData`. |
+| `<InsightCard title="…">` inside `<ScrollReveal>` | The central invariant of the mental model. |
+| `<FailureCallout title="…">` | What goes wrong with the naive design. |
+| `<Diagram><SomeDiagram /></Diagram>` | A diagram in the compact panel (`BlueprintPanel kind="diagram"`). |
+| `<Figure>` | A full-width illustration without the panel border. |
+| `<InlineCheck question="…" options={[…]} />` | A concept check; each option has `label`, `isCorrect`, `explanation`. |
+| `<InPractice title="…" sources={["label"]}>` with a Markdown list | A sourced note. Without `sources` it cites every frontmatter source. |
+| `<DecisionNote eyebrow="…" lines={[…]}>` | A highlighted decision to carry forward. |
+| `<StrategyCards />` | Cards from the topic's `strategies` in `mdxBlueprintData`. |
+| `<Workbench><SomeLab /></Workbench>` | The section-05 experiment; carries `id="workbench"` for the header link. |
+| `<LabPanel id="…">` | A lab without the standard tool sizing (calculators, wide workbenches). |
+
+Topic diagrams and labs (`HotPartitionLab`, `OutboxDiagram`, …) are available by name once they are listed in `diagrams` in `BlueprintMdx.tsx`; their props work as in JSX (`<HotPartitionFlow writes={true} />`). An unknown component name fails at render, and `tests/article-layout.test.ts` renders every article.
+
 ## Use the shared components
 
 - `BlueprintArticleFrame`: supply `topicId`, `toc`, and section content. Optional `brief` holds a longer architecture summary behind a native disclosure.
@@ -45,7 +94,7 @@ The topic route, quiz route, static parameters, sitemap, and end-of-article path
 - `BlueprintPanel kind="diagram"`: place a labeled, responsive architecture visualization in the shared compact diagram container (up to 720px for SVG and 800px for HTML). Align it with the content’s left edge instead of stretching it to prose width. Use contained horizontal scrolling when reducing a dense diagram would make labels unreadable.
 - `BlueprintPanel`: contain an interactive client workbench with compact controls and a clear result. The article frame remains a server component; put state in the workbench.
 - `BlueprintPanel kind="detail"`: contain a comparison or other detail panel inside sections 01–05.
-- `InlineCheck className={neo.conceptCheck}`: use a contextual decision checkpoint. `ArticleQuizEntry` links to the dedicated quiz, so questions do not dominate the reading page.
+- `InlineCheck className={neo.conceptCheck}` (`<InlineCheck>` in MDX applies the class): use a contextual decision checkpoint. `ArticleQuizEntry` links to the dedicated quiz, so questions do not dominate the reading page.
 - `CareerRubricHub`: the engineering level rubric (Mid-level, Senior, Staff). `InterviewSection` renders it, so articles pass `levels` rather than using it directly.
 - Diagram kit (`components/diagrams/kit/DiagramKit.tsx`): `DiagramFigure` wraps `Sequence`, `BranchFlow`, `Amplification`, `BudgetBars`, or `Swimlane`. They are server-rendered HTML that reflows, use the neo and category tokens (light and dark), and animate only once scrolled into view, never under reduced motion. Tones: neutral, accent (category), info, ok, warn, bad. Pass `scroll` for wide diagrams so they scroll inside the panel on phones. Data-driven blueprints register one diagram and its section in `components/diagrams/BlueprintConceptDiagrams.tsx`; a test requires it. That diagram carries `id="workbench"` for the header link. When the topic has a genuine what-if, make the diagram itself interactive (`DiagramFigure` `controls`, `animate={false}`, see `InteractiveConceptDiagrams.tsx`) instead of adding a separate text-output workbench; set `interactive: true` so the header reads "Jump into the workbench".
 - `InPractice` (`components/InPractice.tsx`): a sourced note on how named systems or teams implement the idea just explained. Every point must trace to a listed primary source; backticks render as code. Data-driven blueprints register theirs in `data/topics/blueprint-practice.ts`, and the sources join the article's reference list automatically.
@@ -57,6 +106,6 @@ For data-driven topics, `ProductionBlueprintArticle` renders the whole twelve-se
 
 ## Verify before publication
 
-Run `npm run lint`, `npx tsc --noEmit`, `npm test`, and `npm run build`. Read the relevant installed Next.js guide in `node_modules/next/dist/docs/` before changing routing or rendering conventions, as required by the root AGENTS.md.
+Run `npm run lint`, `npm run content && npx tsc --noEmit`, `npm test`, and `npm run build`. Read the relevant installed Next.js guide in `node_modules/next/dist/docs/` before changing routing or rendering conventions, as required by the root AGENTS.md.
 
 Review the article and quiz in light/dark modes at desktop and mobile widths. Verify every chapter link, the header’s experiment link, quiz submission/next/result behavior, and meaningful workbench state changes. Confirm no horizontal page overflow; local diagram/table scrolling is allowed. Check headings, scenario facts, diagrams, code samples, failure explanations, and sources against the actual content. Leave no TODOs, empty panels, or invented testimonials/metrics in a published page.

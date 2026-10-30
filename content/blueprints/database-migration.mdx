@@ -1,0 +1,138 @@
+---
+topic: database-migration
+sections:
+  problem: Workload and constraints
+  naive: Why a snapshot falls behind
+  mental-model: Synchronize, then switch
+  architecture: Run the migration in five phases
+  worked-example: Explore the migration
+  scale: What breaks on a database ten times larger?
+sources:
+  - { label: "PostgreSQL: Logical replication", href: "https://www.postgresql.org/docs/current/logical-replication.html" }
+  - { label: "Debezium: PostgreSQL connector", href: "https://debezium.io/documentation/reference/stable/connectors/postgresql.html" }
+  - { label: "AWS DMS: Ongoing replication", href: "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html" }
+  - { label: "Stripe: Online migrations at scale", href: "https://stripe.com/blog/online-migrations" }
+---
+
+<Section id="problem">
+
+The source handles 100 million reads and 10 million writes each day. We need to move that workload to a new database without interrupting the application or losing acknowledged writes. The largest table holds about 250 million rows, roughly 500 GB of row data at 2 KB per row.
+
+Daily volume is only the starting point. Ten million writes per day averages about 116 writes per second; a 3× burst raises that to 348. Change the assumptions below to see how much capacity the replication pipeline needs.
+
+<p className="scenario-note">The cutover workbench later uses a separate illustrative load of 2,300 reads and 250 writes per second. Calculator inputs do not change that simulation.</p>
+
+<LabPanel><CapacitySizingLab /></LabPanel>
+
+</Section>
+
+<Section id="naive">
+
+The initial instinct is often: **dump the database using pg\_dump and restore it on the target**. It seems intuitive—export everything, import into the new system, switch DNS. But in an active production system, the target will be missing writes received after the snapshot began.
+
+<Figure><NaiveMigrationDiagram /></Figure>
+
+<InlineCheck
+  question="Architectural Gut Check: The dump of your 250-million-row database starts at 2:00 AM, and the restore on DB B finishes at 6:00 AM. Can you flip production DNS to DB B at 6:01 AM?"
+  options={[
+    {
+      label: "Yes, because pg_dump runs in a single consistent transaction snapshot.",
+      isCorrect: false,
+      explanation: "pg_dump is consistent, but only as of 2:00 AM. All 4 hours of live production mutations that arrived between 2:00 AM and 6:00 AM are missing from DB B. Flipping DNS drops 4 hours of customer activity.",
+    },
+    {
+      label: "No, because the new database is missing 4 hours of concurrent production writes (~1.7M).",
+      isCorrect: true,
+      explanation: "Right. At 10M writes per day, a 4-hour window holds about 1.7 million inserts, updates, and deletes that never reached DB B. A snapshot must be paired with a change stream that starts at the snapshot's exact position.",
+    },
+    {
+      label: "Yes, as long as you clear Redis and restart application pods.",
+      isCorrect: false,
+      explanation: "Clearing caches and restarting pods does not replay missing persistent rows into PostgreSQL.",
+    },
+  ]}
+/>
+
+</Section>
+
+<Section id="mental-model">
+
+Separate data synchronization from traffic ownership. A target can contain the right records and still be unsafe to promote if recent writes are in flight or the rollback path has fallen behind.
+
+First, bring the target to identical state with the source while traffic flows freely. Then, move traffic gradually without serving stale reads or losing in-flight writes. Conflating these two stages is where most migrations fail.
+
+There are two proven ways to keep the target synchronized. **Change data capture** reads the source database's log, so one writer stays authoritative and every change is captured, including writes from jobs and other services. **Application dual writes** change the code to write both stores. Stripe's published migrations use four phases: dual-write, read from both and compare, write only to the new store, then remove the old. Dual writes suit a single codebase that owns every write and needs to reshape data; CDC suits databases with many writers. This blueprint uses CDC.
+
+The rest of this blueprint follows that split: five phases that build confidence in the target, and one short, fenced moment where write ownership actually moves.
+
+<MigrationLsnTimeline />
+
+<DecisionNote eyebrow="A decision to carry forward" lines={["Copied ≠ caught up.", "Caught up ≠ safe to switch."]}>Verify the data, drain in-flight writes, and protect the rollback path before transferring ownership.</DecisionNote>
+
+</Section>
+
+<Section id="architecture">
+
+Each phase has an exit condition. Move to the next one only when the evidence says the previous one is done, not when the calendar says so.
+
+<MigrationOwnershipLanes />
+
+### 1. Seed the target from a known position
+
+Create the change-data-capture (CDC) position first. In PostgreSQL that is a logical replication slot, which remembers a point in the write-ahead log (WAL), the ordered record of every committed change. Then copy existing rows in a snapshot that is consistent with that same position. The order matters: if you copy first and start capturing later, every write between the two moments is silently lost.
+
+For 250 million rows, copy in small keyset batches (`WHERE id > last_id ORDER BY id LIMIT 1000`) with a short pause between batches. Offset pagination gets slower on every page, and an unthrottled copy competes with customer queries for disk and CPU on the source.
+
+### 2. Stream every change from that position
+
+The CDC consumer reads the WAL from the recorded position and applies inserts, updates, and deletes to DB B in commit order. Because the backfill and the stream overlap, the same row can arrive twice. Make every apply idempotent: upsert by primary key and let the newer WAL position win, so replaying a change is harmless.
+
+Watch two signals. Lag (how far DB B trails A, in seconds) tells you whether the target keeps up. Retained WAL on the source tells you whether a stalled consumer is quietly filling A's disk, because the slot keeps every log segment it has not acknowledged.
+
+### 3. Validate before you trust the target
+
+Matching row counts prove quantity, not correctness. Compare checksums per primary-key range (for example, one hash per 100,000 IDs) and re-check ranges that changed during the comparison. Add shadow reads: serve the customer from A, read the same record from B in the background, and record any difference. Finally, check business invariants such as account balance totals and orphaned foreign keys.
+
+Exit condition: divergence stays at zero across a full traffic cycle, including the batch jobs that only run at night.
+
+### 4. Move reads gradually
+
+Reads can ramp safely (1%, 20%, 50%, 100%) because A still owns every write, so rolling back is only a routing change. Mind replication lag: a user who just saved something should read from A, or from B only after B has applied that write's position. Otherwise the user sees their own change disappear.
+
+### 5. Transfer write ownership, then keep a way back
+
+Writes cannot be split by a random percentage. If both databases accept writes to the same row, they conflict and neither is the source of truth. Ownership moves either in one short, fenced switch, or tenant by tenant, so that every key has exactly one writer at any moment. The workbench below models the tenant-by-tenant version.
+
+1. Confirm lag is below the threshold (for example, under one second) and validation is clean.
+2. Prepare reverse replication from B to A, ready to start the moment B accepts writes.
+3. Fence A: hold writes at the application or proxy for a few seconds. Requests wait briefly instead of failing.
+4. Wait until B has applied A's final WAL position.
+5. Route writes to B, release the held requests, and start the reverse stream.
+6. Watch errors, latency, and reverse-stream lag. Rolling back is the same procedure in the other direction.
+
+<FencedCutoverSequence />
+
+In practice, “zero downtime” means no visible outage. A write hold of a few seconds is usually part of it, and it is far safer than letting two databases accept the same writes.
+
+Keep A in sync for at least one full business cycle (month-end jobs, weekly reports) before you decommission it. Some divergence only shows up when a rare query finally runs.
+
+<InPractice title="Tools teams use for each phase">
+
+- PostgreSQL logical replication (publications and subscriptions), or Debezium's PostgreSQL connector, streams WAL changes from a replication slot.
+- AWS DMS runs a full load plus ongoing replication (CDC); for PostgreSQL it reads changes through a logical replication slot. AWS states there is no latency SLA for CDC, so measure lag rather than assume it.
+- Keeping a reverse stream for rollback is bidirectional replication. DMS supports it only with loopback prevention enabled, otherwise each change echoes back to the database it came from.
+- Stripe's published migrations used application dual writes in four steps (dual write, move reads, move writes, remove old data) and verified read paths with GitHub's Scientist library.
+
+</InPractice>
+
+</Section>
+
+<Section id="worked-example">
+
+Step through the phases, then try a cutover. The slider moves tenants (and their reads and writes) from A to B. Introduce replication lag or a validation mismatch and observe how the system responds. Numbers here are an illustrative peak load, not the calculator above.
+
+<ScrollReveal>
+  <LabPanel id="workbench"><CutoverWorkbench /></LabPanel>
+</ScrollReveal>
+
+</Section>

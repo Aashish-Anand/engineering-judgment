@@ -1,3 +1,4 @@
+import type { BlueprintTail } from "@/components/articles/BlueprintSections";
 import { getTopicById } from "@/data/topics/catalog";
 import type { TimelinePhaseData, ExpandableQA, LevelData } from "@/data/types";
 
@@ -165,3 +166,72 @@ export const judgmentQuiz = [
     ]
   }
 ];
+
+/** Sections 06–12 of the blueprint; sections 01–05 are content/blueprints/hot-partition.mdx. */
+export const blueprint: BlueprintTail = {
+  runbook: {
+    steps: [
+      "Confirm the skew per partition: compare request rate, p99 latency, throttling, and queue age for each partition. Cluster averages hide one overloaded node.",
+      "Find the key. Sample the top keys; if one post_id dominates, adding partitions will not move its load.",
+      "Split the traffic into post-body reads, counter reads, reaction writes, comments, and fanout jobs. Each needs a different remedy.",
+      "Relieve reads first: serve the post body from cache with single-flight refresh and bounded stale serving, so cache misses cannot stampede the origin.",
+      "Spread writes: route reactions to stable user-hashed buckets, check that the buckets sit on different physical partitions, and move the displayed count to asynchronous aggregation.",
+      "Watch for amplification from retries, cache misses, and follower fanout until every partition stays under its benchmarked limit.",
+    ],
+  },
+  tradeoffs: [{ caption: "Read and write partitioning decisions", headers: ["Decision", "What improves", "What we now own"], rows: tradeoffs }],
+  failures: failureModes.map(([title, signal, response]) => ({ title, signal, response, explanation: failureExplanations[title] })),
+  scale: {
+    paragraphs: ["At a million requests per second, or a celebrity with ten times the followers, the relief paths themselves become the next hot spots:"],
+    items: [
+      "Redis cluster single-node NIC saturation (>200K packets/sec); requires client-side local in-memory caches.",
+      "Fan-out on celebrity publication causing million-event Kafka consumer lag; requires pull-based hybrid feed models.",
+      "Scatter-gather read latency degradation when merging comments across 32 shards; requires denormalized timeline feeds.",
+      "Secondary index hotspots where follower activity concentrates on a single downstream index table.",
+    ],
+  },
+  interview: {
+    answer: `When a celebrity post creates an extreme traffic hotspot, recognize immediately that adding database partitions does not help: all traffic targets the same partition key.
+
+First, separate the workload into reads and writes. Public post body reads (~70,000 RPS) must never touch the database—they must be served from an edge/Redis cache with single-flight request coalescing to prevent stampedes.
+
+Second, for write contention (likes and reactions), split the single hot counter into N salted buckets (e.g. post_id + salt[0..7]), routing by user_id % N. This converts one serial bottleneck into N independent parallel writes.
+
+Third, display approximate counts asynchronously: a background worker lazily aggregates the bucket counters into a cached display total, saving 99% of read IOPS while ensuring authoritative user mutations remain durable.`,
+    levels: expectations,
+    wrongAnswers: [
+      {
+        question: "Why not double database partitions from 16 to 32?",
+        explanation:
+          "Partition key routing maps the single celebrity post_id to a single node. If 70,000 requests per second target that one key, all 70,000 still land on whatever single node owns that key. Adding partitions divides unrelated keys, not a single hot key.",
+      },
+      {
+        question: "Why not cache writes in a single Redis key before the DB?",
+        explanation:
+          "Writing all 70,000 likes/sec directly to a single Redis key simply relocates the hot partition from PostgreSQL to Redis. A single Redis key will saturate its single CPU core event loop and its 1Gbps network NIC.",
+      },
+      {
+        question: "Why not query all shards on every read to get real-time totals?",
+        explanation:
+          "Scatter-gather queries across 10 or 16 shards multiply read IOPS by 10x–16x. Under 70,000 reads/sec, fanout queries saturate database connection pools and network bandwidth immediately. Lazy asynchronous aggregation is mandatory.",
+      },
+    ],
+    traps: [
+      "Looking only at cluster average CPU or IOPS instead of per-partition percentile skew.",
+      "Writing all mutations to a single unsalted Redis key under the illusion that Redis is infinite.",
+      "Executing scatter-gather parallel queries across all buckets on user-facing read paths.",
+      "Changing key sharding formulas in production without versioned routing and dual-write replay.",
+    ],
+    whiteboardChain: [
+      { label: "1. Detect Skew", color: "bg-rose-50 text-rose-700 border-rose-200" },
+      { label: "2. Cache Public Reads", color: "bg-blue-50 text-blue-700 border-blue-200" },
+      { label: "3. Salt Write Keys [0..9]", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+      { label: "4. Per-User Deduplication", color: "bg-amber-50 text-amber-800 border-amber-200" },
+      { label: "5. Async Aggregation", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+      { label: "6. Canary Migration", color: "bg-purple-50 text-purple-700 border-purple-200" },
+    ],
+  },
+  followUps: followUps.map(({ question, answer }) => [question, answer]),
+  quiz: { title: "Hot partition sharding", questions: judgmentQuiz, href: "/topics/traffic/fix-hot-partition/quiz" },
+  related: ["flash-sale", "database-migration", "retry-storm", "connection-pool"],
+};

@@ -1,3 +1,4 @@
+import type { BlueprintTail } from "@/components/articles/BlueprintSections";
 import type { TopicId } from "@/data/topics/catalog";
 import type { TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
 import { getTopicById } from "@/data/topics/catalog";
@@ -359,3 +360,67 @@ export const judgmentQuiz = [
   }
 ];
 
+
+/** Sections 06–12 of the blueprint; sections 01–05 are content/blueprints/database-migration.mdx. */
+export const blueprint: BlueprintTail = {
+  runbook: {
+    steps: [
+      "Before each phase, check its exit condition: replication lag under the threshold, retained WAL on A stable, and zero validation divergence.",
+      "If CDC stops or lag climbs, pause the cutover and keep A as the only writer. Watch retained WAL on A so a stalled slot cannot fill its disk.",
+      "If validation finds divergence, stop and investigate the affected key ranges before moving any more traffic.",
+      "To switch writes, fence writes on A, wait until B has applied A's final WAL position, then route writes to B and start the reverse stream.",
+      "If errors or latency rise after the switch, roll back with the same fenced procedure in the other direction. The reverse stream keeps A current.",
+      "Keep A in sync for a full business cycle before decommissioning it, and drop its replication slot when you do.",
+    ],
+    // Thresholds are illustrative starting points; set real ones from the baseline measured before the migration.
+    tables: [{ caption: "When to hold or roll back", headers: ["Signal", "Threshold", "Action"], rows: [
+      ["Error rate on B", "Above A's baseline for 5 minutes at the current traffic step", "Route traffic back to A. While A owns writes, this is a routing change."],
+      ["p99 latency on B", "More than 20% above A's baseline at the same step", "Hold the ramp. Roll back if it does not recover within the step's soak time."],
+      ["Forward CDC lag", "Above the cutover threshold (for example, one second) or still growing", "Pause the ramp and keep A as the only writer until lag is steady."],
+      ["Validation divergence", "Any mismatch in a checksummed key range", "Stop. Repair and re-validate the affected range before moving more traffic."],
+      ["Reverse-stream lag after the write switch", "Growing, or the reverse stream has stopped", "Fix the reverse stream before anything else. Without it, rolling back to A loses writes."],
+      ["Retained WAL on A", "Approaching the disk alarm", "Drop or advance the stalled slot deliberately. A full disk takes A down."],
+    ] }],
+  },
+  tradeoffs: [
+    { caption: "Ways to keep the target in sync", headers: ["Approach", "Advantage", "Cost"], rows: dualWriteApproaches },
+    { caption: "Validation and cutover decisions", headers: ["Decision", "Benefit", "Cost"], rows: keyTradeoffs },
+  ],
+  failures: failureModes.map(([title, signal, response]) => ({ title, signal, response, explanation: failureExplanations[title] })),
+  scale: {
+    paragraphs: ["With ten times the rows and write rate, the same five phases still apply, but each one costs more:"],
+    items: tenXProblems,
+  },
+  interview: {
+    answer: interviewAnswer,
+    levels: levelExpectations,
+    wrongAnswers: [
+      {
+        question: "Why not a 3-hour maintenance window?",
+        explanation:
+          "Maintenance windows often overrun. If a data copy takes 5 hours instead of 3, you face an agonizing choice: abort and restart next weekend, or extend downtime during peak business hours.",
+      },
+      {
+        question: "Why not validate with SELECT COUNT(*)?",
+        explanation:
+          "Row counts only prove quantity, not correctness. Two tables can have exactly 10,000,000 rows while having 50,000 corrupted values, truncated timestamps, or mismatched account balances. Compare checksums per key range as well.",
+      },
+      {
+        question: "Why not decommission DB A immediately?",
+        explanation:
+          "Latent bugs often take 48–72 hours to surface (e.g. weekly reporting queries or end-of-month reconciliations). Keep the legacy database running in read-only reverse sync for at least one full business cycle.",
+      },
+    ],
+    traps: avoidList,
+    whiteboardChain: [
+      { label: "1. Constraint", color: "bg-blue-50 text-blue-700 border-blue-200" },
+      { label: "2. Synchronize (CDC)", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+      { label: "3. Backfill (Keyset)", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+      { label: "4. Validate (Shadow)", color: "bg-purple-50 text-purple-700 border-purple-200" },
+      { label: "5. Cutover (Reverse CDC)", color: "bg-amber-50 text-amber-800 border-amber-200" },
+    ],
+  },
+  followUps: followUpQuestions.map(({ question, answer }) => [question, answer]),
+  quiz: { title: "Zero-downtime migration", questions: judgmentQuiz, href: "/topics/database/safely-migrate-production-database/quiz" },
+  related: relatedTopics,
+};

@@ -1,0 +1,141 @@
+---
+topic: transactional-outbox
+sections:
+  problem: Every order must also emit an event
+  naive: Why publishing after or inside the commit fails
+  mental-model: Make the event part of the data
+  architecture: Write the event with the order, relay it later
+  worked-example: Explore the relay
+  scale: What breaks at ten times the events?
+brief:
+  timeToRead: 30-Second Architecture Blueprint
+  bottleneck: Writing to PostgreSQL and publishing to Kafka in the same HTTP request is an uncoordinated dual write. Crashes cause silent data loss (lost events) or phantom records (ghost events).
+  solution: "Transactional Outbox Pattern: Insert the event payload into an outbox table in the exact same database transaction as the business entity ➔ Asynchronously relay via Polling or Debezium CDC ➔ Deduplicate at consumer with event IDs."
+  goldenRule: Never execute two uncoordinated remote network writes in the same user request; make the event part of the database transaction.
+  keyMetrics:
+    - { label: "Target Delivery", value: "At-least-once guaranteed" }
+    - { label: "Event Lag (CDC)", value: "< 50ms WAL tailing" }
+    - { label: "Consumer Safety", value: "100% Idempotent de-duplication" }
+sources:
+  - { label: "Debezium: Outbox Event Router", href: "https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html" }
+  - { label: "PostgreSQL: SELECT locking clause (SKIP LOCKED)", href: "https://www.postgresql.org/docs/current/sql-select.html" }
+  - { label: "microservices.io: Idempotent Consumer", href: "https://microservices.io/patterns/communication-style/idempotent-consumer.html" }
+  - { label: "Confluent: Schema evolution and compatibility", href: "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html" }
+---
+
+<Section id="problem">
+
+<ProblemStatement>
+
+Every purchase must save an order in the database **and** emit an event to the message broker so payment, inventory, and fulfillment services can act.
+
+<Pullquote>A network partition between your database commit and your broker publish is not an edge case. At 5,000 orders/sec, it is a mathematical certainty.</Pullquote>
+
+</ProblemStatement>
+
+<ScenarioMetrics />
+
+</Section>
+
+<Section id="naive">
+
+The intuitive design writes to the database, then publishes to the message broker. If the process crashes, the network times out, or the broker is unavailable between those two steps, the database commit succeeds but the event is never sent:
+
+<Diagram><OutboxDiagram /></Diagram>
+
+<Diagram><DualWriteCrashTimeline /></Diagram>
+
+<InlineCheck
+  question="Architectural Gut Check: Why can't we just call kafka.publish() inside our DB transaction so that if Kafka fails, the DB rolls back?"
+  options={[
+    {
+      label: "It works reliably and is standard production practice.",
+      isCorrect: false,
+      explanation: "Kafka is not an XA resource and does not participate in Postgres transactions. If the broker accepts the message but the DB commit later fails, Kafka cannot 'unsend' the message. Worse, broker latency blocks DB connections.",
+    },
+    {
+      label: "Kafka cannot roll back: the publish can succeed and the commit still fail, and every transaction now waits on the broker.",
+      isCorrect: true,
+      explanation: "Right. The broker does not take part in the database transaction, so a publish followed by a failed commit leaves a ghost event that downstream services act on. As a second cost, each transaction holds its connection and locks while waiting on the broker, which exhausts the pool under load.",
+    },
+    {
+      label: "Kafka brokers automatically reject any messages sent from within SQL transactions.",
+      isCorrect: false,
+      explanation: "Kafka has no visibility into database transactions. It will append the message to the log immediately, leading to phantom ghost events if the DB transaction aborts.",
+    },
+  ]}
+/>
+
+</Section>
+
+<Section id="mental-model">
+
+<ScrollReveal>
+  <InsightCard title="The Architectural Invariant">Two independent distributed systems cannot be made atomically consistent without coordination. Instead of coordinating two systems, **write the event to the same database in the same transaction**.</InsightCard>
+</ScrollReveal>
+
+The database already provides ACID atomicity. If we save the event inside the database as part of the business transaction, it is guaranteed to commit if and only if the order commits. A separate relay process then delivers the event asynchronously.
+
+</Section>
+
+<Section id="architecture">
+
+The resolved architecture decouples the user request from the message broker. The application touches only its local database:
+
+<Diagram><OutboxDiagram resolved={true} /></Diagram>
+
+<Diagram><OutboxSchemaExample /></Diagram>
+
+<Diagram><OutboxRowLifecycle /></Diagram>
+
+<Diagram><OutboxRelayFlow /></Diagram>
+
+<InlineCheck
+  question="Architectural Gut Check: Why not just poll the outbox table with SELECT * FROM outbox WHERE published_at IS NULL ORDER BY id ASC LIMIT 100?"
+  options={[
+    {
+      label: "That is the standard polling relay query, but requires an indexed partial cursor and SKIP LOCKED for concurrent workers.",
+      isCorrect: true,
+      explanation: "Spot on! Plain polling without SKIP LOCKED causes concurrent workers to lock each other. A partial index ON outbox (id) WHERE published_at IS NULL ensures the query stays fast even with 50M historical rows.",
+    },
+    {
+      label: "PostgreSQL prohibits using LIMIT in queries that contain ORDER BY.",
+      isCorrect: false,
+      explanation: "PostgreSQL fully supports ORDER BY with LIMIT; it is standard SQL syntax.",
+    },
+    {
+      label: "Polling queries always corrupt transactional serializability in PostgreSQL.",
+      isCorrect: false,
+      explanation: "SELECT queries do not corrupt serializability, but unindexed table scans create disk I/O bottlenecks.",
+    },
+  ]}
+/>
+
+<InPractice title="The standard CDC relay: Debezium's Outbox Event Router" sources={["Debezium: Outbox Event Router"]}>
+
+- Debezium reads the outbox table through change data capture and expects insert-only rows. It filters out DELETE operations, so a cleanup job does not emit events.
+- Its default columns are `id` (the event ID, sent as a message header), `aggregatetype`, `aggregateid`, `type`, and `payload`.
+- `aggregatetype` chooses the topic (by default `outbox.event.<aggregatetype>`), and `aggregateid` becomes the Kafka message key, so every event for one order lands in the same partition, in order.
+- Delivery is still at least once. Consumers deduplicate by the event ID, exactly as with a polling relay.
+
+</InPractice>
+
+<Diagram><IdempotentConsumerExample /></Diagram>
+
+### The inbox: the outbox’s counterpart
+
+The outbox makes publishing reliable; it cannot stop a redelivery. The consumer-side answer is an inbox table, which microservices.io calls the Idempotent Consumer pattern. The consumer inserts each event ID into the inbox in the same local transaction as its business update, with a unique constraint on the ID. A redelivered event fails that insert and is skipped, so at-least-once delivery still produces one effect. Prune inbox rows only after the longest redelivery or replay window has passed.
+
+### Version the event, not just the table
+
+An outbox payload is a public contract. Consumers you do not control may read it days later, and a replay reads it again much later still. Put a schema version in every event and make compatible changes only: add optional fields, and never rename or retype one in place. A schema registry such as Confluent’s can reject an incompatible schema before it ships. For a breaking change, publish a new event type or version alongside the old one until every consumer has moved.
+
+</Section>
+
+<Section id="worked-example">
+
+Raise the write rate, then tune the polling interval, worker count, and batch size until the relay keeps up. Add consumer re-deliveries to see why every consumer must be idempotent.
+
+<Workbench><OutboxLab /></Workbench>
+
+</Section>

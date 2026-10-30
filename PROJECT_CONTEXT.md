@@ -111,8 +111,8 @@ The interface resembles an experienced engineer's notebook:
 
 The user asked to save context and continue tomorrow. The latest completed task is the full hot-partition article rewrite, following the stronger explanatory structure of Database Migration and Flash Sale. Do not restart the rewrite or assume the user has reviewed and approved the new content yet.
 
-- Main article: `components/articles/HotPartitionArticle.tsx`.
-- Supporting content/TOC: `data/topics/fix-hot-partition.ts`; metadata: `data/topics/catalog.ts`.
+- Main article: `content/blueprints/hot-partition.mdx` (sections 01–05, rendered by `components/articles/BlueprintMdx.tsx`).
+- Supporting content (sections 06–12, `blueprint` export): `data/topics/fix-hot-partition.ts`; metadata: `data/topics/catalog.ts`.
 - Diagrams: `components/diagrams/HotPartitionDiagram.tsx`, `HotPartitionFlow.tsx`, and `HotPartitionWorkedExamples.tsx`.
 - Interactive experiment: `components/HotPartitionLab.tsx`; arithmetic: `data/hot-partition-model.ts`.
 - Latest checks passed: lint, eight tests, TypeScript, whitespace checks, and `npx next build --webpack`. Generated HTML verified 15 section IDs matching TOC data and ten figures.
