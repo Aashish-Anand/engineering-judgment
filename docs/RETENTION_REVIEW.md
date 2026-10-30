@@ -53,7 +53,8 @@ A reader can finish a blueprint and leave with no reason to return. All four com
 
 - **Done (Tier 1):** learning paths with path-aware end-of-article navigation and a `/paths` page; browser-only progress (read marks, quiz best scores, continue where you left off) in the library, navigator, homepage, and paths page; recognition signals and a printable quick-reference card in every article.
 - **Deferred:** RSS and newsletter until the library reaches about 25 articles.
-- **Next candidates:** Tier 2 review queue, pattern index, incident teardowns; trimming the end-of-article interview sections.
+- **Done (Tier 2, part 1):** spaced review queue (`/review`, homepage due tile, every quiz answer scheduled at 3 / 7 / 21 days) and the merged "Interview corner" in the data-driven blueprints (14 → 12 sections).
+- **Waiting for more articles:** browse-by-pattern index (about 15–20 articles) and incident teardowns (a content track alongside new articles).
 
 ## Suggested order
 

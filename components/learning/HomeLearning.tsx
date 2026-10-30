@@ -4,7 +4,8 @@ import Link from "next/link";
 import { getTopicById, topicCatalog, type TopicId } from "@/data/topics/catalog";
 import { libraryDetails } from "@/data/library";
 import { choosePath, learningPaths, nextUnread } from "@/data/learning-paths";
-import { setActivePath } from "@/data/progress";
+import { dueReviewKeys, setActivePath } from "@/data/progress";
+import { reviewQuestionByKey } from "@/data/review";
 import { updateProgress, useProgress } from "@/components/useProgress";
 import styles from "./Learning.module.css";
 
@@ -21,8 +22,17 @@ export function HomeLearning() {
     else if (next) resume = { id: next, reason: `Next in ${choice.path.title}` };
   }
 
+  const due = dueReviewKeys(progress).filter(key => reviewQuestionByKey.has(key)).length;
+
   return (
     <div className={styles.continue}>
+      {due > 0 && (
+        <Link className={`${styles.tile} ${styles.due}`} href="/review">
+          <small>Spaced review</small>
+          <strong>{due} {due === 1 ? "decision" : "decisions"} to revisit</strong>
+          <span>A few minutes now keeps the reasoning from fading.</span>
+        </Link>
+      )}
       {resume && (
         <Link className={styles.tile} href={getTopicById(resume.id).href}>
           <small>Continue where you left off</small>

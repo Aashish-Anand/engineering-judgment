@@ -6,10 +6,10 @@
 .tabs { display:flex; gap:4px; padding:4px; background:var(--theme-soft, #edf1eb); border-radius:7px; margin-bottom:16px; }
 .tabs button { flex:1; padding:8px 5px; font-size:12px; font-weight:600; border-radius:5px; cursor:pointer; }
 .tabs button[aria-selected=true] { background:var(--theme-surface, white); color:var(--theme-accent-green, #294f3d); box-shadow:0 1px 3px #253d3012; }
-.caption { font-size:11px; color:var(--theme-muted, #718075); line-height:1.6; margin:12px 0; }
+.caption { font-size:11px; color:var(--theme-muted, #5f6b62); line-height:1.6; margin:12px 0; }
 .sections,.matches,.group ul { list-style:none; margin:0; padding:0; }
 .sections a { display:flex; gap:9px; font-size:12px; line-height:1.6; padding:8px; text-decoration:none; color:var(--theme-muted, #59685e); border-radius:6px; }
-.sections a span { font-size:10px; color:var(--theme-muted, #8b978c); padding-top:2px; }
+.sections a span { font-size:10px; color:var(--theme-muted, #5f6b62); padding-top:2px; }
 .sections a[aria-current],.matches a[aria-current],.group a[aria-current] { background:var(--theme-soft, #e7efe7); color:var(--theme-accent-green, #214e35); font-weight:600; }
 .sections a:hover,.matches a:hover,.group a:hover { background:var(--theme-soft, #f0f4ef); }
 .search { display:block; font-size:11px; color:var(--theme-muted, #59685e); }
@@ -32,3 +32,5 @@
 .drawer .group > button { font-size:12px; }
 @media(max-width:1023px) { .desktop { display:none; } .mobileBar { display:flex; justify-content:space-between; gap:8px; position:sticky; top:72px; z-index:30; padding:10px 0; background:var(--theme-soft-green, #fafbf8f5); border-bottom:1px solid var(--theme-border, #dce3dc); } .mobileBar button { font-size:12px; padding:8px 10px; border:1px solid var(--theme-border, #dce3dc); border-radius:6px; background:var(--theme-surface, white); cursor:pointer; } }
 @media print { .desktop,.mobileBar,.drawer { display:none; } }
+/* The current chapter sits on a highlight fill; its number must follow the highlight's text color. */
+.sections a[aria-current] span { color:inherit; opacity:.8; }

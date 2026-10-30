@@ -11,6 +11,8 @@
   --neo-lilac:#cfc0ef;
   --neo-lilac-wash:#ece6f5;
   --neo-on-color:#20231f;
+  /* Long-form paragraph color: stronger than muted, softer than ink. */
+  --neo-body:#3b3f37;
   color:var(--neo-ink);
   background:var(--neo-paper);
 }
@@ -80,7 +82,7 @@
 .surface.article :global(.quiz-entry) { border:2px solid var(--neo-ink); border-radius:0; background:var(--neo-lilac-wash); box-shadow:3px 3px 0 var(--neo-ink); }
 .surface.article :global(.quiz-entry) h3 { font-weight:800; }
 .surface.article :global(.editorial-button) { background:var(--neo-coral); color:var(--neo-on-color); border:2px solid var(--neo-ink); border-radius:0; box-shadow:3px 3px 0 var(--neo-ink); font-weight:700; }
-:global(html[data-theme=dark]) :is(.surface,.header) { --neo-paper:#1c211e; --neo-surface:#252c27; --neo-ink:#edece1; --neo-muted:#bec5b9; --neo-grid:#495149; --neo-coral:#ff997d; --neo-yellow:#edda7d; --neo-mint:#aecfb4; --neo-lilac:#c9b8e7; --neo-lilac-wash:#302e3b; }
+:global(html[data-theme=dark]) :is(.surface,.header) { --neo-body:#e6e7dd; --neo-paper:#171b19; --neo-surface:#20251f; --neo-ink:#f3f2ea; --neo-muted:#d0d5ca; --neo-grid:#555e55; --neo-coral:#ff997d; --neo-yellow:#edda7d; --neo-mint:#aecfb4; --neo-lilac:#c9b8e7; --neo-lilac-wash:#302e3b; }
 :global(html[data-theme=dark]) .header { background:var(--neo-paper); }
 :global(html[data-theme=dark]) .surface.article :global(.scenario-context .eyebrow) { color:var(--neo-on-color); }
 @media(max-width:1100px) { .surface.article :global(.blueprint-header) { grid-template-columns:minmax(0,1fr) 260px; gap:32px; } .surface.article :global(.article-thesis) { grid-template-columns:200px minmax(0,1fr); gap:28px; } .journey { gap:12px; } .journey > li { font-size:12px; gap:6px; } }
@@ -119,7 +121,7 @@
 .surface.article :global(.quiz-entry) h3 { grid-column:1; font-size:20px; line-height:1.4; margin:0; }
 .surface.article :global(.quiz-entry) p { grid-column:1; margin:0; font-size:14px; line-height:1.6; max-width:60ch; }
 .surface.article :global(.quiz-entry .editorial-button) { grid-column:2; grid-row:1/4; font-size:14px; gap:18px; padding:10px 16px; }
-.surface.article :global(.quiz-entry-note) { grid-column:1/-1; margin-top:2px; font-size:12px; }
+.surface.article :global(.quiz-entry-note) { grid-column:1/-1; margin-top:2px; font-size:12px; color:var(--neo-muted); }
 .surface.article .detailPanel > div > div { padding:16px; }
 .surface.article .detailPanel :is([class*="text-[10px]"],[class*="text-[11px]"]) { font-size:12px; }
 .surface.article .detailPanel p { font-size:14px; line-height:1.65; }
@@ -176,3 +178,16 @@
 }
 /* Below 1024px a sticky chapter bar sits under the header; keep jumped-to headings clear of both. */
 @media(max-width:1023px) { .surface.article :global(.article-content) > section, .surface.article .labPanel { scroll-margin-top:150px; } }
+/* Contrast fixes found by the dark-mode audit. */
+.surface.article .decisionNote :global(.eyebrow) { color:inherit; }
+/* Disabled actions read as inactive (dashed, no fill) instead of faded coral, and stay legible. */
+.surface :global(.editorial-button):disabled, .surface .conceptCheck button:disabled { opacity:1; background:var(--neo-surface); color:var(--neo-muted); border-style:dashed; box-shadow:none; }
+.navBadge { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; margin-left:6px; padding:0 5px; border:1.5px solid var(--neo-ink); background:var(--neo-yellow); color:var(--neo-on-color); font:700 12px/1 var(--font-mono); vertical-align:1px; }
+
+/* Article content fills the full width beside the chapter navigation (no reading-column cap: the
+   owner prefers using the space on wide screens). Readability comes from the body color, 17px size,
+   and line height instead. */
+.surface.article :global(.article-content) > section > p,
+.surface.article :global(.article-content) > section > :is(ul, ol) > li { font-size:17px; line-height:1.75; color:var(--neo-body); }
+:global(html[data-theme=dark]) .surface.article :global(.article-content) > section > p,
+:global(html[data-theme=dark]) .surface.article :global(.article-content) > section > :is(ul, ol) > li { letter-spacing:.005em; }

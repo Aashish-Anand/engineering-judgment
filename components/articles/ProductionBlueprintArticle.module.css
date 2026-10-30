@@ -10,7 +10,7 @@
 .body blockquote { border-left: 3px solid var(--theme-border, #7c9e89); padding: 1rem 1.5rem; background: var(--theme-soft, #f2f6f3); margin: 1.5rem 0; }
 .tableWrap { overflow-x: auto; }
 .body table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-.body caption { text-align: left; color: var(--theme-muted, #64748b); padding-bottom: .6rem; font-size: .8rem; }
+.body caption { text-align: left; color: var(--theme-muted, #55594f); padding-bottom: .6rem; font-size: .8rem; }
 .body th, .body td { text-align: left; padding: 1rem; vertical-align: top; border-bottom: 1px solid var(--theme-border, #e2e8f0); }
 .body th { color: var(--theme-text, #1e293b); font-weight: 650; }
 .failure { border-left: 3px solid var(--theme-border-amber, #c59c67); padding: .3rem 1.2rem; margin: 1rem 0; background: var(--theme-soft-amber, #faf7f1); }
@@ -38,8 +38,6 @@
 .body thead th { color:var(--category-accent); }
 .body tbody tr:nth-child(even) { background:color-mix(in srgb,var(--category-wash) 45%,transparent); }
 .failure { border-radius:0; }
-.avoid > ul { padding:12px 20px 12px 36px; border-left:3px solid var(--theme-border-amber,#c59c67); border-radius:0; background:var(--theme-soft-amber,#fbf6e9); }
-.rubric > div:not(:first-child) { margin:12px 0; padding:4px 18px; border:1px solid var(--category-line); border-left:3px solid var(--category-accent); border-radius:0; background:var(--category-wash); }
 @media(max-width:640px) { .runbook > ol > li { padding-left:46px; } }
 
 /* Match the shared article frame while keeping category cues in the content. */
@@ -51,10 +49,16 @@
 .body .failure { padding:12px 16px; }
 .body .failure h3 { font-size:18px; margin:0 0 8px; }
 .body .failure p { font-size:15px; margin:0; line-height:1.65; }
-.body .rubric > div:not(:first-child) { padding:12px 16px; }
-.body .rubric h3 { margin:0 0 8px; font-size:18px; }
-.body .rubric p { margin:0; font-size:15px; line-height:1.65; }
 
 .followups details { margin:10px 0; border:1px solid var(--category-line); border-left:3px solid var(--category-accent); background:var(--category-wash); }
 .followups summary { cursor:pointer; padding:12px 16px; font-weight:650; color:var(--theme-text,#1e293b); }
 .body .followups details p { margin:0; padding:0 16px 14px; font-size:15px; line-height:1.65; }
+
+/* Interview corner: one section for the spoken answer, level expectations, and traps. */
+.body .interviewCorner h3 { margin:24px 0 8px; font-size:18px; }
+.body .levels { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
+.body .levels > div { padding:12px 14px; border:1px solid var(--category-line); border-left:3px solid var(--category-accent); background:var(--category-wash); }
+.body .levels h4 { margin:0 0 6px; font-size:15px; font-weight:700; color:var(--theme-text, #1e293b); }
+.body .levels p { margin:0; font-size:14px; line-height:1.6; }
+.body .traps { padding:12px 20px 12px 36px; border-left:3px solid var(--theme-border-amber, #c59c67); background:var(--theme-soft-amber, #fbf6e9); }
+@media (max-width:767px) { .body .levels { grid-template-columns:minmax(0, 1fr); } }

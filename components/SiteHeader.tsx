@@ -2,32 +2,28 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
 import neo from "./Neo.module.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandPalette } from "@/components/CommandPalette";
+import { useProgress } from "@/components/useProgress";
+import { dueReviewKeys } from "@/data/progress";
+import { learningPaths } from "@/data/learning-paths";
 
 const navItems = [
   { label: "Library", href: "/library" },
   { label: "Paths", href: "/paths" },
-  { label: "Workbench", href: "/#labs" },
+  { label: "Review", href: "/review" },
   { label: "About", href: "/#about" },
-];
-
-const quickTopics = [
-  { name: "Database Migration", href: "/topics/database/safely-migrate-production-database", badge: "10M Writes" },
-  { name: "Survive Flash Sale", href: "/topics/traffic/survive-flash-sale", badge: "5M RPS" },
-  { name: "Transactional Outbox", href: "/topics/correctness/transactional-outbox", badge: "At-Least-Once" },
-  { name: "Fix Hot Partition", href: "/topics/traffic/fix-hot-partition", badge: "Key Salting" },
 ];
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const path = usePathname();
-  const redesigned = path === "/" || path.startsWith("/topics/");
+  // Badge count only; /review itself drops keys whose question text has since changed.
+  const due = dueReviewKeys(useProgress()).length;
+  const badge = (label: string) => (label === "Review" && due > 0 ? <span className={neo.navBadge} aria-label={`${due} due`}>{due}</span> : null);
 
   return (
-    <header className={`sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 shadow-2xs ${redesigned ? neo.header : ""}`}>
+    <header className={`sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 shadow-2xs ${neo.header}`}>
       <div className="page-shell site-header-row h-18 flex items-center justify-between gap-4">
         {/* Left: Clean Brand Identity */}
         <Link
@@ -71,7 +67,7 @@ export function SiteHeader() {
               href={item.href}
               className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-colors no-underline whitespace-nowrap shrink-0"
             >
-              {item.label}
+              {item.label}{badge(item.label)}
             </Link>
           ))}
         </nav>
@@ -131,7 +127,7 @@ export function SiteHeader() {
                   onClick={() => setMobileOpen(false)}
                   className="font-sans text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-3 py-2 rounded-lg transition-colors no-underline flex items-center justify-between"
                 >
-                  <span>{item.label}</span>
+                  <span>{item.label}{badge(item.label)}</span>
                   <span className="font-mono text-slate-400 text-xs">→</span>
                 </Link>
               ))}
@@ -140,19 +136,19 @@ export function SiteHeader() {
 
           <div className="pt-3 border-t border-slate-100">
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-              Production Blueprints
+              Learning paths
             </span>
             <div className="grid grid-cols-1 gap-1.5">
-              {quickTopics.map((topic) => (
+              {learningPaths.map((path) => (
                 <Link
-                  key={topic.name}
-                  href={topic.href}
+                  key={path.slug}
+                  href={`/paths#${path.slug}`}
                   onClick={() => setMobileOpen(false)}
                   className="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/60 hover:bg-slate-100 flex items-center justify-between text-xs font-semibold text-slate-800 transition-colors no-underline"
                 >
-                  <span>{topic.name}</span>
+                  <span>{path.title}</span>
                   <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 bg-blue-50 text-blue-700 border border-blue-200 rounded">
-                    {topic.badge}
+                    {path.steps.length} articles
                   </span>
                 </Link>
               ))}

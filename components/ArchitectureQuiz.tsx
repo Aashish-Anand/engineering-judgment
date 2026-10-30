@@ -1,15 +1,19 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { recordQuiz } from "@/data/progress";
+import { recordAnswer, recordQuiz, reviewKey, REVIEW_INTERVAL_DAYS } from "@/data/progress";
 import { updateProgress } from "@/components/useProgress";
 
 export type QuizOption = { text: string; isCorrect: boolean; explanation: string };
 export type QuizQuestion = { scenario: string; options: QuizOption[] };
-/** `topicId` saves the best score in the reader's browser progress. */
-type Props = { title?: string; questions: QuizQuestion[]; topicId?: string };
+/**
+ * `topicId` saves the best score and schedules every answered question for spaced review.
+ * A review session passes `reviewKeys` (one per question, possibly from several articles) and `sources`
+ * (the article each question comes from) instead.
+ */
+type Props = { title?: string; questions: QuizQuestion[]; topicId?: string; reviewKeys?: string[]; sources?: { title: string; href: string }[] };
 
-export function ArchitectureQuiz({ title = "Test your judgment", questions, topicId }: Props) {
+export function ArchitectureQuiz({ title = "Test your judgment", questions, topicId, reviewKeys, sources }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -17,6 +21,14 @@ export function ArchitectureQuiz({ title = "Test your judgment", questions, topi
   const finished = currentIdx >= questions.length;
   const submitted = answers.length > currentIdx;
   const score = answers.filter((answer, index) => questions[index].options[answer].isCorrect).length;
+  const keyFor = (index: number) => reviewKeys?.[index] ?? (topicId ? reviewKey(topicId, questions[index].scenario) : undefined);
+  const tracked = Boolean(reviewKeys || topicId);
+
+  function check(index: number, option: number) {
+    setAnswers([...answers, option]);
+    const key = keyFor(index);
+    if (key) updateProgress(p => recordAnswer(p, key, questions[index].options[option].isCorrect));
+  }
 
   function moveTo(index: number) {
     setCurrentIdx(index);
@@ -32,6 +44,7 @@ export function ArchitectureQuiz({ title = "Test your judgment", questions, topi
         <span className="eyebrow">Practice complete</span>
         <h2 ref={headingRef} tabIndex={-1}>You got {score} of {questions.length} decisions right.</h2>
         <p className="quiz-summary">{score === questions.length ? "You identified the key trade-offs in every scenario. Review the reasoning below to reinforce the model." : "Use the review below to revisit the trade-offs behind each decision."}</p>
+        {tracked && score < questions.length && <p className="quiz-summary">The {questions.length - score} {questions.length - score === 1 ? "decision" : "decisions"} you missed will come back for review in {REVIEW_INTERVAL_DAYS[0]} days, on your homepage and at <a href="/review">Review</a>. Right answers return at longer intervals.</p>}
         <div className="quiz-review">
           {questions.map((question, index) => {
             const chosen = question.options[answers[index]];
@@ -52,6 +65,7 @@ export function ArchitectureQuiz({ title = "Test your judgment", questions, topi
     <section className="judgment-quiz" aria-label={title}>
       <div className="quiz-progress-label"><span className="eyebrow">{title}</span><span>Scenario {currentIdx + 1} of {questions.length}</span></div>
       <div className="quiz-progress-track" role="progressbar" aria-label="Answered scenarios" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={answers.length}><span style={{ width: `${answers.length / questions.length * 100}%` }} /></div>
+      {sources?.[currentIdx] && <p className="eyebrow">From <a href={sources[currentIdx].href}>{sources[currentIdx].title}</a></p>}
       <h2 ref={headingRef} tabIndex={-1} id="quiz-scenario">{question.scenario}</h2>
       <fieldset aria-labelledby="quiz-scenario" disabled={submitted} className="quiz-options">
         <legend className="sr-only">Choose the best response</legend>
@@ -71,7 +85,7 @@ export function ArchitectureQuiz({ title = "Test your judgment", questions, topi
       )}
       <div className="quiz-actions">
         <span>{submitted ? "Take a moment to consider the reasoning." : "Choose an answer before checking it."}</span>
-        {submitted ? <button type="button" className="editorial-button" onClick={() => { if (currentIdx === questions.length - 1 && topicId) updateProgress(p => recordQuiz(p, topicId, score, questions.length)); moveTo(currentIdx + 1); }}>{currentIdx === questions.length - 1 ? "See your results" : "Next scenario"} →</button> : <button type="button" className="editorial-button" disabled={selectedOption === null} onClick={() => { if (selectedOption !== null) setAnswers([...answers, selectedOption]); }}>Check answer →</button>}
+        {submitted ? <button type="button" className="editorial-button" onClick={() => { if (currentIdx === questions.length - 1 && topicId) updateProgress(p => recordQuiz(p, topicId, score, questions.length)); moveTo(currentIdx + 1); }}>{currentIdx === questions.length - 1 ? "See your results" : "Next scenario"} →</button> : <button type="button" className="editorial-button" disabled={selectedOption === null} onClick={() => { if (selectedOption !== null) check(currentIdx, selectedOption); }}>Check answer →</button>}
       </div>
     </section>
   );

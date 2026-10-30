@@ -1,4 +1,6 @@
-/* Semantic surfaces are shared by editorial CSS and the existing utility UI. */
+/* Semantic surfaces are shared by editorial CSS and the existing utility UI.
+   Dark reading targets: body text >= 13:1 and secondary text >= 10:1 against the page, well above
+   the 4.5:1 minimum, because long-form reading on dark backgrounds feels dim at the minimum. */
 html { color-scheme:light; }
 @media screen {
   html[data-theme="dark"] {
@@ -11,14 +13,14 @@ html { color-scheme:light; }
     --theme-soft-purple:#302a40;
     --theme-soft-rose:#3b272d;
     --theme-soft-amber:#393023;
-    --theme-text:#e3ebe6;
-    --theme-muted:#afc0b6;
-    --theme-link:#9ec6f1;
+    --theme-text:#eef3ef;
+    --theme-muted:#c9d5cd;
+    --theme-link:#b6d6f8;
     --theme-accent-green:#b0d6bc;
     --theme-accent-purple:#cdbcef;
     --theme-accent-rose:#f0b6c0;
     --theme-accent-amber:#e8cd9e;
-    --theme-border:#40534a;
+    --theme-border:#4d6157;
     --theme-border-green:#53775f;
     --theme-border-blue:#526e8e;
     --theme-border-purple:#76628d;
@@ -27,9 +29,9 @@ html { color-scheme:light; }
     --color-paper:#111a17;
     --color-paper-alt:#202d29;
     --color-paper-card:#192321;
-    --color-ink:#e3ebe6;
-    --color-ink-secondary:#c2cfc7;
-    --color-ink-muted:#afc0b6;
+    --color-ink:#eef3ef;
+    --color-ink-secondary:#d3ddd6;
+    --color-ink-muted:#c9d5cd;
     --color-ink-faint:#8fa498;
     --color-border:#40534a;
     --color-border-strong:#a2b5a9;
@@ -118,6 +120,9 @@ html { color-scheme:light; }
   html[data-theme="dark"] svg [fill="#FFF0B8"] { fill:var(--theme-soft-amber); }
   html[data-theme="dark"] svg [fill="#F9DDE5"] { fill:var(--theme-soft-rose); }
   html[data-theme="dark"] svg [fill="#E7E1F8"] { fill:var(--theme-soft-purple); }
+  /* Light "danger" and "peach" boxes: without these, light dark-mode text landed on light fills. */
+  html[data-theme="dark"] svg [fill="#FDE8E8"] { fill:var(--theme-soft-rose); }
+  html[data-theme="dark"] svg [fill="#F4E0D0"] { fill:var(--theme-soft-amber); }
 
   html[data-theme="dark"] svg .fill-white { fill:var(--theme-surface); }
   html[data-theme="dark"] svg text { fill:var(--theme-text); }
@@ -125,6 +130,10 @@ html { color-scheme:light; }
   html[data-theme="dark"] svg text:is([class*="fill-emerald-"],[class*="fill-green-"]) { fill:var(--theme-accent-green); }
   html[data-theme="dark"] svg text:is([class*="fill-purple-"]) { fill:var(--theme-accent-purple); }
   html[data-theme="dark"] svg text:is([class*="fill-red-"],[class*="fill-rose-"]) { fill:var(--theme-accent-rose); }
+  /* Keep meaning-carrying SVG text colors, lifted to dark-theme accents (raw #DC2626 is ~3:1 on dark). */
+  html[data-theme="dark"] svg text:is([fill="#DC2626"],[fill="#dc2626"]) { fill:var(--theme-accent-rose); }
+  html[data-theme="dark"] svg text:is([fill="#16A34A"],[fill="#16a34a"]) { fill:var(--theme-accent-green); }
+  html[data-theme="dark"] svg text:is([fill="#6B7280"],[fill="#6b7280"]) { fill:var(--theme-muted); }
 
   html[data-theme="dark"] pre,html[data-theme="dark"] code { color:#d9e7df; }
 }

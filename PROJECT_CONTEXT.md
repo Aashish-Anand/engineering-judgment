@@ -186,3 +186,28 @@ Reviewed AlgoMaster, Hello Interview, Educative, and EnjoyAlgorithms (`docs/RETE
 - **Progress without accounts** (`data/progress.ts`, `components/useProgress.ts`): localStorage only, synced across tabs. Articles are marked read when the path panel scrolls into view (or by checkbox); quizzes save the best score; the homepage offers "Continue where you left off"; ✓ marks in the library and navigator.
 - **Recognize it / remember it** (`data/article-guides.ts`, `components/learning/ArticleGuide.tsx`): three recognition signals and a collapsible, printable quick-reference card under each article's central idea.
 RSS and newsletter are deferred until about 25 articles. Print rules live in `app/globals.css` because CSS modules reject selectors without a local class.
+
+## Retention Tier 2, part 1 — 2026-10-31
+
+- **Spaced review** (`data/progress.ts` review functions, `data/review.ts`, `/review`, homepage due tile): every quiz answer is scheduled by a stable key (article ID plus a hash of the scenario). Wrong answers return in 3 days; right answers step to 7 and 21 days, then retire. Sessions show at most 8 due decisions with their source article, and freeze their list so answering does not reshuffle it. `/review` is `noindex` and outside the sitemap.
+- **Interview corner:** the data-driven blueprints merge "What to avoid", "Explain the decision", and "Expectations by level" into one section; articles now have 12 sections.
+Pattern index and incident teardowns wait until the library is larger.
+
+## UI consistency and contrast — 2026-10-31
+
+- **Dark-mode visibility:** the hand-written SVG diagrams used light fills `#FDE8E8` and `#F4E0D0` with no dark remap, while all SVG text turns light in dark mode, so labels were unreadable. Added remaps to soft rose and soft amber, and mapped red, green, and gray SVG text to dark accents. Fixed muted text on mint (current navigator chapter, decision-note label) and made disabled buttons dashed and legible instead of 45% opacity.
+- **Light mode:** darkened pale fallback grays in the navigator, concept-check letters, quiz-entry note, and table captions.
+- **One design system everywhere:** the neo header on every page; nav is Library · Paths · Review (with a due badge) · About; footer matches; the mobile menu lists learning paths instead of four hard-coded articles; `/library` and the 404 page are restyled in the neo system.
+- Verified with a WCAG contrast audit script over every page type in both themes: 0 failures, except a known false positive (Tailwind v4 `oklch()` backgrounds are not parsed by the script). The script skips SVG, so diagrams were checked visually.
+
+## Dark-mode reading contrast — 2026-10-31
+
+Passing 4.5:1 was not enough: about 58% of article text in dark mode was the muted gray at 8–9:1, which read as dim. Raised the dark palette (neo: paper `#171b19`, surface `#20251f`, ink `#f3f2ea`, muted `#d0d5ca`, grid `#555e55`; theme: text `#eef3ef`, muted `#c9d5cd`, link `#b6d6f8`, border `#4d6157`). Measured by character count, text at 10:1 or better went from about 40% to 94–95% on articles. Also fixed the flash-sale funnel's pastel stage cards, whose descriptions were light text on light fills in dark mode. Light mode is unchanged.
+
+## Paragraph readability — 2026-10-31
+
+Article paragraphs ran about 112–150 characters per line on desktop, in the muted gray, which read as messy in dark mode. Prose (direct paragraphs and lists in a section) now uses a 36em reading column (about 79 characters at 17px), a dedicated `--neo-body` color (dark `#e6e7dd`, light `#3b3f37`), 17px size, and slight letter spacing in dark mode. `ch` was not usable for the cap because this font's "0" is wide (70ch fit about 112 characters). Diagrams, labs, tables, and callouts keep the full width; "In practice" lists cap at 44em.
+
+Follow-up: capping only paragraphs at 36em left a ragged empty strip beside full-width callouts and diagrams. Replaced it with one 680px article column (`.article-content`, centered beside the navigator) shared by every block, so all right edges align; paragraphs fill it at about 85 characters per line. Verified at 1440, 1024, and 800px with no overflow; the migration workbench and flash-sale lab fit.
+
+Reverted the 680px centered column at the owner's request: on 1080p and wider screens it left large empty areas on both sides. Article content again fills the full width beside the navigator; the body color, 17px size, and dark letter spacing stay.

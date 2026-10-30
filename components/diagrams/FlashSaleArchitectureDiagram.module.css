@@ -18,3 +18,5 @@
 
 .scrollHint { display:none; font-size:12px; color:var(--neo-muted); margin:0 0 10px; }
 @container (max-width:700px) { .scrollHint { display:block; } }
+/* Pastel stage cards keep dark text in both themes; article-wide dark text rules must not lighten it. */
+.funnel.funnel .stage:not([data-tone=paper]) :is(p, h3, span) { color:var(--neo-on-color); }

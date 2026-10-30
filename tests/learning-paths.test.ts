@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { topicCatalog, type TopicId } from "@/data/topics/catalog";
 import { choosePath, learningPaths, nextUnread, pathsForTopic, topicLearning } from "@/data/learning-paths";
 import { articleGuides } from "@/data/article-guides";
+import { reviewQuestionByKey, reviewQuestions } from "@/data/review";
 
 // Guards that keep paths coherent as the library grows.
 describe("learning paths", () => {
@@ -66,5 +67,12 @@ describe("learning paths", () => {
       expect(guide.quick.remember.length, topic.id).toBeGreaterThanOrEqual(3);
       for (const text of [...guide.signals, ...guide.quick.remember, guide.quick.invariant, guide.quick.decision, guide.quick.failure]) expect(text.trim().length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("review queue index", () => {
+  it("gives every quiz question a unique, resolvable review key", () => {
+    expect(reviewQuestionByKey.size).toBe(reviewQuestions.length);
+    for (const item of reviewQuestions) expect(reviewQuestionByKey.get(item.key)?.question.scenario).toBe(item.question.scenario);
   });
 });

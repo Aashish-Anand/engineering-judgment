@@ -85,3 +85,13 @@
 @media (max-width:900px) { .guide { grid-template-columns:minmax(0,1fr); } }
 @media print { .printButton { display:none; } }
 
+
+/* ── Spaced review ── */
+.reviewEmpty { padding:24px; border:2px solid var(--neo-ink); background:var(--neo-surface); box-shadow:4px 4px 0 var(--neo-ink); }
+.reviewEmpty h2 { margin:0 0 8px; font-size:22px; }
+.reviewEmpty p { margin:0 0 16px; font-size:15px; line-height:1.6; color:var(--neo-muted); }
+.reviewCount { margin:0 0 14px; font:700 13px/1.6 var(--font-mono); color:var(--neo-muted); }
+.continue a.tile.due { background:var(--neo-yellow); color:var(--neo-on-color); }
+.continue a.tile.due small, .continue a.tile.due span { color:inherit; opacity:.85; }
+.notFoundActions { display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px; }
+.notFoundActions a:not(.start) { color:var(--neo-ink); font-weight:600; text-underline-offset:3px; }

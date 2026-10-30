@@ -3,9 +3,12 @@
 export const PROGRESS_STORAGE_KEY = "engineering-judgment-progress-v1";
 
 export type QuizResult = { score: number; total: number; at: number };
+/** A quiz decision scheduled for review. `step` indexes REVIEW_INTERVAL_DAYS. */
+export type ReviewItem = { due: number; step: number };
 export type Progress = {
   read: Record<string, number>;
   quiz: Record<string, QuizResult>;
+  reviews?: Record<string, ReviewItem>;
   lastVisited?: { id: string; at: number };
   activePath?: string;
 };
@@ -22,7 +25,8 @@ export function parseProgress(raw: string | null): Progress {
     const quiz = value.quiz && typeof value.quiz === "object" ? value.quiz : {};
     const lastVisited = value.lastVisited && typeof value.lastVisited.id === "string" ? value.lastVisited : undefined;
     const activePath = typeof value.activePath === "string" ? value.activePath : undefined;
-    return { read, quiz, lastVisited, activePath };
+    const reviews = value.reviews && typeof value.reviews === "object" ? value.reviews : undefined;
+    return { read, quiz, lastVisited, activePath, reviews };
   } catch {
     return emptyProgress;
   }
@@ -42,3 +46,43 @@ export const recordQuiz = (p: Progress, id: string, score: number, total: number
   if (previous && previous.score / previous.total > score / total) return p;
   return { ...p, quiz: { ...p.quiz, [id]: { score, total, at } } };
 };
+
+/* ── Spaced review (Leitner-style) ──
+   A wrong answer returns in 3 days. Each right answer moves the decision to the next interval;
+   a right answer at the last interval retires it from the queue. */
+export const REVIEW_INTERVAL_DAYS = [3, 7, 21];
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Stable key for one quiz question: article ID plus a short hash of the scenario text. Editing the
+    question text simply retires the old entry, because its key no longer matches any question. */
+export function reviewKey(topicId: string, scenario: string) {
+  let hash = 5381;
+  for (let i = 0; i < scenario.length; i++) hash = ((hash << 5) + hash + scenario.charCodeAt(i)) | 0;
+  return `${topicId}:${(hash >>> 0).toString(36)}`;
+}
+
+export function recordAnswer(p: Progress, key: string, correct: boolean, now = Date.now()): Progress {
+  const reviews = { ...(p.reviews ?? {}) };
+  if (!correct) {
+    reviews[key] = { step: 0, due: now + REVIEW_INTERVAL_DAYS[0] * DAY };
+  } else {
+    const step = (reviews[key]?.step ?? 0) + 1;
+    if (step >= REVIEW_INTERVAL_DAYS.length) delete reviews[key];
+    else reviews[key] = { step, due: now + REVIEW_INTERVAL_DAYS[step] * DAY };
+  }
+  return { ...p, reviews };
+}
+
+/** Keys due now, oldest first. Only keys the caller still recognises should be shown. */
+export function dueReviewKeys(p: Progress, now = Date.now()) {
+  return Object.entries(p.reviews ?? {})
+    .filter(([, item]) => item.due <= now)
+    .sort(([, a], [, b]) => a.due - b.due)
+    .map(([key]) => key);
+}
+
+/** Earliest upcoming due time, for "next review in N days". */
+export function nextReviewAt(p: Progress) {
+  const dues = Object.values(p.reviews ?? {}).map(item => item.due);
+  return dues.length ? Math.min(...dues) : undefined;
+}
