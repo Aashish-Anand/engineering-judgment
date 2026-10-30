@@ -11,6 +11,7 @@ import { InsightCard } from "@/components/InsightCard";
 import { ProblemStatement } from "@/components/ProblemStatement";
 import { CodeBlock } from "@/components/CodeBlock";
 import { InPractice } from "@/components/InPractice";
+import { IncidentBox } from "@/components/IncidentBox";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
 import { InlineCheck, type InlineCheckOption } from "@/components/InlineCheck";
 import { FailureCallout } from "@/components/doodle/FailureCallout";
@@ -99,6 +100,12 @@ function mdxComponents(doc: Blueprint, data: BlueprintData): MdxComponents {
     InPractice: ({ title, sources: labels, children }: { title: string; sources?: string[]; children: ReactNode }) => (
       <InPractice title={title} sources={labels ? sources.filter(([label]) => labels.includes(label)) : sources}>{children}</InPractice>
     ),
+    /** A public incident that shows this article's failure; `source` names one frontmatter source by label. */
+    Incident: ({ title, when, source: label, children }: { title: string; when: string; source: string; children: ReactNode }) => {
+      const source = sources.find(([sourceLabel]) => sourceLabel === label);
+      if (!source) throw new Error(`<Incident> cites "${label}", which is not in ${doc.topic}'s frontmatter sources`);
+      return <IncidentBox title={title} when={when} source={source}>{children}</IncidentBox>;
+    },
     DecisionNote: ({ eyebrow, lines, children }: { eyebrow: string; lines: string[]; children: ReactNode }) => (
       <div className={neo.decisionNote}><span className="eyebrow">{eyebrow}</span><h3>{lines.map((line, i) => <Fragment key={line}>{i > 0 && <br />}{line}</Fragment>)}</h3><p>{children}</p></div>
     ),

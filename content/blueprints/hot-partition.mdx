@@ -21,6 +21,7 @@ sources:
   - { label: "AWS: Choosing the number of shards", href: "https://aws.amazon.com/blogs/database/choosing-the-right-number-of-shards-for-your-large-scale-amazon-dynamodb-table" }
   - { label: "AWS: Contributor Insights for DynamoDB", href: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/contributorinsights_HowItWorks.html" }
   - { label: "Redis CLI", href: "https://redis.io/docs/latest/develop/tools/cli/" }
+  - { label: "Discord: How Discord stores trillions of messages", href: "https://discord.com/blog/how-discord-stores-trillions-of-messages" }
 ---
 
 <Section id="problem">
@@ -34,6 +35,12 @@ Taylor Swift posts an announcement. Out of 100,000 total requests arriving each 
 </ProblemStatement>
 
 <ScenarioMetrics />
+
+<Incident title="Hot partitions slowed Discord's whole cluster" when="Reported 2023" source="Discord: How Discord stores trillions of messages">
+
+Discord stored messages in Cassandra, partitioned by channel and a fixed time window. When one busy channel drew heavy concurrent reads, the nodes serving that partition fell further and further behind. Reads and writes used quorum consistency, so every query touching those nodes slowed down too. Discord writes that a hot partition frequently affected latency across the entire cluster, and on-call engineers were sometimes paged to help it recover.
+
+</Incident>
 
 </Section>
 
@@ -64,7 +71,7 @@ The immediate instinct during an incident is: *“Spin up 16 more database parti
   ]}
 />
 
-<InPractice title="Real systems publish the per-partition ceiling">
+<InPractice title="Real systems publish the per-partition ceiling" sources={["AWS: DynamoDB partition key design", "AWS: Choosing the number of shards", "AWS: Contributor Insights for DynamoDB", "Redis CLI"]}>
 
 - Amazon DynamoDB documents a maximum of 3,000 read units and 1,000 write units per second for every partition. One hot item cannot exceed that, however much capacity the table has.
 - AWS recommends write sharding for hot keys: add a suffix to the partition key so writes spread across partitions, and accept that reads must combine the shards.
