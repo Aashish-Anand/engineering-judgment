@@ -1,4 +1,5 @@
-import { DiagramFigure, Sequence, Swimlane } from "./kit/DiagramKit";
+import { DiagramFigure, Swimlane } from "./kit/DiagramKit";
+import { StepScrubber } from "./kit/StepScrubber";
 
 /* Migration diagrams. They mirror the five-phase walkthrough in content/blueprints/database-migration.mdx; change both together. */
 
@@ -21,21 +22,29 @@ export function MigrationOwnershipLanes() {
 
 export function FencedCutoverSequence() {
   return (
-    <DiagramFigure scroll title="The fenced write cutover · seconds, not hours" caption="The shaded rows are the only time writes wait. The proxy holds new writes, DB B applies A's final log position, and only then does B accept writes, with the reverse stream already running so rollback loses nothing.">
-      <Sequence
-        actors={["Write proxy", "DB A", "CDC stream", "DB B"]}
-        window={{ from: 3, to: 6, label: "WRITE HOLD" }}
-        steps={[
-          { from: 0, to: 1, label: "writes go to A" },
-          { from: 1, to: 2, label: "WAL changes" },
-          { from: 2, to: 3, label: "apply · lag under 1 s", tone: "ok" },
-          { from: 0, to: 0, label: "fence: hold new writes", tone: "warn" },
-          { from: 2, to: 3, label: "apply A's final WAL position", tone: "info" },
-          { from: 3, to: 0, label: "caught up to final position", tone: "ok" },
-          { from: 0, to: 3, label: "route writes to B · release held requests", tone: "ok" },
-          { from: 3, to: 1, label: "reverse stream B → A starts", tone: "info" },
-        ]}
-      />
-    </DiagramFigure>
+    <StepScrubber
+      title="The fenced write cutover · seconds, not hours"
+      caption="The shaded rows are the only time writes wait. The proxy holds new writes, DB B applies A's final log position, and only then does B accept writes, with the reverse stream already running so rollback loses nothing."
+      actors={["Write proxy", "DB A", "CDC stream", "DB B"]}
+      window={{ from: 3, to: 6, label: "WRITE HOLD" }}
+      steps={[
+        { from: 0, to: 1, label: "writes go to A" },
+        { from: 1, to: 2, label: "WAL changes" },
+        { from: 2, to: 3, label: "apply · lag under 1 s", tone: "ok" },
+        { from: 0, to: 0, label: "fence: hold new writes", tone: "warn" },
+        { from: 2, to: 3, label: "apply A's final WAL position", tone: "info" },
+        { from: 3, to: 0, label: "caught up to final position", tone: "ok" },
+        { from: 0, to: 3, label: "route writes to B · release held requests", tone: "ok" },
+        { from: 3, to: 1, label: "reverse stream B → A starts", tone: "info" },
+      ]}
+      frames={[
+        { rows: [0, 1, 2], caption: "Normal traffic. A takes every write, and the CDC stream keeps B less than a second behind." },
+        { rows: [3], caption: "The proxy fences A. New writes wait at the proxy instead of failing. The hold starts now." },
+        { rows: [4], caption: "The stream applies A's last change to B. Nothing new can reach A, so this position is final." },
+        { rows: [5], caption: "B reports it has applied that exact position. A and B now hold the same data." },
+        { rows: [6], caption: "The proxy sends writes to B and releases the held requests. The hold ends, usually within seconds." },
+        { rows: [7], caption: "The reverse stream copies B's changes back to A, so rolling back later loses nothing." },
+      ]}
+    />
   );
 }

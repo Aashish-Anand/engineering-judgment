@@ -26,6 +26,7 @@ export function ProductionBlueprintArticle({ id }: { id: DataBlueprintId }) {
     {section.paragraphs.map(p => <p key={p}>{p}</p>)}
     {practice?.sectionId === section.id && <InPractice {...practice} />}
     {concept?.sectionId === section.id && <concept.Diagram />}
+    {concept?.more?.filter(extra => extra.sectionId === section.id).map(({ Diagram }, i) => <Diagram key={i} />)}
     {section.id === "architecture" && <figure className={styles.diagram} aria-label={`${topic.shortTitle}: architecture flow`}>
       <ol>{topic.flow.map((step, i) => <li key={step}><span aria-hidden="true">{i + 1}</span>{step}</li>)}</ol>
       <figcaption>{topic.diagramCaption}</figcaption>
