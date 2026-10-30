@@ -89,7 +89,7 @@ export function DatabaseCutoverLab() {
 
       {/* Preset Stage Buttons */}
       <div className="mb-5">
-        <span className="font-mono text-xs font-bold uppercase text-slate-500 block mb-2 tracking-wider">
+        <span className="font-mono text-xs font-bold uppercase text-slate-600 block mb-2 tracking-wider">
           Standard Migration Gates:
         </span>
         <div className="flex flex-wrap gap-2">
@@ -118,11 +118,11 @@ export function DatabaseCutoverLab() {
         <div className="flex items-center justify-between gap-2 mb-2">
           <label htmlFor="cutover-slider" className="font-sans font-bold text-sm sm:text-base text-slate-900">
             Live Traffic Shift to DB B:{" "}
-            <span className="font-mono text-base text-emerald-600">{state.percentB}%</span>
+            <span className="font-mono text-base text-emerald-700">{state.percentB}%</span>
           </label>
-          <span className="font-mono text-xs text-slate-500">
+          <span className="font-mono text-xs text-slate-600">
             DB A: <strong className="text-blue-600">{state.percentA}%</strong> · DB B:{" "}
-            <strong className="text-emerald-600">{state.percentB}%</strong>
+            <strong className="text-emerald-700">{state.percentB}%</strong>
           </span>
         </div>
 
@@ -136,7 +136,7 @@ export function DatabaseCutoverLab() {
           className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
         />
 
-        <div className="flex justify-between text-[11px] font-mono text-slate-500 mt-1.5">
+        <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-1.5">
           <span>0% (100% DB A)</span>
           <span>25%</span>
           <span className="font-bold text-amber-600">50% (Max Risk)</span>
@@ -182,13 +182,13 @@ export function DatabaseCutoverLab() {
 
           {/* Router Center Node */}
           <div className="md:col-span-2 flex flex-col items-center justify-center text-center">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 mb-1">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 mb-1">
               Traffic Router
             </span>
-            <div className="hidden md:flex items-center text-slate-400 font-mono text-xs">
+            <div className="hidden md:flex items-center text-slate-600 font-mono text-xs">
               → →
             </div>
-            <div className="md:hidden flex justify-center my-1 text-slate-400 font-mono text-xs">
+            <div className="md:hidden flex justify-center my-1 text-slate-600 font-mono text-xs">
               ↓
             </div>
           </div>
@@ -231,7 +231,7 @@ export function DatabaseCutoverLab() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {/* Metric 1: Lag */}
         <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
-          <span className="text-[11px] font-mono uppercase text-slate-500 block mb-1">
+          <span className="text-[11px] font-mono uppercase text-slate-600 block mb-1">
             Replication Lag
           </span>
           <span
@@ -240,55 +240,55 @@ export function DatabaseCutoverLab() {
                 ? "text-rose-600"
                 : state.replicationLagMs > 300
                 ? "text-amber-600"
-                : "text-emerald-600"
+                : "text-emerald-700"
             }`}
           >
             {state.replicationLagMs} ms
           </span>
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-slate-600">
             {state.replicationLagMs < 200 ? "✓ Safe for cutover" : "⚠️ Catch-up required"}
           </span>
         </div>
 
         {/* Metric 2: Divergence */}
         <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
-          <span className="text-[11px] font-mono uppercase text-slate-500 block mb-1">
+          <span className="text-[11px] font-mono uppercase text-slate-600 block mb-1">
             Data Divergence
           </span>
           <span
             className={`font-mono text-base font-bold block ${
-              state.divergenceRatePercent > 0 ? "text-rose-600" : "text-emerald-600"
+              state.divergenceRatePercent > 0 ? "text-rose-600" : "text-emerald-700"
             }`}
           >
             {state.divergenceRatePercent.toFixed(2)}%
           </span>
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-slate-600">
             {state.divergenceRatePercent === 0 ? "✓ Shadow reads match" : "🚨 Discrepancy detected"}
           </span>
         </div>
 
         {/* Metric 3: Blast Radius */}
         <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
-          <span className="text-[11px] font-mono uppercase text-slate-500 block mb-1">
+          <span className="text-[11px] font-mono uppercase text-slate-600 block mb-1">
             Blast Radius
           </span>
           <span className="font-mono text-base font-bold text-slate-900 block">
             {state.blastRadiusPercent}% users
           </span>
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-slate-600">
             {state.blastRadiusPercent <= 5 ? "Minimal exposure" : "Broad exposure"}
           </span>
         </div>
 
         {/* Metric 4: Daily Shift */}
         <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
-          <span className="text-[11px] font-mono uppercase text-slate-500 block mb-1">
+          <span className="text-[11px] font-mono uppercase text-slate-600 block mb-1">
             Daily Writes on B
           </span>
           <span className="font-mono text-base font-bold text-slate-900 block">
             {((state.percentB / 100) * 10).toFixed(1)}M / day
           </span>
-          <span className="text-[10px] text-slate-400">Out of 10M total</span>
+          <span className="text-[10px] text-slate-600">Out of 10M total</span>
         </div>
       </div>
 
@@ -368,7 +368,7 @@ export function DatabaseCutoverLab() {
       </div>
 
       {/* Assumptions Accordion */}
-      <details className="text-xs text-slate-500">
+      <details className="text-xs text-slate-600">
         <summary className="cursor-pointer font-sans font-bold text-xs text-slate-700 hover:text-slate-900">
           Behind the simulation: How this math reflects production reality ▾
         </summary>

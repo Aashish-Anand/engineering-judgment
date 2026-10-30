@@ -34,12 +34,12 @@ export function SectionHeader({ number, title, id, annotation }: SectionHeaderPr
           </h2>
           <button
             onClick={copyLink}
-            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-800"
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-800"
             aria-label={`Copy link to "${title}"`}
             title="Copy link to section"
           >
             {copied ? (
-              <span className="text-xs font-sans font-semibold text-emerald-600">Copied!</span>
+              <span className="text-xs font-sans font-semibold text-emerald-700">Copied!</span>
             ) : (
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6.5 9.5L9.5 6.5" />

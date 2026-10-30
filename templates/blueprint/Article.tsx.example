@@ -1,59 +1,63 @@
 // Copy to components/articles/YourTopicArticle.tsx after registering the topic.
+// Every blueprint uses the same twelve sections (data/topics/article-format.ts);
+// tests/article-layout.test.ts fails if a section is missing or out of order.
 import { BlueprintArticleFrame, BlueprintSection, BlueprintPanel } from "@/components/articles/BlueprintArticleFrame";
-import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
-import { ArticleNav } from "@/components/ArticleNav";
+import { FailuresSection, FollowUpsSection, InterviewSection, RunbookSection, ScaleSection, SourcesSection, TradeoffsSection } from "@/components/articles/BlueprintSections";
 import { InlineCheck } from "@/components/InlineCheck";
 import { getTopicById, type TopicId } from "@/data/topics/catalog";
 import { topicQuizzes } from "@/data/topics/quizzes";
+import { articleToc } from "@/data/topics/article-format";
 import neo from "@/components/Neo.module.css";
 // Import a topic-specific client workbench and diagram when ready.
 
 const TOPIC_ID = "replace-with-registered-topic-id" satisfies TopicId;
-const toc = [
-  { id: "the-problem", label: "Workload and constraints" },
-  { id: "the-mistake", label: "Where the first design fails" },
-  { id: "mental-model", label: "The mental model" },
-  { id: "architecture", label: "The architecture" },
-  { id: "workbench", label: "Try the failure scenario" },
-  { id: "tradeoffs", label: "Trade-offs and recovery" },
-  { id: "judgment-quiz", label: "Test your judgment" },
-  { id: "related", label: "Keep exploring" },
-];
+const toc = articleToc({
+  problem: "TODO: The production situation",
+  naive: "TODO: Why the first design fails",
+  "mental-model": "TODO: The distinction that makes it tractable",
+  architecture: "TODO: The design",
+  "worked-example": "TODO: Explore the failure",
+  scale: "TODO: What breaks at ten times the load?",
+});
 
 export function YourTopicArticle() {
   const topic = getTopicById(TOPIC_ID);
   const questions = topicQuizzes[TOPIC_ID];
   const checkpoint = questions[0];
   return <BlueprintArticleFrame topicId={TOPIC_ID} toc={toc}>
-    <BlueprintSection id="the-problem" number="01" title="Workload and constraints">
+    <BlueprintSection id="problem" number="01" title="TODO: The production situation">
       <p>TODO: Describe a concrete production situation, the workload, and the invariant to protect.</p>
-      <p>TODO: State the assumptions and what the reader can change in the experiment.</p>
     </BlueprintSection>
-    <BlueprintSection id="the-mistake" number="02" title="Where the first design fails">
+    <BlueprintSection id="naive" number="02" title="TODO: Why the first design fails">
       <p>TODO: Walk through a specific failure boundary and its observable consequence.</p>
       <InlineCheck className={neo.conceptCheck} question={checkpoint.scenario} options={checkpoint.options.map(option => ({ label: option.text, isCorrect: option.isCorrect, explanation: option.explanation }))} />
     </BlueprintSection>
-    <BlueprintSection id="mental-model" number="03" title="The mental model">
+    <BlueprintSection id="mental-model" number="03" title="TODO: The distinction that makes it tractable">
       <p>TODO: Explain the distinction that makes the problem easier to reason about.</p>
     </BlueprintSection>
-    <BlueprintSection id="architecture" number="04" title="The architecture">
+    <BlueprintSection id="architecture" number="04" title="TODO: The design">
       <p>TODO: Trace one successful operation and one failure through the design.</p>
       <BlueprintPanel kind="diagram">{/* Insert a compact, labeled diagram here; do not stretch it to prose width. */}</BlueprintPanel>
     </BlueprintSection>
-    <BlueprintSection id="workbench" number="05" title="Try the failure scenario">
+    <BlueprintSection id="worked-example" number="05" title="TODO: Explore the failure">
       <p>TODO: Tell the reader which assumption to change and what to observe.</p>
-      <BlueprintPanel>{/* Insert a topic-specific client workbench here. */}</BlueprintPanel>
+      <BlueprintPanel id="workbench">{/* Insert a topic-specific client workbench here. */}</BlueprintPanel>
     </BlueprintSection>
-    <BlueprintSection id="tradeoffs" number="06" title="Trade-offs and recovery">
-      <p>TODO: Explain the cost, failure signal, recovery action, and the condition under which you would choose another design.</p>
-      <details><summary>Operational runbook</summary><p>TODO: Detection, mitigation, verification, and rollback conditions.</p></details>
-    </BlueprintSection>
-    <BlueprintSection id="judgment-quiz" number="07" title="Test your judgment">
-      <ArticleQuizEntry title={topic.meta.title} questions={questions} quizHref={`${topic.href}/quiz`} />
-    </BlueprintSection>
-    <BlueprintSection id="related" number="08" title="Keep exploring">
-      <p>TODO: Link to relevant published blueprints and primary sources.</p>
-      <ArticleNav currentId={TOPIC_ID} />
-    </BlueprintSection>
+    <RunbookSection steps={["TODO: Detect", "TODO: Mitigate", "TODO: Verify and roll back"]} />
+    <TradeoffsSection tables={[{ caption: "TODO: Decisions and their costs", headers: ["Decision", "Benefit", "Cost"], rows: [["TODO", "TODO", "TODO"]] }]} />
+    <FailuresSection failures={[{ title: "TODO: Failure mode", signal: "TODO: How you notice", response: "TODO: What you do" }]} />
+    <ScaleSection title="TODO: What breaks at ten times the load?" items={["TODO: The next limit"]} />
+    <InterviewSection
+      answer="TODO: A one-minute spoken answer."
+      levels={[
+        { title: "Mid-level", description: "TODO", items: ["TODO"] },
+        { title: "Senior", description: "TODO", items: ["TODO"] },
+        { title: "Staff", description: "TODO", items: ["TODO"] },
+      ]}
+      wrongAnswers={[{ question: "TODO: Why not the obvious fix?", explanation: "TODO" }]}
+      traps={["TODO: A trap to call out"]}
+    />
+    <FollowUpsSection items={[["TODO: Follow-up question", "TODO: Answer"]]} />
+    <SourcesSection topicId={TOPIC_ID} sources={[["TODO: Primary source", "https://example.com"]]} quiz={{ title: topic.meta.title, questions, href: `${topic.href}/quiz` }} related={[]} />
   </BlueprintArticleFrame>;
 }

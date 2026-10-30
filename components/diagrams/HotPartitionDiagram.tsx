@@ -51,7 +51,7 @@ export function HotPartitionDiagram({ resolved = false }: { resolved?: boolean }
               >
                 <span className="block font-mono font-bold text-xs">P{i + 1}</span>
                 <span className="block text-xs font-semibold">{i === 6 ? "70k/s" : "2k/s"}</span>
-                <span className="block text-[10px] mt-0.5 text-slate-500 font-mono">
+                <span className="block text-[10px] mt-0.5 text-slate-600 font-mono">
                   {i === 6 ? "7× limit" : "spare room"}
                 </span>
               </div>

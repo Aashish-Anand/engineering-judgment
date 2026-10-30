@@ -49,7 +49,7 @@ export function ExecutiveBlueprint({
 
         {/* The Solution */}
         <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-600 block mb-1">
+          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
             02 · Architecture Fix
           </span>
           <p className="font-medium text-xs sm:text-sm text-slate-800 leading-snug mb-0">
@@ -70,7 +70,7 @@ export function ExecutiveBlueprint({
 
       {keyMetrics && keyMetrics.length > 0 && (
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-4 text-xs font-mono">
-          <span className="text-slate-500 font-bold">KEY THRESHOLDS:</span>
+          <span className="text-slate-600 font-bold">KEY THRESHOLDS:</span>
           {keyMetrics.map((m, idx) => (
             <div key={idx} className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />

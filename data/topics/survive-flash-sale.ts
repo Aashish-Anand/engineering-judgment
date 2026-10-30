@@ -1,19 +1,9 @@
 import type { TopicId } from "@/data/topics/catalog";
-import type { TocItem, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
+import type { TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
 import { getTopicById } from "@/data/topics/catalog";
 
 export const meta = getTopicById("flash-sale").meta;
 
-export const tocItems: TocItem[] = [
-  { id: "the-problem",       label: "01 · Problem & Scale Anatomy" },
-  { id: "the-mistake",       label: "02 · Naive Row-Lock Trap" },
-  { id: "mental-model",      label: "03 · Core Mental Model" },
-  { id: "architecture",      label: "04 · Funnel Pipeline & Lua Gate" },
-  { id: "tradeoffs-hub",     label: "05 · Trade-offs & Production Traps" },
-  { id: "career-rubric",     label: "06 · Staff+ Interview Rubric" },
-  { id: "judgment-quiz",     label: "07 · Test Your Judgment" },
-  { id: "related",           label: "08 · Related Architectures" },
-];
 
 export const scenarioMetrics = [
   { label: "Concurrent users at launch", value: "~10M active on page" },

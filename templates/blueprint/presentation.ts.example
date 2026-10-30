@@ -4,7 +4,7 @@ import type { ArticlePresentation } from "@/data/topics/presentation";
 export const presentation = {
   number: "010", // Use a unique, stable publication number.
   shortTitle: "TODO: Short topic name",
-  startId: "the-problem", // Must match a rendered section anchor.
+  startId: "problem", // The first shared section.
   overview: "TODO: One paragraph explaining the failure boundary, the central decision, and its cost.",
   scenario: [
     { label: "Workload", value: "TODO: Stated assumption" },

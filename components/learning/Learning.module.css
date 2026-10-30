@@ -59,7 +59,7 @@
 
 /* ── In-article path line under the eyebrow ── */
 .pathLine { margin:-4px 0 14px; font:600 12px/1.7 var(--font-mono); color:var(--neo-muted); }
-.pathLine a { color:var(--neo-ink); text-underline-offset:3px; }
+.pathLine a { color:var(--neo-ink); text-decoration:underline; text-underline-offset:3px; }
 
 @media (max-width:640px) {
   .pathCard li { grid-template-columns:30px minmax(0,1fr); align-items:start; }

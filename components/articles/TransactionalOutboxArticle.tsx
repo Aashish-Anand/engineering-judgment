@@ -1,15 +1,12 @@
 import { BlueprintArticleFrame, BlueprintPanel } from "./BlueprintArticleFrame";
 import neo from "@/components/Neo.module.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { ArticleNav } from "@/components/ArticleNav";
-import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
 import { InlineCheck } from "@/components/InlineCheck";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
 import { InsightCard } from "@/components/InsightCard";
 import { ProblemStatement } from "@/components/ProblemStatement";
-import { RelatedTopics } from "@/components/RelatedTopics";
 import { OutboxDiagram, OutboxRelayFlow } from "@/components/diagrams/OutboxDiagram";
 import {
   OutboxRowLifecycle,
@@ -19,10 +16,7 @@ import {
 } from "@/components/diagrams/OutboxWorkedExamples";
 import { OutboxLab } from "@/components/OutboxLab";
 import { InPractice } from "@/components/InPractice";
-import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
-import { CareerRubricHub } from "@/components/CareerRubricHub";
 import {
-  tocItems,
   scenarioMetrics,
   tradeoffs,
   failureModes,
@@ -30,22 +24,21 @@ import {
   followUps,
   judgmentQuiz,
 } from "@/data/topics/transactional-outbox";
+import { articleToc } from "@/data/topics/article-format";
+import { FailuresSection, FollowUpsSection, InterviewSection, RunbookSection, ScaleSection, SourcesSection, TradeoffsSection } from "./BlueprintSections";
 
-const OUTBOX_TRAPS = [
+const OUTBOX_WRONG_ANSWERS = [
   {
-    trapNum: "TRAP 01",
     question: "Why not wrap broker.publish() inside the SQL transaction?",
     explanation:
       "A slow broker or network round-trip holds the database transaction and locks open, consuming database connections. Under load, connection pool exhaustion takes down the entire application API in milliseconds.",
   },
   {
-    trapNum: "TRAP 02",
     question: "Why not poll outbox with SELECT * FROM outbox WHERE published = false?",
     explanation:
       "As the outbox table grows to millions of historical rows, scans without a partial index on unpublished rows kill disk IOPS. Concurrent pollers without a fixed slice of aggregate IDs can also publish events for the same order out of order.",
   },
   {
-    trapNum: "TRAP 03",
     question: "Why not rely on Kafka for exactly-once processing across services?",
     explanation:
       "Kafka's transactional producer only guarantees atomicity within Kafka topics, not across external databases. At-least-once delivery is the physical reality; consumer idempotency keys are non-negotiable.",
@@ -81,11 +74,34 @@ const OUTBOX_AVOID = [
   "Un-partitioned concurrent polling queries that cause race conditions and out-of-order events.",
 ];
 
+const OUTBOX_RUNBOOK = [
+  "Check the age of the oldest unpublished outbox row first. It tells you whether events are late, not just whether the table is large.",
+  "If the broker is down, keep accepting writes and let the relay retry with backoff. The outbox holds the backlog; alert on table size and disk before it pressures the database.",
+  "If the broker is healthy but the relay is behind, add relay capacity partitioned by aggregate_id so events for one order stay in order.",
+  "Before replaying a range after a relay crash, confirm every consumer deduplicates by the outbox event ID. Replays always produce duplicates.",
+  "For a CDC relay, check that the connector's stored offset and the replication slot agree. A lost position re-reads old events or skips new ones.",
+  "Once the backlog drains, compare outbox row counts with broker offsets, then clean up published rows.",
+];
+
+const OUTBOX_SOURCES: [label: string, href: string][] = [
+  ["Debezium: Outbox Event Router", "https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html"],
+  ["PostgreSQL: SELECT locking clause (SKIP LOCKED)", "https://www.postgresql.org/docs/current/sql-select.html"],
+];
+
+const toc = articleToc({
+  problem: "Every order must also emit an event",
+  naive: "Why publishing after or inside the commit fails",
+  "mental-model": "Make the event part of the data",
+  architecture: "Write the event with the order, relay it later",
+  "worked-example": "Explore the relay",
+  scale: "What breaks at ten times the events?",
+});
+
 export function TransactionalOutboxArticle() {
   const relatedTopics = ["idempotent-api", "poison-messages", "database-migration", "schema-evolution"] as const;
 
   return (
-    <BlueprintArticleFrame topicId="transactional-outbox" toc={tocItems} brief={
+    <BlueprintArticleFrame topicId="transactional-outbox" toc={toc} brief={
       <ExecutiveBlueprint
           timeToRead="30-Second Architecture Blueprint"
           bottleneck="Writing to PostgreSQL and publishing to Kafka in the same HTTP request is an uncoordinated dual write. Crashes cause silent data loss (lost events) or phantom records (ghost events)."
@@ -100,13 +116,8 @@ export function TransactionalOutboxArticle() {
     }>
 
             {/* ── 01 — The Dual-Write Problem & Live Simulator ── */}
-            <section id="the-problem" className="scroll-mt-16">
-              <SectionHeader
-                number="01"
-                title="The Production Constraint & Workload Scale"
-                id="the-problem"
-                annotation="5,000 Orders/sec"
-              />
+            <section id="problem" className="scroll-mt-16">
+              <SectionHeader number="01" title="Every order must also emit an event" id="problem" />
               <ProblemStatement>
                 <p>
                   Every purchase must save an order in the database <strong>and</strong> emit an event to the message broker so payment, inventory, and fulfillment services can act.
@@ -119,18 +130,11 @@ export function TransactionalOutboxArticle() {
               <div className="my-5">
                 <MetricTable rows={scenarioMetrics} />
               </div>
-
-              {/* Interactive Polling vs CDC Simulator */}
-              <BlueprintPanel id="workbench"><OutboxLab /></BlueprintPanel>
             </section>
 
             {/* ── 02 — The Obvious Mistake & Gut Check ───────── */}
-            <section id="the-mistake" className="scroll-mt-16">
-              <SectionHeader
-                number="02"
-                title="The Obvious Mistake: Publishing After or Inside Commit"
-                id="the-mistake"
-              />
+            <section id="naive" className="scroll-mt-16">
+              <SectionHeader number="02" title="Why publishing after or inside the commit fails" id="naive" />
               <p className="text-slate-700 leading-relaxed">
                 The intuitive design writes to the database, then publishes to the message broker. If the process crashes, the network times out, or the broker is unavailable between those two steps, the database commit succeeds but the event is never sent:
               </p>
@@ -172,11 +176,7 @@ export function TransactionalOutboxArticle() {
 
             {/* ── 03 — Core Mental Model ─────────────────────── */}
             <section id="mental-model" className="scroll-mt-16">
-              <SectionHeader
-                number="03"
-                title="The Core Mental Model: Make the Event Part of the Data"
-                id="mental-model"
-              />
+              <SectionHeader number="03" title="Make the event part of the data" id="mental-model" />
               <ScrollReveal>
                 <InsightCard title="The Architectural Invariant">
                   Two independent distributed systems cannot be made atomically consistent without coordination. Instead of coordinating two systems, <strong>write the event to the same database in the same transaction</strong>.
@@ -189,12 +189,7 @@ export function TransactionalOutboxArticle() {
 
             {/* ── 04 — Outbox Architecture & Relay Engine ────── */}
             <section id="architecture" className="scroll-mt-16">
-              <SectionHeader
-                number="04"
-                title="Outbox Architecture, Schema & Relay Engine"
-                id="architecture"
-                annotation="Polling vs CDC"
-              />
+              <SectionHeader number="04" title="Write the event with the order, relay it later" id="architecture" />
               <p className="text-slate-700 leading-relaxed mb-4">
                 The resolved architecture decouples the user request from the message broker. The application touches only its local database:
               </p>
@@ -253,7 +248,7 @@ export function TransactionalOutboxArticle() {
                   "`aggregatetype` chooses the topic (by default `outbox.event.<aggregatetype>`), and `aggregateid` becomes the Kafka message key, so every event for one order lands in the same partition, in order.",
                   "Delivery is still at least once. Consumers deduplicate by the event ID, exactly as with a polling relay.",
                 ]}
-                sources={[["Debezium: Outbox Event Router", "https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html"]]}
+                sources={OUTBOX_SOURCES.slice(0, 1)}
               />
 
               <div className="my-6">
@@ -263,96 +258,44 @@ export function TransactionalOutboxArticle() {
               </div>
             </section>
 
-            {/* ── 05 — Trade-offs, Runbook & Traps Hub ───────── */}
-            <section id="tradeoffs-hub" className="scroll-mt-16">
-              <SectionHeader
-                number="05"
-                title="Trade-offs, Incident Runbook & Production Traps"
-                id="tradeoffs-hub"
-                annotation="Decision Matrix"
-              />
-              <p className="text-slate-700 leading-relaxed mb-4">
-                Compare relay architectures, review failure recovery procedures, and study the top traps when publishing mission-critical events:
+            {/* ── 05 — Experiment ─────────────────────────────── */}
+            <section id="worked-example" className="scroll-mt-16">
+              <SectionHeader number="05" title="Explore the relay" id="worked-example" />
+              <p className="text-slate-700 leading-relaxed">
+                Raise the write rate, then tune the polling interval, worker count, and batch size until the relay keeps up. Add consumer re-deliveries to see why every consumer must be idempotent.
               </p>
-
-              <ScrollReveal>
-                <BlueprintPanel kind="detail"><TradeoffDiagnosticsHub
-                  approachesTitle="1. Outbox Relay Architecture Options"
-                  approachesHeaders={["Relay Approach", "Advantage", "Trade-off / Operational Risk"]}
-                  approachesRows={tradeoffs}
-                  keyTradeoffsTitle="2. Key Correctness & Ordering Trade-offs"
-                  keyTradeoffsHeaders={["Decision", "Benefit", "Cost / Complexity"]}
-                  keyTradeoffsRows={[
-                    ["Per-Aggregate Ordering", "Simple partitioning by aggregate_id", "No global cross-aggregate ordering"],
-                    ["At-Least-Once Relay", "Guaranteed zero lost events", "Downstream must implement idempotency keys"],
-                    ["Synchronous Dual Write", "Zero extra tables or workers", "Inconsistent on any process or network failure"],
-                  ]}
-                  failureModesTitle="Outbox Failure Modes, Detection & Runbook"
-                  failureModesHeaders={["Failure Mode", "Detection Signal", "Mitigation & Operational Response"]}
-                  failureModesRows={failureModes}
-                  trapsTitle="The 3 Classic Outbox Production Traps"
-                  traps={OUTBOX_TRAPS}
-                  tenXTitle="What Happens at 10× Scale (50,000 Events / Sec)?"
-                  tenXProblems={OUTBOX_TEN_X}
-                  avoidTitle="⚠️ Anti-patterns that cause data loss or pool exhaustion:"
-                  avoidList={OUTBOX_AVOID}
-                /></BlueprintPanel>
-              </ScrollReveal>
+              <BlueprintPanel id="workbench"><OutboxLab /></BlueprintPanel>
             </section>
 
-            {/* ── 06 — Staff+ Interview & Career Rubric ──────── */}
-            <section id="career-rubric" className="scroll-mt-16">
-              <SectionHeader
-                number="06"
-                title="Engineering Level Rubric & Interview Synthesis"
-                id="career-rubric"
-                annotation="L4 to Staff Evaluation"
-              />
-              <p className="text-slate-700 leading-relaxed mb-4">
-                How tech companies evaluate event publishing design across engineering seniority levels, complete with verbal synthesis and follow-up probing questions:
-              </p>
-
-              <ScrollReveal>
-                <BlueprintPanel kind="detail"><CareerRubricHub
-                  initiallyExpanded={false}
-                  interviewAnswer={OUTBOX_INTERVIEW_SYNTHESIS}
-                  levelExpectations={expectations}
-                  followUpQuestions={followUps}
-                  whiteboardChain={OUTBOX_WHITEBOARD}
-                /></BlueprintPanel>
-              </ScrollReveal>
-            </section>
-
-            {/* ── 07 — Judgment Quiz ────────────────────────── */}
-            {judgmentQuiz && (
-              <section id="judgment-quiz" className="scroll-mt-16">
-                <SectionHeader
-                  number="07"
-                  title="Test Your Judgment: Transactional Outbox"
-                  id="judgment-quiz"
-                />
-                <ScrollReveal>
-                  <ArticleQuizEntry
-                    quizHref="/topics/correctness/transactional-outbox/quiz"
-                    title="Transactional Outbox Judgment Test"
-                    questions={judgmentQuiz}
-                  />
-                </ScrollReveal>
-              </section>
-            )}
-
-            {/* ── 08 — Related Architectures ────────────────── */}
-            <section id="related" className="scroll-mt-16 pt-4">
-              <SectionHeader
-                number="08"
-                title="Related System Architecture Deep Dives"
-                id="related"
-              />
-              <RelatedTopics ids={relatedTopics} />
-              <div className="mt-8">
-                <ArticleNav currentId="transactional-outbox" />
-              </div>
-            </section>
+            <RunbookSection steps={OUTBOX_RUNBOOK} />
+            <TradeoffsSection tables={[
+              { caption: "Outbox relay options", headers: ["Relay approach", "Advantage", "Operational risk"], rows: tradeoffs },
+              { caption: "Correctness and ordering decisions", headers: ["Decision", "Benefit", "Cost"], rows: [
+                ["Per-aggregate ordering", "Simple partitioning by aggregate_id", "No global cross-aggregate ordering"],
+                ["At-least-once relay", "No lost events", "Downstream must implement idempotency keys"],
+                ["Synchronous dual write", "No extra tables or workers", "Inconsistent on any process or network failure"],
+              ] },
+            ]} />
+            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response }))} />
+            <ScaleSection
+              title="What breaks at ten times the events?"
+              paragraphs={["At 50,000 events per second, the outbox table and its relay become a system you operate in their own right:"]}
+              items={OUTBOX_TEN_X}
+            />
+            <InterviewSection
+              answer={OUTBOX_INTERVIEW_SYNTHESIS}
+              levels={expectations}
+              wrongAnswers={OUTBOX_WRONG_ANSWERS}
+              traps={OUTBOX_AVOID}
+              whiteboardChain={OUTBOX_WHITEBOARD}
+            />
+            <FollowUpsSection items={followUps.map(({ question, answer }) => [question, answer])} />
+            <SourcesSection
+              topicId="transactional-outbox"
+              sources={OUTBOX_SOURCES}
+              quiz={{ title: "Transactional outbox", questions: judgmentQuiz, href: "/topics/correctness/transactional-outbox/quiz" }}
+              related={relatedTopics}
+            />
     </BlueprintArticleFrame>
   );
 }

@@ -116,7 +116,7 @@ export function SiteHeader() {
       {mobileOpen && (
         <div className="lg:hidden border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-4 py-4 space-y-4 shadow-lg animate-fadeIn">
           <div>
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
               Navigation
             </span>
             <nav className="flex flex-col gap-1">
@@ -128,14 +128,14 @@ export function SiteHeader() {
                   className="font-sans text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-3 py-2 rounded-lg transition-colors no-underline flex items-center justify-between"
                 >
                   <span>{item.label}{badge(item.label)}</span>
-                  <span className="font-mono text-slate-400 text-xs">→</span>
+                  <span className="font-mono text-slate-600 text-xs">→</span>
                 </Link>
               ))}
             </nav>
           </div>
 
           <div className="pt-3 border-t border-slate-100">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
               Learning paths
             </span>
             <div className="grid grid-cols-1 gap-1.5">

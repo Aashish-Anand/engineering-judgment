@@ -230,7 +230,7 @@ export function ArchitecturePressurePreview() {
             className={`flex-1 py-1 px-2 rounded-md font-sans text-xs font-semibold transition-all cursor-pointer ${
               activeTab === idx
                 ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-slate-600 hover:text-slate-800"
             }`}
           >
             {s.name}
@@ -241,7 +241,7 @@ export function ArchitecturePressurePreview() {
       {/* Live Metrics Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3.5">
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-2 text-center">
-          <span className="block font-mono text-[10px] uppercase text-slate-400">
+          <span className="block font-mono text-[10px] uppercase text-slate-600">
             Throughput
           </span>
           <span className="block font-mono text-xs font-bold text-slate-800">
@@ -249,19 +249,19 @@ export function ArchitecturePressurePreview() {
           </span>
         </div>
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-2 text-center">
-          <span className="block font-mono text-[10px] uppercase text-slate-400">
+          <span className="block font-mono text-[10px] uppercase text-slate-600">
             Replication / P99
           </span>
           <span
             className={`block font-mono text-xs font-bold ${
-              isSpiked ? "text-amber-600" : "text-emerald-600"
+              isSpiked ? "text-amber-600" : "text-emerald-700"
             }`}
           >
             {metrics.latency}
           </span>
         </div>
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-2 text-center">
-          <span className="block font-mono text-[10px] uppercase text-slate-400">
+          <span className="block font-mono text-[10px] uppercase text-slate-600">
             Load Saturation
           </span>
           <span className="block font-mono text-xs font-bold text-slate-800">
@@ -269,12 +269,12 @@ export function ArchitecturePressurePreview() {
           </span>
         </div>
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-2 text-center">
-          <span className="block font-mono text-[10px] uppercase text-slate-400">
+          <span className="block font-mono text-[10px] uppercase text-slate-600">
             System State
           </span>
           <span
             className={`block font-mono text-xs font-bold ${
-              isSpiked ? "text-rose-600" : "text-emerald-600"
+              isSpiked ? "text-rose-600" : "text-emerald-700"
             }`}
           >
             {metrics.status}
@@ -290,14 +290,14 @@ export function ArchitecturePressurePreview() {
             className="flex items-center justify-between p-2.5 bg-slate-50/60 hover:bg-slate-50 border border-slate-200/80 rounded-lg transition-colors"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-mono text-[11px] font-bold text-slate-400">
+              <span className="font-mono text-[11px] font-bold text-slate-600">
                 0{i + 1}
               </span>
               <div className="min-w-0">
                 <span className="font-sans font-bold text-xs text-slate-900 block truncate">
                   {node.name}
                 </span>
-                <span className="font-mono text-[10px] text-slate-500 block">
+                <span className="font-mono text-[10px] text-slate-600 block">
                   {node.role}
                 </span>
               </div>

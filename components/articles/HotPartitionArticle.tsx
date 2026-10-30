@@ -1,12 +1,10 @@
 import { BlueprintArticleFrame, BlueprintPanel } from "./BlueprintArticleFrame";
 import neo from "@/components/Neo.module.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { ArticleNav } from "@/components/ArticleNav";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
 import { InsightCard } from "@/components/InsightCard";
 import { ProblemStatement } from "@/components/ProblemStatement";
-import { RelatedTopics } from "@/components/RelatedTopics";
 import { HotPartitionLab } from "@/components/HotPartitionLab";
 import { HotPartitionDiagram } from "@/components/diagrams/HotPartitionDiagram";
 import { HotPartitionFlow } from "@/components/diagrams/HotPartitionFlow";
@@ -21,11 +19,7 @@ import {
   ReactionMigrationExample,
   CommentReadExample,
 } from "@/components/diagrams/HotPartitionWorkedExamples";
-import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
-import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
-import { CareerRubricHub } from "@/components/CareerRubricHub";
 import {
-  tocItems,
   scenarioMetrics,
   tradeoffs,
   failureModes,
@@ -33,22 +27,21 @@ import {
   followUps,
   judgmentQuiz,
 } from "@/data/topics/fix-hot-partition";
+import { articleToc } from "@/data/topics/article-format";
+import { FailuresSection, FollowUpsSection, InterviewSection, RunbookSection, ScaleSection, SourcesSection, TradeoffsSection } from "./BlueprintSections";
 
-const HOT_PARTITION_TRAPS = [
+const HOT_PARTITION_WRONG_ANSWERS = [
   {
-    trapNum: "TRAP 01",
     question: "Why not double database partitions from 16 to 32?",
     explanation:
       "Partition key routing maps the single celebrity post_id to a single node. If 70,000 requests per second target that one key, all 70,000 still land on whatever single node owns that key. Adding partitions divides unrelated keys, not a single hot key.",
   },
   {
-    trapNum: "TRAP 02",
     question: "Why not cache writes in a single Redis key before the DB?",
     explanation:
       "Writing all 70,000 likes/sec directly to a single Redis key simply relocates the hot partition from PostgreSQL to Redis. A single Redis key will saturate its single CPU core event loop and its 1Gbps network NIC.",
   },
   {
-    trapNum: "TRAP 03",
     question: "Why not query all shards on every read to get real-time totals?",
     explanation:
       "Scatter-gather queries across 10 or 16 shards multiply read IOPS by 10x–16x. Under 70,000 reads/sec, fanout queries saturate database connection pools and network bandwidth immediately. Lazy asynchronous aggregation is mandatory.",
@@ -86,11 +79,36 @@ const HOT_PARTITION_AVOID = [
   "Changing key sharding formulas in production without versioned routing and dual-write replay.",
 ];
 
+const HOT_PARTITION_RUNBOOK = [
+  "Confirm the skew per partition: compare request rate, p99 latency, throttling, and queue age for each partition. Cluster averages hide one overloaded node.",
+  "Find the key. Sample the top keys; if one post_id dominates, adding partitions will not move its load.",
+  "Split the traffic into post-body reads, counter reads, reaction writes, comments, and fanout jobs. Each needs a different remedy.",
+  "Relieve reads first: serve the post body from cache with single-flight refresh and bounded stale serving, so cache misses cannot stampede the origin.",
+  "Spread writes: route reactions to stable user-hashed buckets, check that the buckets sit on different physical partitions, and move the displayed count to asynchronous aggregation.",
+  "Watch for amplification from retries, cache misses, and follower fanout until every partition stays under its benchmarked limit.",
+];
+
+const HOT_PARTITION_SOURCES: [label: string, href: string][] = [
+  ["AWS: DynamoDB partition key design", "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html"],
+  ["AWS: Choosing the number of shards", "https://aws.amazon.com/blogs/database/choosing-the-right-number-of-shards-for-your-large-scale-amazon-dynamodb-table"],
+  ["AWS: Contributor Insights for DynamoDB", "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/contributorinsights_HowItWorks.html"],
+  ["Redis CLI", "https://redis.io/docs/latest/develop/tools/cli/"],
+];
+
+const toc = articleToc({
+  problem: "One post receives 70% of the traffic",
+  naive: "Why more partitions do not help",
+  "mental-model": "Reuse reads, distribute writes",
+  architecture: "Cache reads, salt writes",
+  "worked-example": "Explore the skew",
+  scale: "What breaks at ten times the traffic?",
+});
+
 export function HotPartitionArticle() {
   const relatedTopics = ["flash-sale", "database-migration", "retry-storm", "connection-pool"] as const;
 
   return (
-    <BlueprintArticleFrame topicId="hot-partition" toc={tocItems} brief={
+    <BlueprintArticleFrame topicId="hot-partition" toc={toc} brief={
       <ExecutiveBlueprint
           timeToRead="30-Second Architecture Blueprint"
           bottleneck="A viral post concentrates 70,000 requests/sec onto a single database partition key. Doubling partitions does not help because all traffic shares the exact same key."
@@ -105,13 +123,8 @@ export function HotPartitionArticle() {
     }>
 
             {/* ── 01 — Skew & Scale Anatomy + Live Lab ───────── */}
-            <section id="the-problem" className="scroll-mt-16">
-              <SectionHeader
-                number="01"
-                title="The Production Constraint: The Celebrity Post Skew"
-                id="the-problem"
-                annotation="70,000 RPS on 1 Node"
-              />
+            <section id="problem" className="scroll-mt-16">
+              <SectionHeader number="01" title="One post receives 70% of the traffic" id="problem" />
               <ProblemStatement>
                 <p>
                   Taylor Swift posts an announcement. Out of 100,000 total requests arriving each second across your 16-partition cluster, <strong>70,000 target Taylor&apos;s single post</strong>.
@@ -124,18 +137,11 @@ export function HotPartitionArticle() {
               <div className="my-5">
                 <MetricTable rows={scenarioMetrics} />
               </div>
-
-              {/* Interactive Partition Skew Simulator */}
-              <BlueprintPanel id="workbench"><HotPartitionLab /></BlueprintPanel>
             </section>
 
             {/* ── 02 — The Obvious Mistake & Gut Check ───────── */}
-            <section id="the-mistake" className="scroll-mt-16">
-              <SectionHeader
-                number="02"
-                title="The Obvious Mistake: Scaling Nodes Without Changing Keys"
-                id="the-mistake"
-              />
+            <section id="naive" className="scroll-mt-16">
+              <SectionHeader number="02" title="Why more partitions do not help" id="naive" />
               <p className="text-slate-700 leading-relaxed">
                 The immediate instinct during an incident is: <em>&ldquo;Spin up 16 more database partitions!&rdquo;</em> But partition key routing hashes <code>post_id</code>. All 70,000 RPS still map to the exact same partition:
               </p>
@@ -175,22 +181,13 @@ export function HotPartitionArticle() {
                   "AWS recommends write sharding for hot keys: add a suffix to the partition key so writes spread across partitions, and accept that reads must combine the shards.",
                   "Find the key before changing it. DynamoDB's CloudWatch Contributor Insights lists the most accessed and most throttled keys. For Redis, `redis-cli --hotkeys` samples hot keys, but only when `maxmemory-policy` is an LFU policy.",
                 ]}
-                sources={[
-                  ["AWS: DynamoDB partition key design", "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html"],
-                  ["AWS: Choosing the number of shards", "https://aws.amazon.com/blogs/database/choosing-the-right-number-of-shards-for-your-large-scale-amazon-dynamodb-table"],
-                  ["AWS: Contributor Insights for DynamoDB", "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/contributorinsights_HowItWorks.html"],
-                  ["Redis CLI", "https://redis.io/docs/latest/develop/tools/cli/"],
-                ]}
+                sources={HOT_PARTITION_SOURCES}
               />
             </section>
 
             {/* ── 03 — Core Mental Model ─────────────────────── */}
             <section id="mental-model" className="scroll-mt-16">
-              <SectionHeader
-                number="03"
-                title="The Core Mental Model: Reuse Reads, Distribute Writes"
-                id="mental-model"
-              />
+              <SectionHeader number="03" title="Reuse reads, distribute writes" id="mental-model" />
               <ScrollReveal>
                 <InsightCard title="The Architectural Invariant">
                   One popular post creates two completely different kinds of work: <strong>identical public reads</strong> and <strong>independent user writes</strong>. Conflating them is why systems collapse.
@@ -203,12 +200,7 @@ export function HotPartitionArticle() {
 
             {/* ── 04 — Read & Write Sharding Architecture ────── */}
             <section id="architecture" className="scroll-mt-16">
-              <SectionHeader
-                number="04"
-                title="Dual-Path Architecture & Sharding Design"
-                id="architecture"
-                annotation="Salted Buckets [0..9]"
-              />
+              <SectionHeader number="04" title="Cache reads, salt writes" id="architecture" />
               <p className="text-slate-700 leading-relaxed mb-4">
                 Follow each kind of work to its separate relief path:
               </p>
@@ -297,90 +289,37 @@ await db.transaction(async (tx) => {
               </div>
             </section>
 
-            {/* ── 05 — Trade-offs, Runbook & Traps Hub ───────── */}
-            <section id="tradeoffs-hub" className="scroll-mt-16">
-              <SectionHeader
-                number="05"
-                title="Trade-offs, Incident Runbook & Production Traps"
-                id="tradeoffs-hub"
-                annotation="Decision Matrix"
-              />
-              <p className="text-slate-700 leading-relaxed mb-4">
-                Compare partition sharding strategies, study failure modes under load, and review the classic traps that cause hot partition outages:
+            {/* ── 05 — Experiment ─────────────────────────────── */}
+            <section id="worked-example" className="scroll-mt-16">
+              <SectionHeader number="05" title="Explore the skew" id="worked-example" />
+              <p className="text-slate-700 leading-relaxed">
+                Switch between the read and write paths. Raise the share of reads served by cache, then spread post-like writes across more partitions, and watch when the hot partition drops under its limit.
               </p>
-
-              <ScrollReveal>
-                <BlueprintPanel kind="detail"><TradeoffDiagnosticsHub
-                  approachesTitle="1. Read & Write Partitioning Decisions"
-                  approachesHeaders={["Decision", "What Improves", "What We Now Own"]}
-                  approachesRows={tradeoffs}
-                  keyTradeoffsRows={[]}
-                  failureModesTitle="Hot Partition Failure Modes & Telemetry Runbook"
-                  failureModesHeaders={["Failure Mode", "Detection Signal", "Operational Response & Mitigation"]}
-                  failureModesRows={failureModes}
-                  trapsTitle="The 3 Classic Hot Partition Traps"
-                  traps={HOT_PARTITION_TRAPS}
-                  tenXTitle="What Happens at 10× Scale (1M RPS / Celebrity Fanout)?"
-                  tenXProblems={HOT_PARTITION_TEN_X}
-                  avoidTitle="⚠️ Anti-patterns that guarantee partition throttling:"
-                  avoidList={HOT_PARTITION_AVOID}
-                /></BlueprintPanel>
-              </ScrollReveal>
+              <BlueprintPanel id="workbench"><HotPartitionLab /></BlueprintPanel>
             </section>
 
-            {/* ── 06 — Staff+ Interview & Career Rubric ──────── */}
-            <section id="career-rubric" className="scroll-mt-16">
-              <SectionHeader
-                number="06"
-                title="Engineering Level Rubric & Interview Synthesis"
-                id="career-rubric"
-                annotation="L4 to Staff Evaluation"
-              />
-              <p className="text-slate-700 leading-relaxed mb-4">
-                How interviewers evaluate partition skew design across engineering seniority levels, complete with verbal synthesis and follow-up probing questions:
-              </p>
-
-              <ScrollReveal>
-                <BlueprintPanel kind="detail"><CareerRubricHub
-                  initiallyExpanded={false}
-                  interviewAnswer={HOT_PARTITION_INTERVIEW_SYNTHESIS}
-                  levelExpectations={expectations}
-                  followUpQuestions={followUps}
-                  whiteboardChain={HOT_PARTITION_WHITEBOARD}
-                /></BlueprintPanel>
-              </ScrollReveal>
-            </section>
-
-            {/* ── 07 — Judgment Quiz ────────────────────────── */}
-            {judgmentQuiz && (
-              <section id="judgment-quiz" className="scroll-mt-16">
-                <SectionHeader
-                  number="07"
-                  title="Test Your Judgment: Hot Partition Sharding"
-                  id="judgment-quiz"
-                />
-                <ScrollReveal>
-                  <ArticleQuizEntry
-                    quizHref="/topics/traffic/fix-hot-partition/quiz"
-                    title="Hot Partition Sharding Judgment Test"
-                    questions={judgmentQuiz}
-                  />
-                </ScrollReveal>
-              </section>
-            )}
-
-            {/* ── 08 — Related Architectures ────────────────── */}
-            <section id="related" className="scroll-mt-16 pt-4">
-              <SectionHeader
-                number="08"
-                title="Related System Architecture Deep Dives"
-                id="related"
-              />
-              <RelatedTopics ids={relatedTopics} />
-              <div className="mt-8">
-                <ArticleNav currentId="hot-partition" />
-              </div>
-            </section>
+            <RunbookSection steps={HOT_PARTITION_RUNBOOK} />
+            <TradeoffsSection tables={[{ caption: "Read and write partitioning decisions", headers: ["Decision", "What improves", "What we now own"], rows: tradeoffs }]} />
+            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response }))} />
+            <ScaleSection
+              title="What breaks at ten times the traffic?"
+              paragraphs={["At a million requests per second, or a celebrity with ten times the followers, the relief paths themselves become the next hot spots:"]}
+              items={HOT_PARTITION_TEN_X}
+            />
+            <InterviewSection
+              answer={HOT_PARTITION_INTERVIEW_SYNTHESIS}
+              levels={expectations}
+              wrongAnswers={HOT_PARTITION_WRONG_ANSWERS}
+              traps={HOT_PARTITION_AVOID}
+              whiteboardChain={HOT_PARTITION_WHITEBOARD}
+            />
+            <FollowUpsSection items={followUps.map(({ question, answer }) => [question, answer])} />
+            <SourcesSection
+              topicId="hot-partition"
+              sources={HOT_PARTITION_SOURCES}
+              quiz={{ title: "Hot partition sharding", questions: judgmentQuiz, href: "/topics/traffic/fix-hot-partition/quiz" }}
+              related={relatedTopics}
+            />
     </BlueprintArticleFrame>
   );
 }

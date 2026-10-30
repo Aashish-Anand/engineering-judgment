@@ -38,7 +38,7 @@ export function TopicCard({ category, question, href, available = false }: Topic
             Read decision →
           </span>
         ) : (
-          <span className="font-sans font-medium text-xs text-slate-400">
+          <span className="font-sans font-medium text-xs text-slate-600">
             Coming soon...
           </span>
         )}

@@ -25,7 +25,7 @@ export function DecisionTable({ headers, rows, title }: DecisionTableProps) {
             className={`px-2 py-0.5 rounded-md transition-colors ${
               mobileMode === "cards"
                 ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
-                : "text-slate-500"
+                : "text-slate-600"
             }`}
           >
             Cards
@@ -36,7 +36,7 @@ export function DecisionTable({ headers, rows, title }: DecisionTableProps) {
             className={`px-2 py-0.5 rounded-md transition-colors ${
               mobileMode === "table"
                 ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
-                : "text-slate-500"
+                : "text-slate-600"
             }`}
           >
             Table
@@ -68,7 +68,7 @@ export function DecisionTable({ headers, rows, title }: DecisionTableProps) {
                   const headerIndex = j + 1;
                   return (
                     <div key={headerIndex} className="flex flex-col">
-                      <span className="font-mono text-[10px] uppercase font-bold text-slate-400">
+                      <span className="font-mono text-[10px] uppercase font-bold text-slate-600">
                         {headers[headerIndex]}
                       </span>
                       <span className="text-slate-700 text-xs leading-relaxed font-sans">
@@ -90,7 +90,7 @@ export function DecisionTable({ headers, rows, title }: DecisionTableProps) {
         }`}
       >
         {mobileMode === "table" && (
-          <div className="md:hidden text-[11px] font-mono text-slate-500 mb-1.5 flex items-center justify-end gap-1 select-none">
+          <div className="md:hidden text-[11px] font-mono text-slate-600 mb-1.5 flex items-center justify-end gap-1 select-none">
             <span>Scroll horizontally</span>
             <span>→</span>
           </div>

@@ -17,7 +17,7 @@ export function OutboxRowLifecycle() {
             <dt className="font-semibold text-slate-700 mt-1">event_type</dt>
             <dd className="font-mono text-xs text-slate-900">OrderCreated</dd>
             <dt className="font-semibold text-slate-700 mt-1">published_at</dt>
-            <dd className="font-mono text-xs text-slate-500">NULL</dd>
+            <dd className="font-mono text-xs text-slate-600">NULL</dd>
           </dl>
         </Node>
         <Node title="2. Published" tone="yellow">
@@ -107,7 +107,7 @@ export function OutboxSchemaExample() {
       <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">
         A practical outbox table schema
       </figcaption>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Scrollable table" className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm border-collapse">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/70">
@@ -128,14 +128,14 @@ export function OutboxSchemaExample() {
             ].map(([col, type, purpose]) => (
               <tr key={col}>
                 <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">{col}</td>
-                <td className="py-2.5 px-3 font-mono text-slate-500">{type}</td>
+                <td className="py-2.5 px-3 font-mono text-slate-600">{type}</td>
                 <td className="py-2.5 px-3 text-slate-600">{purpose}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="text-xs sm:text-sm text-slate-500 mt-4 mb-0">
+      <p className="text-xs sm:text-sm text-slate-600 mt-4 mb-0">
         Index on <code>(published_at, id)</code> keeps relay queries fast. Partition the table by <code>created_at</code> to make cleanup a metadata operation instead of row-by-row deletion.
       </p>
     </figure>

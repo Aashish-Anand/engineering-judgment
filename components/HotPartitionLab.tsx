@@ -17,7 +17,7 @@ export function HotPartitionLab() {
       <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
         <div>
           <h3 className="font-sans text-lg sm:text-xl font-bold text-slate-900 m-0">You are on call. Try a fix.</h3>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-0">Focus on the 70,000 req/s for the hot post. Each independent DB partition has an assumed 10,000 req/s limit.</p>
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 mb-0">Focus on the 70,000 req/s for the hot post. Each independent DB partition has an assumed 10,000 req/s limit.</p>
         </div>
         <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">Interactive Simulation</span>
       </div>
@@ -44,7 +44,7 @@ export function HotPartitionLab() {
         <label className="block mb-5 font-sans text-xs sm:text-sm font-semibold text-slate-700">
           Reads served by cache: <span className="font-mono font-bold text-blue-600">{cache}%</span>
           <input className="block w-full mt-2 accent-blue-600 cursor-pointer" type="range" min={0} max={99} value={cache} onChange={(e) => setCache(Number(e.target.value))} />
-          <span className="block text-xs text-slate-400 mt-1 font-normal">Try 90%: notice how much peak load still hits the underlying primary partition.</span>
+          <span className="block text-xs text-slate-600 mt-1 font-normal">Try 90%: notice how much peak load still hits the underlying primary partition.</span>
         </label>
       ) : (
         <label className="block mb-5 font-sans text-xs sm:text-sm font-semibold text-slate-700">
@@ -54,12 +54,12 @@ export function HotPartitionLab() {
               <option key={n} value={n}>{n} {n === 1 ? "partition" : "partitions"}</option>
             ))}
           </select>
-          <span className="block text-xs text-slate-400 mt-1 font-normal">Compare 7 vs 8 partitions. Operating exactly at the ceiling leaves 0 headroom for traffic bursts.</span>
+          <span className="block text-xs text-slate-600 mt-1 font-normal">Compare 7 vs 8 partitions. Operating exactly at the ceiling leaves 0 headroom for traffic bursts.</span>
         </label>
       )}
 
       <figure className="my-5 p-4 bg-slate-50 border border-slate-200/80 rounded-xl">
-        <figcaption className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider mb-3">Requests per second at each partition (Scale: 0 to 70,000)</figcaption>
+        <figcaption className="text-xs font-mono font-bold text-slate-600 uppercase tracking-wider mb-3">Requests per second at each partition (Scale: 0 to 70,000)</figcaption>
         <div className="space-y-2">
           {Array.from({ length: result.count }, (_, i) => (
             <div key={i} className="grid grid-cols-[2rem_1fr_4rem] sm:grid-cols-[3rem_1fr_5rem] items-center gap-2 text-xs font-mono font-semibold">
@@ -75,7 +75,7 @@ export function HotPartitionLab() {
             </div>
           ))}
         </div>
-        <p className="text-[11px] text-slate-400 mt-3 mb-0 font-sans">Dark marker = 10,000 requests/s safe threshold limit per partition node.</p>
+        <p className="text-[11px] text-slate-600 mt-3 mb-0 font-sans">Dark marker = 10,000 requests/s safe threshold limit per partition node.</p>
       </figure>
 
       <div className="border-t border-slate-100 pt-3" aria-live="polite">

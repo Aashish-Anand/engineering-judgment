@@ -102,7 +102,7 @@ export function LevelExpectation({ levels }: LevelExpectationProps) {
                 >
                   {config.badge}
                 </span>
-                <span className="font-sans font-medium text-xs text-slate-400">
+                <span className="font-sans font-medium text-xs text-slate-600">
                   {config.subtitle}
                 </span>
               </div>
@@ -129,7 +129,7 @@ export function LevelExpectation({ levels }: LevelExpectationProps) {
             </div>
 
             {/* Bottom evaluation tier stamp */}
-            <div className="mt-5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[0.7rem] font-mono text-slate-400">
+            <div className="mt-5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[0.7rem] font-mono text-slate-600">
               <span>{config.tier}</span>
               <span className="font-sans font-bold text-xs text-slate-600">
                 Level {config.badge}

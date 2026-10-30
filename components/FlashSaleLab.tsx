@@ -29,7 +29,7 @@ export function FlashSaleLab() {
             Multi-Tier Flash Sale Admission &amp; Reservation Simulator
           </h4>
         </div>
-        <span className="text-xs font-mono text-slate-400">Model: Edge Funnel ➔ Redis Lua ➔ Kafka Buffer</span>
+        <span className="text-xs font-mono text-slate-600">Model: Edge Funnel ➔ Redis Lua ➔ Kafka Buffer</span>
       </div>
 
       {/* Sliders Grid */}
@@ -41,6 +41,7 @@ export function FlashSaleLab() {
           </div>
           <input
             type="range"
+            aria-label="Peak Incoming Concurrency"
             min={100000}
             max={5000000}
             step={100000}
@@ -48,7 +49,7 @@ export function FlashSaleLab() {
             onChange={(e) => setPeakRps(Number(e.target.value))}
             className="w-full accent-blue-600 cursor-pointer"
           />
-          <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+          <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
             <span>100K RPS</span>
             <span>5M RPS</span>
           </div>
@@ -61,6 +62,7 @@ export function FlashSaleLab() {
           </div>
           <input
             type="range"
+            aria-label="Edge Queue Admission Drip"
             min={1000}
             max={50000}
             step={1000}
@@ -68,7 +70,7 @@ export function FlashSaleLab() {
             onChange={(e) => setAdmissionDrip(Number(e.target.value))}
             className="w-full accent-blue-600 cursor-pointer"
           />
-          <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+          <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
             <span>1K / sec</span>
             <span>50K / sec</span>
           </div>
@@ -81,6 +83,7 @@ export function FlashSaleLab() {
           </div>
           <input
             type="range"
+            aria-label="Available Inventory Units"
             min={1000}
             max={50000}
             step={1000}
@@ -88,7 +91,7 @@ export function FlashSaleLab() {
             onChange={(e) => setTotalStock(Number(e.target.value))}
             className="w-full accent-blue-600 cursor-pointer"
           />
-          <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+          <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
             <span>1,000 units</span>
             <span>50,000 units</span>
           </div>
@@ -101,6 +104,7 @@ export function FlashSaleLab() {
           </div>
           <input
             type="range"
+            aria-label="Checkout Abandonment Rate"
             min={5}
             max={60}
             step={5}
@@ -108,7 +112,7 @@ export function FlashSaleLab() {
             onChange={(e) => setAbandonmentRate(Number(e.target.value))}
             className="w-full accent-amber-600 cursor-pointer"
           />
-          <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+          <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
             <span>5% (Hyper-committed)</span>
             <span>60% (Casual buyers)</span>
           </div>
@@ -121,6 +125,7 @@ export function FlashSaleLab() {
           </div>
           <input
             type="range"
+            aria-label="Stock Reservation TTL"
             min={3}
             max={20}
             step={1}
@@ -128,7 +133,7 @@ export function FlashSaleLab() {
             onChange={(e) => setTtlMinutes(Number(e.target.value))}
             className="w-full accent-blue-600 cursor-pointer"
           />
-          <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+          <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
             <span>3 minutes</span>
             <span>20 minutes</span>
           </div>
@@ -138,35 +143,35 @@ export function FlashSaleLab() {
       {/* Output Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Edge Shed Ratio</span>
+          <span className="font-mono text-[10px] uppercase font-bold text-slate-600 block">Edge Shed Ratio</span>
           <span className="font-sans text-base sm:text-lg font-extrabold text-blue-700">
             {edgeShedPercent.toFixed(1)}%
           </span>
-          <p className="text-[11px] text-slate-500 m-0 mt-0.5">Shed by Virtual Queue</p>
+          <p className="text-[11px] text-slate-600 m-0 mt-0.5">Shed by Virtual Queue</p>
         </div>
 
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Initial Sellout Time</span>
+          <span className="font-mono text-[10px] uppercase font-bold text-slate-600 block">Initial Sellout Time</span>
           <span className="font-sans text-base sm:text-lg font-extrabold text-emerald-700">
             {selloutSeconds.toFixed(1)}s
           </span>
-          <p className="text-[11px] text-slate-500 m-0 mt-0.5">Redis stock drops to 0</p>
+          <p className="text-[11px] text-slate-600 m-0 mt-0.5">Redis stock drops to 0</p>
         </div>
 
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Auto-Restock Wave</span>
+          <span className="font-mono text-[10px] uppercase font-bold text-slate-600 block">Auto-Restock Wave</span>
           <span className="font-sans text-base sm:text-lg font-extrabold text-amber-700">
             {abandonedUnits.toLocaleString("en-US")} units
           </span>
-          <p className="text-[11px] text-slate-500 m-0 mt-0.5">Recycled at {ttlMinutes}m TTL</p>
+          <p className="text-[11px] text-slate-600 m-0 mt-0.5">Recycled at {ttlMinutes}m TTL</p>
         </div>
 
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">DB Settlement Load</span>
+          <span className="font-mono text-[10px] uppercase font-bold text-slate-600 block">DB Settlement Load</span>
           <span className="font-sans text-base sm:text-lg font-extrabold text-slate-900">
             ~{Math.round(dbWriteRate)} WPS
           </span>
-          <p className="text-[11px] text-slate-500 m-0 mt-0.5">Async Kafka consumer</p>
+          <p className="text-[11px] text-slate-600 m-0 mt-0.5">Async Kafka consumer</p>
         </div>
       </div>
 

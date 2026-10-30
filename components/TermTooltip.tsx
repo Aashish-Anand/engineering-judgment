@@ -197,7 +197,7 @@ export function TermTooltip({ termKey, children }: TermTooltipProps) {
           </p>
           {def.tools && def.tools.length > 0 && (
             <div className="mt-2.5 pt-2 border-t border-slate-100">
-              <p className="font-mono font-bold text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+              <p className="font-mono font-bold text-[10px] uppercase tracking-wider text-slate-600 mb-1">
                 Common Tools
               </p>
               <div className="flex flex-wrap gap-1.5">

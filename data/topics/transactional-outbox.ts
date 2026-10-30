@@ -1,17 +1,7 @@
 import { getTopicById } from "@/data/topics/catalog";
-import type { TocItem, TimelinePhaseData, ExpandableQA, LevelData } from "@/data/types";
+import type { TimelinePhaseData, ExpandableQA, LevelData } from "@/data/types";
 
 export const meta = getTopicById("transactional-outbox").meta;
-export const tocItems: TocItem[] = [
-  { id: "the-problem",       label: "01 · Dual-Write Problem" },
-  { id: "the-mistake",       label: "02 · Naive Publish Trap" },
-  { id: "mental-model",      label: "03 · Core Mental Model" },
-  { id: "architecture",      label: "04 · Outbox Architecture & Relay" },
-  { id: "tradeoffs-hub",     label: "05 · Trade-offs & Production Traps" },
-  { id: "career-rubric",     label: "06 · Staff+ Interview Rubric" },
-  { id: "judgment-quiz",     label: "07 · Test Your Judgment" },
-  { id: "related",           label: "08 · Related Architectures" },
-];
 export const scenarioMetrics = [
   { label: "Service", value: "Order service processing purchases" },
   { label: "Database", value: "PostgreSQL with ACID transactions" },
@@ -50,9 +40,9 @@ export const failureModes = [
   ["CDC connector loses its WAL position", "Re-reads old events or skips new ones", "Durable offset storage, snapshot recovery procedure, reconciliation checks"],
 ];
 export const expectations: LevelData[] = [
-  { title: "MID", description: "Recognize the dual-write problem and explain why it causes inconsistency.", items: ["Describe what happens when a crash occurs between DB commit and event publish", "Explain why publishing inside the transaction couples availability to the broker", "Know that the outbox pattern solves this by making the event part of the transaction"] },
-  { title: "SENIOR", description: "Design a working outbox with relay, ordering, and failure handling.", items: ["Choose between polling and CDC for the relay and justify the trade-off", "Handle at-least-once delivery with idempotency keys on the consumer side", "Plan outbox table cleanup and monitor relay lag and table growth"] },
-  { title: "STAFF", description: "Own the event contract as a system-wide reliability primitive.", items: ["Define event schemas and versioning as a cross-team contract", "Design for multi-region relay with ordering and consistency guarantees", "Account for outbox as infrastructure: operability, cost, and team ownership"] },
+  { title: "Mid-level", description: "Recognize the dual-write problem and explain why it causes inconsistency.", items: ["Describe what happens when a crash occurs between DB commit and event publish", "Explain why publishing inside the transaction couples availability to the broker", "Know that the outbox pattern solves this by making the event part of the transaction"] },
+  { title: "Senior", description: "Design a working outbox with relay, ordering, and failure handling.", items: ["Choose between polling and CDC for the relay and justify the trade-off", "Handle at-least-once delivery with idempotency keys on the consumer side", "Plan outbox table cleanup and monitor relay lag and table growth"] },
+  { title: "Staff", description: "Own the event contract as a system-wide reliability primitive.", items: ["Define event schemas and versioning as a cross-team contract", "Design for multi-region relay with ordering and consistency guarantees", "Account for outbox as infrastructure: operability, cost, and team ownership"] },
 ];
 export const followUps: ExpandableQA[] = [
   { question: "Why not publish the event inside the database transaction?", answer: "The transaction stays open while waiting for the broker to acknowledge. If the broker is slow or down, the transaction blocks, holding database locks and connections. Under load, this exhausts the connection pool and stops all writes — not just event publishing. The outbox avoids this by writing only to the local database, which is fast and reliable." },

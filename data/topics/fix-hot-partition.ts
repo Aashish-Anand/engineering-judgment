@@ -1,17 +1,7 @@
 import { getTopicById } from "@/data/topics/catalog";
-import type { TocItem, TimelinePhaseData, ExpandableQA, LevelData } from "@/data/types";
+import type { TimelinePhaseData, ExpandableQA, LevelData } from "@/data/types";
 
 export const meta = getTopicById("hot-partition").meta;
-export const tocItems: TocItem[] = [
-  { id: "the-problem",       label: "01 · Skew & Scale Anatomy" },
-  { id: "the-mistake",       label: "02 · Naive Node-Scaling Trap" },
-  { id: "mental-model",      label: "03 · Core Mental Model" },
-  { id: "architecture",      label: "04 · Read & Write Sharding" },
-  { id: "tradeoffs-hub",     label: "05 · Trade-offs & Production Traps" },
-  { id: "career-rubric",     label: "06 · Staff+ Interview Rubric" },
-  { id: "judgment-quiz",     label: "07 · Test Your Judgment" },
-  { id: "related",           label: "08 · Related Architectures" },
-];
 export const scenarioMetrics = [
   { label: "Workload (illustrative)", value: "100,000 requests/second across 16 partitions" },
   { label: "Hot partition", value: "70,000 requests/second: 70% of traffic" },
@@ -51,9 +41,9 @@ export const failureModes = [
   ["Migration splits ownership", "Old and new routes accept conflicting writes", "Versioned routing, fenced handoff, checkpoints, and explicit rollback semantics"],
 ];
 export const expectations: LevelData[] = [
-  { title: "MID", description: "Recognize skew and separate read load from write load.", items: ["Use per-partition metrics rather than averages", "Explain caching and why more servers do not split one key", "Identify freshness and correctness requirements"] },
-  { title: "SENIOR", description: "Design a working relief path with explicit consistency boundaries.", items: ["Choose stable shard keys and idempotent mutations", "Address stampedes, read fanout, and ordering", "Plan canary migration and bounded queues"] },
-  { title: "STAFF", description: "Own celebrity traffic as a recurring system behavior.", items: ["Model fanout and downstream index bottlenecks", "Set per-key budgets, isolation, and operational ownership", "Account for resharding, regional behavior, and long-term cost"] },
+  { title: "Mid-level", description: "Recognize skew and separate read load from write load.", items: ["Use per-partition metrics rather than averages", "Explain caching and why more servers do not split one key", "Identify freshness and correctness requirements"] },
+  { title: "Senior", description: "Design a working relief path with explicit consistency boundaries.", items: ["Choose stable shard keys and idempotent mutations", "Address stampedes, read fanout, and ordering", "Plan canary migration and bounded queues"] },
+  { title: "Staff", description: "Own celebrity traffic as a recurring system behavior.", items: ["Model fanout and downstream index bottlenecks", "Set per-key budgets, isolation, and operational ownership", "Account for resharding, regional behavior, and long-term cost"] },
 ];
 export const followUps: ExpandableQA[] = [
   { question: "Why not just add more partitions?", answer: "That helps if several independent busy keys can be moved apart. One popular post key still routes to one partition unless its layout or access pattern changes. First avoid repeated reads; then split independent reaction records, checking that the buckets have enough physical capacity." },

@@ -30,7 +30,7 @@ export function OutboxLab() {
             Transactional Outbox &amp; Relay Throughput Simulator
           </h4>
         </div>
-        <span className="text-xs font-mono text-slate-400">Model: ACID Outbox Row ➔ Relay ➔ Kafka Partition</span>
+        <span className="text-xs font-mono text-slate-600">Model: ACID Outbox Row ➔ Relay ➔ Kafka Partition</span>
       </div>
 
       {/* Mode Selector Tabs */}
@@ -68,6 +68,7 @@ export function OutboxLab() {
           </div>
           <input
             type="range"
+            aria-label="Primary DB Write Throughput"
             min={200}
             max={8000}
             step={200}
@@ -75,7 +76,7 @@ export function OutboxLab() {
             onChange={(e) => setWps(Number(e.target.value))}
             className="w-full accent-blue-600 cursor-pointer"
           />
-          <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+          <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
             <span>200 WPS</span>
             <span>8,000 WPS</span>
           </div>
@@ -89,6 +90,7 @@ export function OutboxLab() {
             </div>
             <input
               type="range"
+              aria-label="Polling Interval"
               min={100}
               max={3000}
               step={100}
@@ -96,7 +98,7 @@ export function OutboxLab() {
               onChange={(e) => setPollIntervalMs(Number(e.target.value))}
               className="w-full accent-blue-600 cursor-pointer"
             />
-            <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+            <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
               <span>100ms (Aggressive)</span>
               <span>3,000ms (Relaxed)</span>
             </div>
@@ -105,7 +107,7 @@ export function OutboxLab() {
           <div>
             <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
               <span>CDC WAL Streaming Latency:</span>
-              <span className="font-mono text-emerald-600 font-bold">~25 ms (Sub-second)</span>
+              <span className="font-mono text-emerald-700 font-bold">~25 ms (Sub-second)</span>
             </div>
             <div className="p-2.5 bg-emerald-50/80 border border-emerald-200 rounded-lg text-xs text-emerald-900">
               Debezium reads the PostgreSQL Write-Ahead Log directly without executing polling queries on the database engine.
@@ -121,6 +123,7 @@ export function OutboxLab() {
             </div>
             <input
               type="range"
+              aria-label="Concurrent Workers (SKIP LOCKED)"
               min={1}
               max={12}
               step={1}
@@ -128,7 +131,7 @@ export function OutboxLab() {
               onChange={(e) => setWorkerCount(Number(e.target.value))}
               className="w-full accent-blue-600 cursor-pointer"
             />
-            <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+            <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
               <span>1 worker</span>
               <span>12 workers</span>
             </div>
@@ -143,6 +146,7 @@ export function OutboxLab() {
             </div>
             <input
               type="range"
+              aria-label="Batch Size (Rows per Worker)"
               min={25}
               max={500}
               step={25}
@@ -150,7 +154,7 @@ export function OutboxLab() {
               onChange={(e) => setBatchSize(Number(e.target.value))}
               className="w-full accent-blue-600 cursor-pointer"
             />
-            <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+            <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
               <span>25 rows</span>
               <span>500 rows</span>
             </div>
@@ -164,6 +168,7 @@ export function OutboxLab() {
           </div>
           <input
             type="range"
+            aria-label="Consumer Re-Delivery / Retry Rate"
             min={0.5}
             max={5}
             step={0.5}
@@ -171,7 +176,7 @@ export function OutboxLab() {
             onChange={(e) => setDuplicateRatePercent(Number(e.target.value))}
             className="w-full accent-amber-600 cursor-pointer"
           />
-          <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-0.5">
+          <div className="flex justify-between text-[11px] font-mono text-slate-600 mt-0.5">
             <span>0.5% (Stable network)</span>
             <span>5.0% (Frequent rebalances)</span>
           </div>
@@ -181,35 +186,35 @@ export function OutboxLab() {
       {/* Output Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">End-to-End Lag</span>
+          <span className="font-mono text-[10px] uppercase font-bold text-slate-600 block">End-to-End Lag</span>
           <span className={`font-sans text-base sm:text-lg font-extrabold ${effectiveLagMs > 1000 ? "text-amber-700" : "text-emerald-700"}`}>
             ~{Math.round(effectiveLagMs)} ms
           </span>
-          <p className="text-[11px] text-slate-500 m-0 mt-0.5">DB Commit ➔ Broker ACK</p>
+          <p className="text-[11px] text-slate-600 m-0 mt-0.5">DB Commit ➔ Broker ACK</p>
         </div>
 
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Relay Drain Capacity</span>
+          <span className="font-mono text-[10px] uppercase font-bold text-slate-600 block">Relay Drain Capacity</span>
           <span className={`font-sans text-base sm:text-lg font-extrabold ${isBacklogged ? "text-red-700" : "text-blue-700"}`}>
             {maxRelayCapacityWps.toLocaleString("en-US")} WPS
           </span>
-          <p className="text-[11px] text-slate-500 m-0 mt-0.5">{isBacklogged ? "⚠️ Outbox backlog growing" : "Sufficient headroom"}</p>
+          <p className="text-[11px] text-slate-600 m-0 mt-0.5">{isBacklogged ? "⚠️ Outbox backlog growing" : "Sufficient headroom"}</p>
         </div>
 
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Duplicates Intercepted</span>
+          <span className="font-mono text-[10px] uppercase font-bold text-slate-600 block">Duplicates Intercepted</span>
           <span className="font-sans text-base sm:text-lg font-extrabold text-amber-700">
             {duplicateEventsPerMin.toLocaleString("en-US")} / min
           </span>
-          <p className="text-[11px] text-slate-500 m-0 mt-0.5">Deduplicated at consumer</p>
+          <p className="text-[11px] text-slate-600 m-0 mt-0.5">Deduplicated at consumer</p>
         </div>
 
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <span className="font-mono text-[10px] uppercase font-bold text-slate-500 block">Delivery Guarantee</span>
+          <span className="font-mono text-[10px] uppercase font-bold text-slate-600 block">Delivery Guarantee</span>
           <span className="font-sans text-base sm:text-lg font-extrabold text-emerald-700">
             At-Least-Once
           </span>
-          <p className="text-[11px] text-slate-500 m-0 mt-0.5">Zero lost events</p>
+          <p className="text-[11px] text-slate-600 m-0 mt-0.5">Zero lost events</p>
         </div>
       </div>
 

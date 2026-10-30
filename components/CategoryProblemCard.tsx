@@ -21,7 +21,7 @@ export function CategoryProblemCard({ category, icon, problems }: ExploreCategor
         <ul className="space-y-1.5 text-xs sm:text-sm font-sans">
           {problems.map((prob, idx) => (
             <li key={prob.name} className="flex items-start gap-1.5">
-              <span className="text-slate-400 shrink-0 select-none text-xs mt-0.5">
+              <span className="text-slate-600 shrink-0 select-none text-xs mt-0.5">
                 {idx === 0 ? "•" : "↳"}
               </span>
               {prob.available && prob.href ? (
@@ -35,7 +35,7 @@ export function CategoryProblemCard({ category, icon, problems }: ExploreCategor
                   </span>
                 </Link>
               ) : (
-                <span className="text-slate-500 font-medium">
+                <span className="text-slate-600 font-medium">
                   {prob.name}
                 </span>
               )}
@@ -45,7 +45,7 @@ export function CategoryProblemCard({ category, icon, problems }: ExploreCategor
       </div>
 
       {/* Footer / Clean Arrow */}
-      <div className="mt-4 pt-2 flex items-center justify-end text-slate-400 hover:text-slate-600 text-sm font-sans">
+      <div className="mt-4 pt-2 flex items-center justify-end text-slate-600 hover:text-slate-600 text-sm font-sans">
         <span>Explore →</span>
       </div>
     </div>

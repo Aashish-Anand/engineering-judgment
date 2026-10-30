@@ -1,20 +1,9 @@
 import type { TopicId } from "@/data/topics/catalog";
-import type { TocItem, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
+import type { TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
 import { getTopicById } from "@/data/topics/catalog";
 
 export const meta = getTopicById("database-migration").meta;
 
-export const tocItems: TocItem[] = [
-  { id: "the-problem",       label: "Workload and constraints" },
-  { id: "the-mistake",       label: "Why a snapshot fails" },
-  { id: "mental-model",      label: "Synchronize, then switch" },
-  { id: "phases",            label: "The five phases" },
-  { id: "workbench",         label: "Migration workbench" },
-  { id: "tradeoffs-hub",     label: "Trade-offs & Runbook" },
-  { id: "career-rubric",     label: "Explain the decision" },
-  { id: "judgment-quiz",     label: "Test Your Judgment" },
-  { id: "related",           label: "Related Architectures" },
-];
 
 export const scenarioMetrics = [
   { label: "Reads",                    value: "100M / day" },

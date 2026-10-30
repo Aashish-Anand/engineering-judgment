@@ -1,12 +1,29 @@
 # Publishing a blueprint
 
-All nine existing articles use `components/articles/BlueprintArticleFrame.tsx` and the shared neo-brutalist styles in `components/Neo.module.css`. Reuse that frame for every new article. The frame owns the breadcrumb, title, scenario brief, four-step journey, central idea, chapter navigation, and content width. Dedicated quiz pages inherit the same visual system automatically.
+All nine existing articles use `components/articles/BlueprintArticleFrame.tsx`, the shared sections in `components/articles/BlueprintSections.tsx`, and the shared neo-brutalist styles in `components/Neo.module.css`. Reuse that frame for every new article. The frame owns the breadcrumb, title, scenario brief, four-step journey, central idea, chapter navigation, and content width. Dedicated quiz pages inherit the same visual system automatically.
 
 ## Start from the saved template
 
 Copy `templates/blueprint/Article.tsx.example` to `components/articles/YourTopicArticle.tsx`. Copy the entry in `templates/blueprint/presentation.ts.example` into `data/topics/presentation.ts`, under the new topic ID. These example files are deliberately excluded from application compilation and publishing. Replace every TODO before registering a published article.
 
-The template has eight sections: constraints, first failure, mental model, architecture, experiment, trade-offs and recovery, practice, and related reading. Additional worked examples, runbooks, scaling sections, or career rubrics can be inserted when the topic needs them. Keep the failure-to-decision sequence; do not pad a short topic to match another article’s length.
+Every blueprint has the same twelve sections, in this order. They are defined once in `data/topics/article-format.ts`, and `tests/article-layout.test.ts` fails if an article is missing one or orders them differently.
+
+| # | ID | Heading |
+|---|---|---|
+| 01 | `problem` | Topic-specific: the production situation and workload |
+| 02 | `naive` | Topic-specific: why the obvious design fails |
+| 03 | `mental-model` | Topic-specific: the distinction that makes the problem tractable |
+| 04 | `architecture` | Topic-specific: the design |
+| 05 | `worked-example` | Topic-specific: the experiment or worked example; holds `id="workbench"` |
+| 06 | `runbook` | Respond in production |
+| 07 | `tradeoffs` | Every safeguard has a cost |
+| 08 | `failures` | Failure modes to rehearse |
+| 09 | `scale` | Topic-specific: "What breaks at ten times …?" |
+| 10 | `interview` | Interview corner: one-minute answer, engineering level rubric, common wrong answers, traps |
+| 11 | `follow-ups` | What breaks next? |
+| 12 | `sources` | Sources and practice, followed by the quiz entry and related reading |
+
+Headings use sentence case. Build the chapter navigation with `articleToc()`, which takes only the six topic-specific titles. Sections 06–12 come from `components/articles/BlueprintSections.tsx`; pass them data rather than writing their markup. Extra worked examples or diagrams go inside sections 01–05. Do not pad a short topic to match another article's length.
 
 ## Register the content
 
@@ -27,16 +44,16 @@ The topic route, quiz route, static parameters, sitemap, and end-of-article path
 - `BlueprintSection`: supply the section ID, number, and title once. Each TOC target must resolve to one unique rendered ID.
 - `BlueprintPanel kind="diagram"`: place a labeled, responsive architecture visualization in the shared compact diagram container (up to 720px for SVG and 800px for HTML). Align it with the content’s left edge instead of stretching it to prose width. Use contained horizontal scrolling when reducing a dense diagram would make labels unreadable.
 - `BlueprintPanel`: contain an interactive client workbench with compact controls and a clear result. The article frame remains a server component; put state in the workbench.
-- `BlueprintPanel kind="detail"`: contain a comparison, diagnostics hub, or career rubric.
+- `BlueprintPanel kind="detail"`: contain a comparison or other detail panel inside sections 01–05.
 - `InlineCheck className={neo.conceptCheck}`: use a contextual decision checkpoint. `ArticleQuizEntry` links to the dedicated quiz, so questions do not dominate the reading page.
-- `CareerRubricHub initiallyExpanded={false}`: show the rubric while keeping the longer candidate synthesis available on demand.
+- `CareerRubricHub`: the engineering level rubric (Mid-level, Senior, Staff). `InterviewSection` renders it, so articles pass `levels` rather than using it directly.
 - Diagram kit (`components/diagrams/kit/DiagramKit.tsx`): `DiagramFigure` wraps `Sequence`, `BranchFlow`, `Amplification`, `BudgetBars`, or `Swimlane`. They are server-rendered HTML that reflows, use the neo and category tokens (light and dark), and animate only once scrolled into view, never under reduced motion. Tones: neutral, accent (category), info, ok, warn, bad. Pass `scroll` for wide diagrams so they scroll inside the panel on phones. Data-driven blueprints register one diagram and its section in `components/diagrams/BlueprintConceptDiagrams.tsx`; a test requires it. That diagram carries `id="workbench"` for the header link. When the topic has a genuine what-if, make the diagram itself interactive (`DiagramFigure` `controls`, `animate={false}`, see `InteractiveConceptDiagrams.tsx`) instead of adding a separate text-output workbench; set `interactive: true` so the header reads "Jump into the workbench".
 - `InPractice` (`components/InPractice.tsx`): a sourced note on how named systems or teams implement the idea just explained. Every point must trace to a listed primary source; backticks render as code. Data-driven blueprints register theirs in `data/topics/blueprint-practice.ts`, and the sources join the article's reference list automatically.
 - `RelatedTopics ids={[...]}`: pass published `TopicId`s only. Titles come from `libraryDetails`, so do not add placeholder topics or hand-written titles.
 
 Use the shared type scale: 17px reading copy, 14px controls/supporting text, labels at least 12px, section headings 22–28px, and a responsive article title. The article layout spans the same outer width as the journey bar. Chapter navigation sits on the left, and the content fills the remaining width; on smaller screens it fills the frame. Paragraphs, code blocks, tables, labs, callouts, and quizzes fill the full content width beside the chapter navigation, with aligned edges. Paragraphs use the body color at 17px. Do not cap individual blocks or center a narrower column: the site owner prefers using the full width on wide screens, and a narrower paragraph leaves a ragged gap beside wider blocks. Diagrams use compact widths instead: SVG panels cap at 720px, HTML diagrams at 800px, and simple illustrations at 640px, all aligned to the left edge of the content. Preserve intrinsic aspect ratios and readable labels; reflow tall diagrams into compact numbered layouts rather than magnifying them. Do not add independent width caps or breakout widths to other body blocks. Keep section gaps at the shared 32–40px. Use solid reading surfaces and restrained hard shadows. The dotted texture belongs to the homepage canvas.
 
-For articles with the same fifteen-section structure as the five data-driven blueprints, `ProductionBlueprintArticle` can still be reused. It already uses the shared frame. Extend its typed data/model support deliberately; do not force a different experiment into an existing lab kind.
+For data-driven topics, `ProductionBlueprintArticle` renders the whole twelve-section format from `data/topics/production-blueprints.ts`. Extend its typed data/model support deliberately; do not force a different experiment into an existing lab kind.
 
 ## Verify before publication
 

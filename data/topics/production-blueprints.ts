@@ -1,11 +1,11 @@
 import { productionCatalog } from "./production-catalog";
 import type { QuizQuestion } from "@/components/JudgmentQuiz";
 import type { TopicId } from "./catalog";
-import type { TopicMeta } from "@/data/types";
+import type { LevelData, TopicMeta } from "@/data/types";
 
 export type ProductionBlueprint = {
  id: TopicId; href: `/topics/${string}/${string}`; prompt: string; meta: TopicMeta; shortTitle: string; flow: string[]; diagramCaption: string;
- sections: { id: string; title: string; paragraphs: string[] }[]; runbook: string[]; tradeoffs: string[][]; failures: string[][]; interview: string; levels: string[]; followups: string[][]; related: TopicId[]; conceptCheck?: QuizQuestion; sources: string[][]; questions: QuizQuestion[];
+ sections: { id: string; title: string; paragraphs: string[] }[]; runbook: string[]; tradeoffs: string[][]; failures: string[][]; interview: string; levels: LevelData[]; followups: string[][]; related: TopicId[]; conceptCheck?: QuizQuestion; sources: string[][]; questions: QuizQuestion[];
 };
 
 const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] = [
@@ -122,9 +122,33 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     ],
     "interview": "I would name the business intent before calling the provider, atomically claim that key locally, and reuse the same provider key across recovery. Unknown outcomes remain pending until reconciliation. This provides an effectively single business effect only within the provider’s deduplication and retention contract.",
     "levels": [
-      "Explain why a timeout is ambiguous and why a unique constraint beats check-then-insert.",
-      "Design concurrent request handling, request fingerprints, terminal-state updates, and recovery.",
-      "Define provider contracts, retention windows, regional ownership, auditability, and reconciliation operations."
+      {
+        "title": "Mid-level",
+        "description": "Explain why a timeout is ambiguous and why a unique constraint beats check-then-insert.",
+        "items": [
+          "Treat a timeout as an unknown outcome, not a failure",
+          "Use a client-supplied key for one payment intent",
+          "Claim the key with a unique constraint instead of a prior read"
+        ]
+      },
+      {
+        "title": "Senior",
+        "description": "Design concurrent request handling, request fingerprints, terminal-state updates, and recovery.",
+        "items": [
+          "Reject a reused key whose request body differs",
+          "Return the stored outcome to concurrent and late retries",
+          "Pass the same key to the provider and reconcile unknown results"
+        ]
+      },
+      {
+        "title": "Staff",
+        "description": "Define provider contracts, retention windows, regional ownership, auditability, and reconciliation operations.",
+        "items": [
+          "Set key retention longer than the longest client retry window",
+          "Assign one region to own each payment intent",
+          "Make reconciliation and audit trails an operated, alerted process"
+        ]
+      }
     ],
     "followups": [
       ["What should a caller see while the first request is still running?", "A stable in-progress answer, such as 409 Conflict or 202 Accepted with the intent ID and a status URL. The second request must not start another provider call; the caller polls or waits for a notification."],
@@ -370,9 +394,33 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     ],
     "interview": "I would classify the failure, bound retry effort, and quarantine permanent failures durably before acknowledgement. I would preserve event identity, protect per-order invariants, and assign an owner to controlled replay. Moving a message to a DLQ is an operational state, not business success.",
     "levels": [
-      "Distinguish retryable failures from invalid messages and explain acknowledgement timing.",
-      "Design durable handoff, duplicate handling, group ordering, and replay limits.",
-      "Set ownership, retention, audit requirements, and outage policies across producer and consumer teams."
+      {
+        "title": "Mid-level",
+        "description": "Distinguish retryable failures from invalid messages and explain acknowledgement timing.",
+        "items": [
+          "Separate transient errors from messages that can never succeed",
+          "Acknowledge only after the effect is durable",
+          "Bound retries instead of retrying forever"
+        ]
+      },
+      {
+        "title": "Senior",
+        "description": "Design durable handoff, duplicate handling, group ordering, and replay limits.",
+        "items": [
+          "Move poison messages to a dead-letter queue with their failure reason",
+          "Make the consumer idempotent so redelivery is harmless",
+          "Decide what happens to later messages for the same key"
+        ]
+      },
+      {
+        "title": "Staff",
+        "description": "Set ownership, retention, audit requirements, and outage policies across producer and consumer teams.",
+        "items": [
+          "Assign who triages and replays dead-lettered messages",
+          "Set retention so replay is still possible after an incident",
+          "Agree contract and schema rules with producer teams"
+        ]
+      }
     ],
     "followups": [
       ["Can an invalid event be repaired without changing its business identity?", "Yes, if the repair keeps the original event ID and records what changed and who approved it. Consumers deduplicate the replay by that ID. Minting a new ID turns the repair into a second event."],
@@ -594,9 +642,33 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     ],
     "interview": "I would first distinguish a slow dependency from extra original demand. I would cap concurrent work, select one retry owner, propagate deadlines, and admit retries only within a work budget and safe-operation contract. I would degrade honestly and restore traffic through limited recovery probes.",
     "levels": [
-      "Explain how slow requests hold resources and why jitter reduces synchronization.",
-      "Combine deadlines, retry safety, budgets, concurrency limits, and recovery probes.",
-      "Allocate budgets across services and replicas, define degradation contracts, and test systemic recovery."
+      {
+        "title": "Mid-level",
+        "description": "Explain how slow requests hold resources and why jitter reduces synchronization.",
+        "items": [
+          "Show how retries multiply load on a slow dependency",
+          "Use exponential backoff with jitter",
+          "Give every call a timeout shorter than the caller's"
+        ]
+      },
+      {
+        "title": "Senior",
+        "description": "Combine deadlines, retry safety, budgets, concurrency limits, and recovery probes.",
+        "items": [
+          "Retry only idempotent operations",
+          "Cap retries with a per-client retry budget",
+          "Retry at one layer and propagate deadlines through the others"
+        ]
+      },
+      {
+        "title": "Staff",
+        "description": "Allocate budgets across services and replicas, define degradation contracts, and test systemic recovery.",
+        "items": [
+          "Size budgets for the whole call graph, not one service",
+          "Define what each caller gets when a dependency sheds load",
+          "Rehearse recovery so a returning service is not stampeded"
+        ]
+      }
     ],
     "followups": [
       ["Who owns retries when an SDK retries internally?", "Choose one layer, usually the one closest to the failing dependency, and disable or cap retries everywhere else. Otherwise the layers multiply: three layers of three attempts can become 27 calls."],
@@ -814,9 +886,33 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     ],
     "interview": "I would separate pool acquisition time from query and checkout duration. I would inspect leaks, idle transactions, and lock waits, then allocate the shared database budget across peak replicas. Scaling the application only helps if it does not overload the database; admission control must bound waiting.",
     "levels": [
-      "Explain pool acquisition, connection checkout, and database execution as separate intervals.",
-      "Diagnose occupancy with metrics, model replica budgets, and bound acquisition waits.",
-      "Coordinate budgets across teams, deployment overlap, workload fairness, and database capacity planning."
+      {
+        "title": "Mid-level",
+        "description": "Explain pool acquisition, connection checkout, and database execution as separate intervals.",
+        "items": [
+          "Separate time waiting for a connection from query time",
+          "Explain why a bigger pool can make the database slower",
+          "Set an acquisition timeout instead of waiting forever"
+        ]
+      },
+      {
+        "title": "Senior",
+        "description": "Diagnose occupancy with metrics, model replica budgets, and bound acquisition waits.",
+        "items": [
+          "Estimate occupancy from request rate and hold time",
+          "Find work that holds a connection while it waits on something else",
+          "Divide the database's connection limit across every replica"
+        ]
+      },
+      {
+        "title": "Staff",
+        "description": "Coordinate budgets across teams, deployment overlap, workload fairness, and database capacity planning.",
+        "items": [
+          "Include deployment overlap and autoscaling in the connection budget",
+          "Isolate batch jobs from latency-sensitive traffic",
+          "Plan database capacity alongside the services that share it"
+        ]
+      }
     ],
     "followups": [
       ["How does a rolling deployment change the connection budget?", "Old and new replicas overlap during a rollout, so peak demand is the surge replica count times pool size. Budget for maximum surge or shrink pools during deploys, so the rollout itself does not exhaust the database."],
@@ -1038,9 +1134,33 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     ],
     "interview": "I would expand first, deploy a compatible bridge, drain or synchronize old writers, then run a resumable backfill under an explicit source-of-truth rule. I would validate before switching readers and preserve the old representation through rollback. Contract is a separate step with evidence that old consumers are gone.",
     "levels": [
-      "Explain why mixed application versions require backward-compatible schema additions.",
-      "Plan writer transitions, race-safe backfills, validation, and reversible read switching.",
-      "Inventory cross-team consumers, define rollback boundaries, and budget large-table operational costs."
+      {
+        "title": "Mid-level",
+        "description": "Explain why mixed application versions require backward-compatible schema additions.",
+        "items": [
+          "Treat a rolling deploy as old and new code running together",
+          "Add columns before code depends on them",
+          "Never rename or drop in the same release that stops using a field"
+        ]
+      },
+      {
+        "title": "Senior",
+        "description": "Plan writer transitions, race-safe backfills, validation, and reversible read switching.",
+        "items": [
+          "Make writers fill both shapes before readers switch",
+          "Backfill in batches that never overwrite fresher writes",
+          "Validate the new shape before moving reads"
+        ]
+      },
+      {
+        "title": "Staff",
+        "description": "Inventory cross-team consumers, define rollback boundaries, and budget large-table operational costs.",
+        "items": [
+          "Find every consumer of the table, including other teams",
+          "State which step stops being reversible",
+          "Budget lock time, replication lag, and storage for large tables"
+        ]
+      }
     ],
     "followups": [
       ["What is the last point at which the old application can safely roll back?", "Just before the contract step. While the old column is still written and read correctly, the old version works. Once you stop writing it or drop it, rolling back the application also requires a data repair."],

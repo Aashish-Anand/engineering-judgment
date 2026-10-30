@@ -1,37 +1,88 @@
 import { BlueprintArticleFrame } from "./BlueprintArticleFrame";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { ArticleNav } from "@/components/ArticleNav";
-import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { SectionHeader } from "@/components/SectionHeader";
-import { RelatedTopics } from "@/components/RelatedTopics";
 import { InlineCheck } from "@/components/InlineCheck";
 import { NaiveMigrationDiagram } from "@/components/diagrams/NaiveMigrationDiagram";
 import { CapacitySizingLab } from "@/components/CapacitySizingLab";
 import { CutoverWorkbench } from "@/components/CutoverWorkbench";
 import { InPractice } from "@/components/InPractice";
 import { FencedCutoverSequence, MigrationOwnershipLanes } from "@/components/diagrams/MigrationPhaseDiagrams";
-import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
-import { CareerRubricHub } from "@/components/CareerRubricHub";
 
 import * as article from "@/data/topics/safely-migrate-production-database";
 import neo from "@/components/Neo.module.css";
+import { articleToc } from "@/data/topics/article-format";
+import { FailuresSection, FollowUpsSection, InterviewSection, RunbookSection, ScaleSection, SourcesSection, TradeoffsSection } from "./BlueprintSections";
+
+const MIGRATION_WRONG_ANSWERS = [
+  {
+    question: "Why not a 3-hour maintenance window?",
+    explanation:
+      "Maintenance windows often overrun. If a data copy takes 5 hours instead of 3, you face an agonizing choice: abort and restart next weekend, or extend downtime during peak business hours.",
+  },
+  {
+    question: "Why not validate with SELECT COUNT(*)?",
+    explanation:
+      "Row counts only prove quantity, not correctness. Two tables can have exactly 10,000,000 rows while having 50,000 corrupted values, truncated timestamps, or mismatched account balances. Compare checksums per key range as well.",
+  },
+  {
+    question: "Why not decommission DB A immediately?",
+    explanation:
+      "Latent bugs often take 48–72 hours to surface (e.g. weekly reporting queries or end-of-month reconciliations). Keep the legacy database running in read-only reverse sync for at least one full business cycle.",
+  },
+];
+
+const MIGRATION_WHITEBOARD = [
+  { label: "1. Constraint", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { label: "2. Synchronize (CDC)", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { label: "3. Backfill (Keyset)", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  { label: "4. Validate (Shadow)", color: "bg-purple-50 text-purple-700 border-purple-200" },
+  { label: "5. Cutover (Reverse CDC)", color: "bg-amber-50 text-amber-800 border-amber-200" },
+];
+
+const MIGRATION_RUNBOOK = [
+  "Before each phase, check its exit condition: replication lag under the threshold, retained WAL on A stable, and zero validation divergence.",
+  "If CDC stops or lag climbs, pause the cutover and keep A as the only writer. Watch retained WAL on A so a stalled slot cannot fill its disk.",
+  "If validation finds divergence, stop and investigate the affected key ranges before moving any more traffic.",
+  "To switch writes, fence writes on A, wait until B has applied A's final WAL position, then route writes to B and start the reverse stream.",
+  "If errors or latency rise after the switch, roll back with the same fenced procedure in the other direction. The reverse stream keeps A current.",
+  "Keep A in sync for a full business cycle before decommissioning it, and drop its replication slot when you do.",
+];
+
+const MIGRATION_SOURCES: [label: string, href: string][] = [
+  ["PostgreSQL: Logical replication", "https://www.postgresql.org/docs/current/logical-replication.html"],
+  ["Debezium: PostgreSQL connector", "https://debezium.io/documentation/reference/stable/connectors/postgresql.html"],
+  ["AWS DMS: Ongoing replication", "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html"],
+  ["Stripe: Online migrations at scale", "https://stripe.com/blog/online-migrations"],
+];
+
+const toc = articleToc({
+  problem: "Workload and constraints",
+  naive: "Why a snapshot falls behind",
+  "mental-model": "Synchronize, then switch",
+  architecture: "Run the migration in five phases",
+  "worked-example": "Explore the migration",
+  scale: "What breaks on a database ten times larger?",
+});
 
 export function DatabaseMigrationArticle() {
   const {
-    tocItems,
     relatedTopics,
+    dualWriteApproaches,
+    keyTradeoffs,
+    failureModes,
+    tenXProblems,
+    avoidList,
+    interviewAnswer,
+    levelExpectations,
+    followUpQuestions,
   } = article;
 
   return (
-    <BlueprintArticleFrame topicId="database-migration" toc={tocItems}>
+    <BlueprintArticleFrame topicId="database-migration" toc={toc}>
 
             {/* ── 01 — The Problem & Live Capacity Calculator ──── */}
-            <section id="the-problem" className="scroll-mt-28">
-              <SectionHeader
-                number="01"
-                title="Workload and constraints"
-                id="the-problem"
-              />
+            <section id="problem" className="scroll-mt-28">
+              <SectionHeader number="01" title="Workload and constraints" id="problem" />
               <p className="reading-copy">The source handles 100 million reads and 10 million writes each day. We need to move that workload to a new database without interrupting the application or losing acknowledged writes. The largest table holds about 250 million rows, roughly 500 GB of row data at 2 KB per row.</p>
               <p className="reading-copy">Daily volume is only the starting point. Ten million writes per day averages about 116 writes per second; a 3× burst raises that to 348. Change the assumptions below to see how much capacity the replication pipeline needs.</p>
               <p className="scenario-note">The cutover workbench later uses a separate illustrative load of 2,300 reads and 250 writes per second. Calculator inputs do not change that simulation.</p>
@@ -41,12 +92,8 @@ export function DatabaseMigrationArticle() {
             </section>
 
             {/* ── 02 — The Naive Snapshot Trap & Gut Check ─────── */}
-            <section id="the-mistake" className="scroll-mt-28">
-              <SectionHeader
-                number="02"
-                title="Why a snapshot falls behind"
-                id="the-mistake"
-              />
+            <section id="naive" className="scroll-mt-28">
+              <SectionHeader number="02" title="Why a snapshot falls behind" id="naive" />
               <p className="text-slate-700 leading-relaxed">
                 The initial instinct is often: <strong>dump the database using pg_dump and restore it on the target</strong>. It seems intuitive—export everything, import into the new system, switch DNS. But in an active production system, the target will be missing writes received after the snapshot began.
               </p>
@@ -82,11 +129,7 @@ export function DatabaseMigrationArticle() {
 
             {/* ── 03 — Mental Model ────────────────────────────── */}
             <section id="mental-model" className="scroll-mt-28">
-              <SectionHeader
-                number="03"
-                title="Synchronize, then switch"
-                id="mental-model"
-              />
+              <SectionHeader number="03" title="Synchronize, then switch" id="mental-model" />
               <p className="reading-copy">Separate data synchronization from traffic ownership. A target can contain the right records and still be unsafe to promote if recent writes are in flight or the rollback path has fallen behind.</p>
               <p className="text-slate-700 leading-relaxed">
                 First, bring the target to identical state with the source while traffic flows freely. Then, move traffic gradually without serving stale reads or losing in-flight writes. Conflating these two stages is where most migrations fail.
@@ -97,12 +140,8 @@ export function DatabaseMigrationArticle() {
             </section>
 
             {/* ── 04 — The Five Phases ──────────────────────────── */}
-            <section id="phases" className="scroll-mt-28">
-              <SectionHeader
-                number="04"
-                title="Run the migration in five phases"
-                id="phases"
-              />
+            <section id="architecture" className="scroll-mt-28">
+              <SectionHeader number="04" title="Run the migration in five phases" id="architecture" />
               <p className="reading-copy">Each phase has an exit condition. Move to the next one only when the evidence says the previous one is done, not when the calendar says so.</p>
               <MigrationOwnershipLanes />
 
@@ -143,95 +182,49 @@ export function DatabaseMigrationArticle() {
                   "Keeping a reverse stream for rollback is bidirectional replication. DMS supports it only with loopback prevention enabled, otherwise each change echoes back to the database it came from.",
                   "Stripe's published migrations used application dual writes in four steps (dual write, move reads, move writes, remove old data) and verified read paths with GitHub's Scientist library.",
                 ]}
-                sources={[
-                  ["PostgreSQL: Logical replication", "https://www.postgresql.org/docs/current/logical-replication.html"],
-                  ["Debezium: PostgreSQL connector", "https://debezium.io/documentation/reference/stable/connectors/postgresql.html"],
-                  ["AWS DMS: Ongoing replication", "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html"],
-                  ["Stripe: Online migrations at scale", "https://stripe.com/blog/online-migrations"],
-                ]}
+                sources={MIGRATION_SOURCES}
               />
             </section>
 
             {/* ── 05 — Interactive Migration Workbench ─────────── */}
-            <section id="workbench" className="scroll-mt-28">
-              <SectionHeader
-                number="05"
-                title="Explore the migration"
-                id="workbench"
-              />
+            <section id="worked-example" className="scroll-mt-28">
+              <SectionHeader number="05" title="Explore the migration" id="worked-example" />
               <p className="text-slate-700 leading-relaxed mb-4">
                 Step through the phases, then try a cutover. The slider moves tenants (and their reads and writes) from A to B. Introduce replication lag or a validation mismatch and observe how the system responds. Numbers here are an illustrative peak load, not the calculator above.
               </p>
 
               <ScrollReveal>
-                <div className={neo.labPanel}>
+                <div id="workbench" className={neo.labPanel}>
                 <CutoverWorkbench />
                 </div>
               </ScrollReveal>
             </section>
 
-            {/* ── 06 — Trade-offs, Runbook & Traps Hub ──────────── */}
-            <section id="tradeoffs-hub" className="scroll-mt-28">
-              <SectionHeader
-                number="06"
-                title="Trade-offs and failure modes"
-                id="tradeoffs-hub"
-              />
-              <p className="text-slate-700 leading-relaxed mb-4">
-                Compare synchronization approaches, see how each failure mode is detected and handled, and review the traps that make migrations overrun.
-              </p>
-
-              <ScrollReveal>
-                <div className={neo.detailPanel}><TradeoffDiagnosticsHub /></div>
-              </ScrollReveal>
-            </section>
-
-            {/* ── 07 — Interview & Career Rubric ────────────────── */}
-            <section id="career-rubric" className="scroll-mt-28">
-              <SectionHeader
-                number="07"
-                title="Explain the decision"
-                id="career-rubric"
-              />
-              <p className="text-slate-700 leading-relaxed mb-4">
-                What a strong explanation covers at each engineering level, a 60-second summary, and the follow-up questions interviewers commonly ask.
-              </p>
-
-              <ScrollReveal>
-                <div className={neo.detailPanel}><CareerRubricHub initiallyExpanded={false} /></div>
-              </ScrollReveal>
-            </section>
-
-            {/* ── 08 — Judgment Quiz ───────────────────────────── */}
-            {article.judgmentQuiz && (
-              <section id="judgment-quiz" className="scroll-mt-28">
-                <SectionHeader
-                  number="08"
-                  title="Test your judgment"
-                  id="judgment-quiz"
-                />
-                <ScrollReveal>
-                  <ArticleQuizEntry
-                    quizHref="/topics/database/safely-migrate-production-database/quiz"
-                    title="Zero-Downtime Migration Judgment Test"
-                    questions={article.judgmentQuiz}
-                  />
-                </ScrollReveal>
-              </section>
-            )}
-
-            {/* ── 09 — Related Architectures ───────────────────── */}
-            <section id="related" className="scroll-mt-28 pt-4">
-              <SectionHeader
-                number="09"
-                title="Keep exploring"
-                id="related"
-              />
-              <RelatedTopics ids={relatedTopics} />
-              <div className="mt-8">
-                <ArticleNav currentId="database-migration" />
-              </div>
-            </section>
+            <RunbookSection steps={MIGRATION_RUNBOOK} />
+            <TradeoffsSection tables={[
+              { caption: "Ways to keep the target in sync", headers: ["Approach", "Advantage", "Cost"], rows: dualWriteApproaches },
+              { caption: "Validation and cutover decisions", headers: ["Decision", "Benefit", "Cost"], rows: keyTradeoffs },
+            ]} />
+            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response }))} />
+            <ScaleSection
+              title="What breaks on a database ten times larger?"
+              paragraphs={["With ten times the rows and write rate, the same five phases still apply, but each one costs more:"]}
+              items={tenXProblems}
+            />
+            <InterviewSection
+              answer={interviewAnswer}
+              levels={levelExpectations}
+              wrongAnswers={MIGRATION_WRONG_ANSWERS}
+              traps={avoidList}
+              whiteboardChain={MIGRATION_WHITEBOARD}
+            />
+            <FollowUpsSection items={followUpQuestions.map(({ question, answer }) => [question, answer])} />
+            <SourcesSection
+              topicId="database-migration"
+              sources={MIGRATION_SOURCES}
+              quiz={{ title: "Zero-downtime migration", questions: article.judgmentQuiz, href: "/topics/database/safely-migrate-production-database/quiz" }}
+              related={relatedTopics}
+            />
     </BlueprintArticleFrame>
   );
 }

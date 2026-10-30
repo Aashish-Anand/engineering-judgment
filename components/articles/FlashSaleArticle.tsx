@@ -1,42 +1,36 @@
 import { BlueprintArticleFrame, BlueprintPanel } from "./BlueprintArticleFrame";
 import neo from "@/components/Neo.module.css";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { ArticleNav } from "@/components/ArticleNav";
 import { CodeBlock } from "@/components/CodeBlock";
-import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
 import { InlineCheck } from "@/components/InlineCheck";
 import { SectionHeader } from "@/components/SectionHeader";
 import { MetricTable } from "@/components/MetricTable";
 import { InsightCard } from "@/components/InsightCard";
 import { ProblemStatement } from "@/components/ProblemStatement";
-import { RelatedTopics } from "@/components/RelatedTopics";
 import { FailureCallout } from "@/components/doodle/FailureCallout";
 import { NaiveFlashSaleDiagram } from "@/components/diagrams/NaiveFlashSaleDiagram";
 import { FlashSaleArchitectureDiagram } from "@/components/diagrams/FlashSaleArchitectureDiagram";
 import { InventoryRaceDiagram } from "@/components/diagrams/InventoryRaceDiagram";
 import { ReservationFlowDiagram } from "@/components/diagrams/ReservationFlowDiagram";
 import { FlashSaleLab } from "@/components/FlashSaleLab";
-import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
-import { CareerRubricHub } from "@/components/CareerRubricHub";
 
 import * as article from "@/data/topics/survive-flash-sale";
+import { articleToc } from "@/data/topics/article-format";
+import { FailuresSection, FollowUpsSection, InterviewSection, RunbookSection, ScaleSection, SourcesSection, TradeoffsSection } from "./BlueprintSections";
 
-const FLASH_SALE_TRAPS = [
+const FLASH_SALE_WRONG_ANSWERS = [
   {
-    trapNum: "TRAP 01",
     question: "Why not rely on Kubernetes Horizontal Pod Autoscaler (HPA)?",
     explanation:
       "Kubernetes HPA takes 45–90 seconds to observe metrics and spin up new pod containers. At 10,000 admitted requests per second, the 10,000 iPhones are reserved in about one second. The spike is completely over before the first new pod reaches ready status.",
   },
   {
-    trapNum: "TRAP 02",
     question: "Why not process payments before deducting stock?",
     explanation:
       "External payment gateways (Stripe, Adyen) take 1,500–3,000ms per transaction. Bombarding them with 2,000,000 concurrent API calls triggers rate limits and causes thousands of cards to be billed for items that just sold out.",
   },
   {
-    trapNum: "TRAP 03",
     question: "Why not let stock go negative and cancel excess orders?",
     explanation:
       "Selling 10,500 items when you only have 10,000 units requires canceling 500 orders post-sale. This creates credit card chargeback penalties, PR outrage, and legal liabilities. Zero overselling must be an inviolable invariant.",
@@ -52,9 +46,34 @@ const FLASH_SALE_WHITEBOARD = [
   { label: "6. Reconciliation", color: "bg-purple-50 text-purple-700 border-purple-200" },
 ];
 
+const FLASH_SALE_RUNBOOK = [
+  "Before the start, pre-warm capacity and load-test the whole funnel. Autoscaling cannot react to a spike that is over in seconds.",
+  "Open the waiting room before the start and admit buyers at the drip rate the inventory gate was tested for.",
+  "Watch the Redis inventory node's CPU, latency, and remaining stock. If the stock key saturates its node, short-circuit requests locally once stock reaches zero.",
+  "If Redis fails, trip the circuit breaker and reject checkouts with a clear retry message. Never fall back to the database for reservations.",
+  "Watch settlement-queue lag and the reservation sweeper. Expired holds must return to stock within the TTL.",
+  "After the sale, reconcile Redis holds, committed orders, and payments, and refund any order beyond the available stock.",
+];
+
+const FLASH_SALE_SOURCES = [
+  ["Redis: Scripting with Lua", "https://redis.io/docs/latest/develop/programmability/eval-intro/"],
+  ["Redis: Replication", "https://redis.io/docs/latest/operate/oss_and_stack/management/replication/"],
+  ["Redis: WAIT", "https://redis.io/docs/latest/commands/wait/"],
+  ["Queue-it: How the virtual waiting room works", "https://queue-it.com/how-does-queue-it-work/"],
+  ["AWS Builders' Library: Using load shedding to avoid overload", "https://aws.amazon.com/builders-library/using-load-shedding-to-avoid-overload/"],
+];
+
+const toc = articleToc({
+  problem: "Ten million buyers, ten thousand units",
+  naive: "Why row locks collapse under the rush",
+  "mental-model": "Admit first, settle later",
+  architecture: "Funnel buyers into an atomic reservation",
+  "worked-example": "Explore the sale",
+  scale: "What breaks at ten times the buyers?",
+});
+
 export function FlashSaleArticle() {
   const {
-    tocItems,
     scenarioMetrics,
     inventoryApproaches,
     keyTradeoffs,
@@ -69,7 +88,7 @@ export function FlashSaleArticle() {
   } = article;
 
   return (
-    <BlueprintArticleFrame topicId="flash-sale" toc={tocItems} brief={
+    <BlueprintArticleFrame topicId="flash-sale" toc={toc} brief={
       <ExecutiveBlueprint
           timeToRead="30-Second Architecture Blueprint"
           bottleneck="10M concurrent users hit a single inventory counter at 12:00:00 PM (~2M RPS). Relational row locks serialize, starving database connection pools in 5ms."
@@ -84,13 +103,8 @@ export function FlashSaleArticle() {
     }>
 
             {/* ── 01 — Problem & Live Simulator ─────────────── */}
-            <section id="the-problem" className="scroll-mt-16">
-              <SectionHeader
-                number="01"
-                title="The Production Constraint & Workload Scale"
-                id="the-problem"
-                annotation="10M Users / 10K Items"
-              />
+            <section id="problem" className="scroll-mt-16">
+              <SectionHeader number="01" title="Ten million buyers, ten thousand units" id="problem" />
               <ProblemStatement>
                 <p>
                   An e-commerce retailer is launching a high-profile flash sale: <strong>10,000 discounted iPhone units</strong> made available to a waiting audience of <strong>10 million users</strong> at exactly 12:00:00 PM.
@@ -106,18 +120,11 @@ export function FlashSaleArticle() {
                   sideNote="All 10,000 units are reserved in about a second of admitted traffic. The challenge is 9.99M rejections without taking down the infrastructure."
                 />
               </div>
-
-              {/* Interactive Simulator */}
-              <BlueprintPanel id="workbench"><FlashSaleLab /></BlueprintPanel>
             </section>
 
             {/* ── 02 — The Naive Row-Lock Trap ──────────────── */}
-            <section id="the-mistake" className="scroll-mt-16">
-              <SectionHeader
-                number="02"
-                title="The Obvious Mistake: Relational Row Locking"
-                id="the-mistake"
-              />
+            <section id="naive" className="scroll-mt-16">
+              <SectionHeader number="02" title="Why row locks collapse under the rush" id="naive" />
               <p className="text-slate-700 leading-relaxed">
                 The most intuitive approach is writing directly to the relational database with an ACID transaction and row-level locking:
               </p>
@@ -167,11 +174,7 @@ COMMIT;`}
 
             {/* ── 03 — Core Mental Model ────────────────────── */}
             <section id="mental-model" className="scroll-mt-16">
-              <SectionHeader
-                number="03"
-                title="The Core Mental Model: Admission First, Settle Later"
-                id="mental-model"
-              />
+              <SectionHeader number="03" title="Admit first, settle later" id="mental-model" />
               <ScrollReveal>
                 <InsightCard title="The Architectural Invariant">
                   A flash sale is an <strong>admission control problem</strong> followed by a <strong>reservation reconciliation problem</strong>.
@@ -184,12 +187,7 @@ COMMIT;`}
 
             {/* ── 04 — Funnel Pipeline & Lua Gate ───────────── */}
             <section id="architecture" className="scroll-mt-16">
-              <SectionHeader
-                number="04"
-                title="Funnel Architecture & Atomic Lua Reservation"
-                id="architecture"
-                annotation="Zero Overselling Pipeline"
-              />
+              <SectionHeader number="04" title="Funnel buyers into an atomic reservation" id="architecture" />
               <p className="text-slate-700 leading-relaxed mb-4">
                 The diagram below illustrates the progressive filtering funnel. Each layer sheds an order of magnitude of pressure before requests ever touch relational storage:
               </p>
@@ -301,92 +299,40 @@ return 0 -- Already paid, already released, or not yet expired`}
               />
             </section>
 
-            {/* ── 05 — Trade-offs, Runbook & Traps Hub ──────── */}
-            <section id="tradeoffs-hub" className="scroll-mt-16">
-              <SectionHeader
-                number="05"
-                title="Trade-offs, Incident Runbook & Production Traps"
-                id="tradeoffs-hub"
-                annotation="Decision Matrix"
-              />
-              <p className="text-slate-700 leading-relaxed mb-4">
-                Compare concurrency primitives, study the top failure modes under load, and review the anti-patterns that take down high-volume events:
+            {/* ── 05 — Experiment ─────────────────────────────── */}
+            <section id="worked-example" className="scroll-mt-16">
+              <SectionHeader number="05" title="Explore the sale" id="worked-example" />
+              <p className="text-slate-700 leading-relaxed">
+                Raise peak demand and the admission drip, then change the stock, abandonment rate, and reservation TTL. Watch where the funnel sheds load and how many units return to stock.
               </p>
-
-              <ScrollReveal>
-                <BlueprintPanel kind="detail"><TradeoffDiagnosticsHub
-                  approachesTitle="1. Inventory Concurrency Approches"
-                  approachesHeaders={["Approach", "Advantage", "Trade-off / Risk"]}
-                  approachesRows={inventoryApproaches}
-                  keyTradeoffsTitle="2. Key Architectural Trade-offs"
-                  keyTradeoffsHeaders={["Decision", "Benefit", "Cost / Risk"]}
-                  keyTradeoffsRows={keyTradeoffs}
-                  failureModesTitle="Flash Sale Failure Modes & Operational Responses"
-                  failureModesHeaders={["Failure Mode", "Detection Signal", "Mitigation & Response"]}
-                  failureModesRows={failureModes}
-                  trapsTitle="The 3 Classic Flash Sale Traps"
-                  traps={FLASH_SALE_TRAPS}
-                  tenXTitle="What Happens at 10× Scale (100M Users / 100K Units)?"
-                  tenXProblems={tenXProblems}
-                  avoidTitle="⚠️ Anti-patterns that guarantee production outages:"
-                  avoidList={avoidList}
-                /></BlueprintPanel>
-              </ScrollReveal>
+              <BlueprintPanel id="workbench"><FlashSaleLab /></BlueprintPanel>
             </section>
 
-            {/* ── 06 — Staff+ Interview & Career Rubric ─────── */}
-            <section id="career-rubric" className="scroll-mt-16">
-              <SectionHeader
-                number="06"
-                title="Engineering Level Rubric & Interview Synthesis"
-                id="career-rubric"
-                annotation="L4 to Staff Evaluation"
-              />
-              <p className="text-slate-700 leading-relaxed mb-4">
-                How interviewers evaluate high-traffic system design across engineering levels, complete with verbal synthesis and follow-up probing questions:
-              </p>
-
-              <ScrollReveal>
-                <BlueprintPanel kind="detail"><CareerRubricHub
-                  initiallyExpanded={false}
-                  interviewAnswer={interviewAnswer}
-                  levelExpectations={levelExpectations}
-                  followUpQuestions={followUpQuestions}
-                  whiteboardChain={FLASH_SALE_WHITEBOARD}
-                /></BlueprintPanel>
-              </ScrollReveal>
-            </section>
-
-            {/* ── 07 — Judgment Quiz ───────────────────────── */}
-            {article.judgmentQuiz && (
-              <section id="judgment-quiz" className="scroll-mt-16">
-                <SectionHeader
-                  number="07"
-                  title="Test Your Judgment: The 10M-User Flash Sale"
-                  id="judgment-quiz"
-                />
-                <ScrollReveal>
-                  <ArticleQuizEntry
-                    quizHref="/topics/traffic/survive-flash-sale/quiz"
-                    title="Flash Sale Concurrency Judgment Test"
-                    questions={article.judgmentQuiz}
-                  />
-                </ScrollReveal>
-              </section>
-            )}
-
-            {/* ── 08 — Related Architectures ───────────────── */}
-            <section id="related" className="scroll-mt-16 pt-4">
-              <SectionHeader
-                number="08"
-                title="Related System Architecture Deep Dives"
-                id="related"
-              />
-              <RelatedTopics ids={relatedTopics} />
-              <div className="mt-8">
-                <ArticleNav currentId="flash-sale" />
-              </div>
-            </section>
+            <RunbookSection steps={FLASH_SALE_RUNBOOK} />
+            <TradeoffsSection tables={[
+              { caption: "Inventory concurrency approaches", headers: ["Approach", "Advantage", "Risk"], rows: inventoryApproaches },
+              { caption: "Funnel decisions", headers: ["Decision", "Benefit", "Cost"], rows: keyTradeoffs },
+            ]} />
+            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response }))} />
+            <ScaleSection
+              title="What breaks at ten times the buyers?"
+              paragraphs={["With 100 million buyers and 100,000 units, every tier of the funnel meets a new limit:"]}
+              items={tenXProblems}
+            />
+            <InterviewSection
+              answer={interviewAnswer}
+              levels={levelExpectations}
+              wrongAnswers={FLASH_SALE_WRONG_ANSWERS}
+              traps={avoidList}
+              whiteboardChain={FLASH_SALE_WHITEBOARD}
+            />
+            <FollowUpsSection items={followUpQuestions.map(({ question, answer }) => [question, answer])} />
+            <SourcesSection
+              topicId="flash-sale"
+              sources={FLASH_SALE_SOURCES}
+              quiz={{ title: "The 10M-user flash sale", questions: article.judgmentQuiz, href: "/topics/traffic/survive-flash-sale/quiz" }}
+              related={relatedTopics}
+            />
     </BlueprintArticleFrame>
   );
 }

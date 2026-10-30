@@ -100,7 +100,7 @@ export function CodeBlock({
       </div>
 
       {/* Code body */}
-      <pre className="m-0 p-4 bg-transparent border-none shadow-none text-xs sm:text-sm font-mono leading-relaxed overflow-x-auto text-slate-200 selection:bg-blue-600 selection:text-white">
+      <pre tabIndex={0} className="m-0 p-4 bg-transparent border-none shadow-none text-xs sm:text-sm font-mono leading-relaxed overflow-x-auto text-slate-200 selection:bg-blue-600 selection:text-white">
         <code>{code.trim()}</code>
       </pre>
     </div>

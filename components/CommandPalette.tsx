@@ -133,15 +133,15 @@ export function CommandPalette() {
             strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-slate-400 shrink-0"
+            className="text-slate-600 shrink-0"
             aria-hidden="true"
           >
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span className="hidden sm:inline text-slate-500 text-xs truncate">Search architecture...</span>
+          <span className="hidden sm:inline text-slate-600 text-xs truncate">Search architecture...</span>
         </div>
-        <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-mono font-medium text-slate-400 shadow-2xs shrink-0">
+        <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-mono font-medium text-slate-600 shadow-2xs shrink-0">
           ⌘K
         </kbd>
       </button>
@@ -158,7 +158,7 @@ export function CommandPalette() {
           >
             {/* Search Input Bar */}
             <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-200 bg-slate-50/70">
-              <span className="text-base select-none text-slate-400" aria-hidden="true">
+              <span className="text-base select-none text-slate-600" aria-hidden="true">
                 🔍
               </span>
               <input
@@ -175,7 +175,7 @@ export function CommandPalette() {
               <button
                 onClick={() => setIsOpen(false)}
                 type="button"
-                className="px-1.5 py-0.5 border border-slate-200 rounded text-xs font-mono text-slate-500 hover:bg-white cursor-pointer"
+                className="px-1.5 py-0.5 border border-slate-200 rounded text-xs font-mono text-slate-600 hover:bg-white cursor-pointer"
               >
                 ESC
               </button>
@@ -184,7 +184,7 @@ export function CommandPalette() {
             {/* Results List */}
             <div className="overflow-y-auto p-2 divide-y divide-slate-100">
               {filtered.length === 0 ? (
-                <div className="py-8 text-center text-sm font-sans text-slate-500">
+                <div className="py-8 text-center text-sm font-sans text-slate-600">
                   No matching engineering topics or concepts found.
                 </div>
               ) : (
@@ -221,7 +221,7 @@ export function CommandPalette() {
             </div>
 
             {/* Footer with Keyboard Hints */}
-            <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] font-mono text-slate-600">
               <div className="flex items-center gap-3">
                 <span>↑↓ navigate</span>
                 <span>↵ select</span>

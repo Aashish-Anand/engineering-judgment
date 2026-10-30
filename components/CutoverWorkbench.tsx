@@ -136,7 +136,7 @@ export function CutoverWorkbench() {
               >
                 <span
                   className={`font-mono text-[10px] w-4 h-4 rounded flex items-center justify-center font-bold ${
-                    isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                    isActive ? "bg-white text-blue-700" : "bg-slate-100 text-slate-600"
                   }`}
                 >
                   {stage.number}
@@ -156,13 +156,13 @@ export function CutoverWorkbench() {
             <span className="font-mono text-xs font-bold text-slate-600 uppercase tracking-wider">
               Live Topology · {WORKBENCH_STAGES.find((s) => s.id === activeStage)?.label}
             </span>
-            <span className="font-mono text-[11px] text-slate-500">
+            <span className="font-mono text-[11px] text-slate-600">
               {activeStage === "cutover" ? `Traffic split: ${100 - percent}% A / ${percent}% B` : "Status: Single Writer"}
             </span>
           </div>
 
           {/* Clean SVG Vector Diagram */}
-          <div className="w-full py-2 overflow-x-auto">
+          <div tabIndex={0} role="region" aria-label="Scrollable panel" className="w-full py-2 overflow-x-auto">
             <svg
               viewBox="0 20 760 130"
               className="w-full min-w-[600px] max-w-[760px] h-auto select-none font-sans text-xs"
@@ -318,7 +318,7 @@ export function CutoverWorkbench() {
 
         {/* Phase Implementation Code / Details */}
         {activeStage === "backfill" && (
-          <div className="p-4 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs overflow-x-auto">
+          <div tabIndex={0} role="region" aria-label="Scrollable panel" className="p-4 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs overflow-x-auto">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px] text-slate-400">
               <span>keyset-cursor-backfill.sql</span>
               <span className="text-emerald-400">O(1) Direct Index Seek</span>
@@ -337,7 +337,7 @@ LIMIT 1000;
         )}
 
         {activeStage === "shadow" && (
-          <div className="p-4 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs overflow-x-auto">
+          <div tabIndex={0} role="region" aria-label="Scrollable panel" className="p-4 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs overflow-x-auto">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px] text-slate-400">
               <span>stripe-shadow-read-comparator.ts</span>
               <span className="text-emerald-400">Zero Customer Impact</span>
@@ -365,7 +365,7 @@ queueMicrotask(async () => {
             </span>
             <span className="font-mono text-xs text-slate-600">
               DB A: <strong className="text-blue-600">{state.percentA}%</strong> · DB B:{" "}
-              <strong className="text-emerald-600">{state.percentB}%</strong>
+              <strong className="text-emerald-700">{state.percentB}%</strong>
             </span>
           </div>
 
@@ -455,7 +455,7 @@ queueMicrotask(async () => {
         {/* Phase Context & Senior Intuition */}
         <details className={styles.notes}><summary>Phase notes &amp; rollback safety</summary><div className={styles.phaseNotes}>
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-            <span className="font-mono text-[11px] uppercase font-bold text-slate-500 block mb-1">
+            <span className="font-mono text-[11px] uppercase font-bold text-slate-600 block mb-1">
               Operational Focus · {WORKBENCH_STAGES.find((s) => s.id === activeStage)?.label}
             </span>
             <p className="font-sans text-xs sm:text-sm text-slate-800 leading-relaxed mb-0">

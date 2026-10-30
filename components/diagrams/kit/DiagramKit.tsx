@@ -15,7 +15,7 @@ export function DiagramFigure({ id, title, caption, scroll = false, animate = tr
       <DiagramMotion title={title} enabled={animate}>
         {controls && <div className={styles.controls}>{controls}</div>}
         {scroll && <p className={styles.scrollHint}>Scroll sideways to see every column →</p>}
-        <div className={scroll ? styles.scroll : styles.body}>{children}</div>
+        {scroll ? <div className={styles.scroll} tabIndex={0} role="region" aria-label={`${title} (scrollable)`}>{children}</div> : <div className={styles.body}>{children}</div>}
       </DiagramMotion>
       {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
     </figure>
