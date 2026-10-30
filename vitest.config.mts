@@ -12,6 +12,6 @@ export default defineConfig({
     environment: "node",
     globalSetup: ["./tests/setup/velite.ts"],
     // Browser tests in e2e/ run under Playwright, not Vitest.
-    exclude: [...configDefaults.exclude, "e2e/**"],
+    exclude: [...configDefaults.exclude, "e2e/**", ".claude/**"],
   },
 });
