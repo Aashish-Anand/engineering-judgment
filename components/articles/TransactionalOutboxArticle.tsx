@@ -20,6 +20,7 @@ import {
   scenarioMetrics,
   tradeoffs,
   failureModes,
+  failureExplanations,
   expectations,
   followUps,
   judgmentQuiz,
@@ -288,7 +289,7 @@ export function TransactionalOutboxArticle() {
                 ["Synchronous dual write", "No extra tables or workers", "Inconsistent on any process or network failure"],
               ] },
             ]} />
-            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response }))} />
+            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response, explanation: failureExplanations[title] }))} />
             <ScaleSection
               title="What breaks at ten times the events?"
               paragraphs={["At 50,000 events per second, the outbox table and its relay become a system you operate in their own right:"]}

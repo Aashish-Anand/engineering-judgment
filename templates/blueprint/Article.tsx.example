@@ -45,7 +45,7 @@ export function YourTopicArticle() {
     </BlueprintSection>
     <RunbookSection steps={["TODO: Detect", "TODO: Mitigate", "TODO: Verify and roll back"]} />
     <TradeoffsSection tables={[{ caption: "TODO: Decisions and their costs", headers: ["Decision", "Benefit", "Cost"], rows: [["TODO", "TODO", "TODO"]] }]} />
-    <FailuresSection failures={[{ title: "TODO: Failure mode", signal: "TODO: How you notice", response: "TODO: What you do" }]} />
+    <FailuresSection failures={[{ title: "TODO: Failure mode", explanation: "TODO: In plain words, what goes wrong and why it hurts (two sentences).", signal: "TODO: How you notice", response: "TODO: What you do" }]} />
     <ScaleSection title="TODO: What breaks at ten times the load?" items={["TODO: The next limit"]} />
     <InterviewSection
       answer="TODO: A one-minute spoken answer."

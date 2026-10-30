@@ -37,7 +37,7 @@ export function ProductionBlueprintArticle({ id }: { id: DataBlueprintId }) {
           {topic.sections.filter(section => section.id !== "scale").map(renderSection)}
           <RunbookSection steps={topic.runbook} />
           <TradeoffsSection tables={[{ caption: "Decisions and their operational costs", headers: ["Decision", "Trade-off"], rows: topic.tradeoffs }, ...(topic.extraTables ?? [])]} />
-          <FailuresSection failures={topic.failures.map(([title, detail]) => ({ title, detail }))} />
+          <FailuresSection failures={topic.failures.map(([title, response, explanation]) => ({ title, response, explanation }))} />
           <ScaleSection title={scale.title} paragraphs={scale.paragraphs} />
           <InterviewSection answer={topic.interview} levels={topic.levels} wrongAnswers={topic.wrongAnswers} traps={example.avoid} />
           <FollowUpsSection items={topic.followups as [string, string][]} />

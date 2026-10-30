@@ -186,6 +186,20 @@ export const failureModes = [
   ],
 ];
 
+/** Plain-language "what happens" for each failure mode, keyed by its title. */
+export const failureExplanations: Record<string, string> = {
+  "Redis cluster outage": "The Redis node that holds the stock count goes down, so nobody can reserve an item. The tempting fallback is to send buyers to the database, which cannot take that load and would fall over too.",
+  "Overselling from logic bug": "A bug lets more reservations through than there is stock, so you confirm more orders than you have units. Those buyers must be refunded, which costs money and trust.",
+  "Hot key node saturation": "Every buyer checks the same stock key, and that key lives on one Redis node. That node maxes out its CPU while the others idle, and reservations slow down for everyone.",
+  "Payment gateway timeout": "The payment provider answers slowly, so payments are still pending when the 10-minute hold runs out. If you release the hold anyway, a buyer who paid can lose their item to someone else.",
+  "Bot army bypasses rate limit": "Scripts send requests faster than any person can and grab most of the stock. Real buyers see sold out within seconds.",
+  "Kafka consumer lag spike": "Orders pile up in the queue faster than workers can save them to the database. Buyers wait longer for confirmation, and holds can expire before their order is written.",
+  "Inventory leak (abandoned holds)": "Buyers reserve an item and never pay. If expired holds are not returned, stock shows zero while thousands of units sit unsold.",
+  "Edge cache miss spike": "Just before the sale, product pages are not yet cached at the edge. The first wave of visitors hits your own servers directly and slows them down at the worst moment.",
+  "User double-clicks purchase": "An impatient buyer clicks Buy twice, or the app retries on its own. Without protection, the second request reserves a second unit or charges twice.",
+  "Database connection starvation": "Order workers open more database connections than the database allows. New queries wait for a free connection, and the rest of the site slows down with them.",
+};
+
 export const tenXProblems = [
   "Waiting room must maintain 100M concurrent WebSocket or SSE connections across distributed edge PoPs.",
   "Single-key Redis throughput (~100K ops/sec) is saturated 100× over — inventory sharding across 50+ Redis nodes becomes mandatory.",

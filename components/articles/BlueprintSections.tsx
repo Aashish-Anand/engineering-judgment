@@ -8,6 +8,7 @@ import type { QuizQuestion } from "@/components/JudgmentQuiz";
 import type { TopicId } from "@/data/topics/catalog";
 import type { LevelData } from "@/data/types";
 import { fixedSections, sectionNumber } from "@/data/topics/article-format";
+import { FailureTabs } from "./FailureTabs";
 import styles from "./BlueprintSections.module.css";
 
 /*
@@ -17,7 +18,8 @@ import styles from "./BlueprintSections.module.css";
  */
 
 export type DecisionTable = { caption: string; headers: string[]; rows: string[][] };
-export type FailureMode = { title: string; detail?: string; signal?: string; response?: string };
+/** `explanation` says in plain words what goes wrong; `signal` is how you notice; `response` is what to do. */
+export type FailureMode = { title: string; explanation: string; signal?: string; response?: string };
 export type WrongAnswer = { question: string; explanation: string };
 
 const cx = (...names: (string | undefined)[]) => names.filter(Boolean).join(" ");
@@ -53,12 +55,7 @@ export function TradeoffsSection({ tables }: { tables: DecisionTable[] }) {
 export function FailuresSection({ failures }: { failures: FailureMode[] }) {
   return <section id="failures" className={styles.body}>
     <SectionHeader number={sectionNumber("failures")} id="failures" title={fixedSections.failures.title} />
-    {failures.map(failure => <div key={failure.title} className={styles.failure}>
-      <h3>{failure.title}</h3>
-      {failure.detail && <p>{failure.detail}</p>}
-      {failure.signal && <p><strong>Signal:</strong> {failure.signal}</p>}
-      {failure.response && <p><strong>Response:</strong> {failure.response}</p>}
-    </div>)}
+    <FailureTabs failures={failures} />
   </section>;
 }
 
@@ -90,7 +87,7 @@ export function InterviewSection({ answer, levels, traps, wrongAnswers, whiteboa
     <CareerRubricHub levels={levels} whiteboardChain={whiteboardChain} />
     {wrongAnswers.length > 0 && <>
       <h3>Common wrong answers</h3>
-      {wrongAnswers.map(wrong => <div key={wrong.question} className={styles.failure}><h4>{wrong.question}</h4><p>{wrong.explanation}</p></div>)}
+      {wrongAnswers.map(wrong => <div key={wrong.question} className={styles.failure}><span className={styles.wrongTag}><span aria-hidden="true">✗ </span>Wrong answer</span><h4>{wrong.question}</h4><p>{wrong.explanation}</p></div>)}
     </>}
     <h3>Traps to call out</h3>
     <ul className={styles.traps}>{traps.map(item => <li key={item}>{item}</li>)}</ul>

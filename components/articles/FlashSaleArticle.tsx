@@ -80,6 +80,7 @@ export function FlashSaleArticle() {
     inventoryApproaches,
     keyTradeoffs,
     failureModes,
+    failureExplanations,
     tenXProblems,
     avoidList,
     interviewAnswer,
@@ -327,7 +328,7 @@ return 0 -- Already paid, already released, or not yet expired`}
               { caption: "Inventory concurrency approaches", headers: ["Approach", "Advantage", "Risk"], rows: inventoryApproaches },
               { caption: "Funnel decisions", headers: ["Decision", "Benefit", "Cost"], rows: keyTradeoffs },
             ]} />
-            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response }))} />
+            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response, explanation: failureExplanations[title] }))} />
             <ScaleSection
               title="What breaks at ten times the buyers?"
               paragraphs={["With 100 million buyers and 100,000 units, every tier of the funnel meets a new limit:"]}

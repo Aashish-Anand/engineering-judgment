@@ -40,6 +40,16 @@ export const failureModes = [
   ["Unbounded event backlog", "Oldest-event age rises continuously", "Backpressure and admission limits; add actual drain capacity"],
   ["Migration splits ownership", "Old and new routes accept conflicting writes", "Versioned routing, fenced handoff, checkpoints, and explicit rollback semantics"],
 ];
+
+/** Plain-language "what happens" for each failure mode, keyed by its title. */
+export const failureExplanations: Record<string, string> = {
+  "Cache stampede": "The cached copy of the hot post expires, and thousands of readers miss the cache in the same instant. They all go to the database together, which is exactly the load the cache was there to stop.",
+  "Redis becomes the new hot shard": "Moving the hot post into Redis moves the hotspot with it. One key lives on one Redis node, so that node's CPU or network fills up while the rest of the cluster sits idle.",
+  "Duplicate or reordered actions": "Retries and spread-out buckets mean the same like can arrive twice, or an unlike can land before the like it cancels. The count slowly drifts away from what users actually did.",
+  "Salted keys hit the same physical shard": "You split one key into eight buckets, but the database may still place several of them on the same machine. On paper the load is spread out; in practice one node still takes most of it.",
+  "Unbounded event backlog": "Writes go into a queue faster than workers can drain it. Nothing fails right away, but the queue keeps growing and the displayed counts fall further behind every minute.",
+  "Migration splits ownership": "While a key moves to a new layout, old and new code paths can both accept writes for it. Each side thinks it owns the data, and their updates overwrite each other.",
+};
 export const expectations: LevelData[] = [
   { title: "Mid-level", description: "Recognize skew and separate read load from write load.", items: ["Use per-partition metrics rather than averages", "Explain caching and why more servers do not split one key", "Identify freshness and correctness requirements"] },
   { title: "Senior", description: "Design a working relief path with explicit consistency boundaries.", items: ["Choose stable shard keys and idempotent mutations", "Address stampedes, read fanout, and ordering", "Plan canary migration and bounded queues"] },

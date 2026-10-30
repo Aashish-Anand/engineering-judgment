@@ -81,6 +81,7 @@ export function DatabaseMigrationArticle() {
     dualWriteApproaches,
     keyTradeoffs,
     failureModes,
+    failureExplanations,
     tenXProblems,
     avoidList,
     interviewAnswer,
@@ -217,7 +218,7 @@ export function DatabaseMigrationArticle() {
               { caption: "Ways to keep the target in sync", headers: ["Approach", "Advantage", "Cost"], rows: dualWriteApproaches },
               { caption: "Validation and cutover decisions", headers: ["Decision", "Benefit", "Cost"], rows: keyTradeoffs },
             ]} />
-            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response }))} />
+            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response, explanation: failureExplanations[title] }))} />
             <ScaleSection
               title="What breaks on a database ten times larger?"
               paragraphs={["With ten times the rows and write rate, the same five phases still apply, but each one costs more:"]}

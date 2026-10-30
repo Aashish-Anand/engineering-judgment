@@ -82,7 +82,7 @@
 .surface.article :global(.quiz-entry) { border:2px solid var(--neo-ink); border-radius:0; background:var(--neo-lilac-wash); box-shadow:3px 3px 0 var(--neo-ink); }
 .surface.article :global(.quiz-entry) h3 { font-weight:800; }
 .surface.article :global(.editorial-button) { background:var(--neo-coral); color:var(--neo-on-color); border:2px solid var(--neo-ink); border-radius:0; box-shadow:3px 3px 0 var(--neo-ink); font-weight:700; }
-:global(html[data-theme=dark]) :is(.surface,.header) { --neo-body:#e8ebe6; --neo-paper:#121614; --neo-surface:#1a1f1d; --neo-ink:#f3f4ef; --neo-muted:#cdd4cc; --neo-grid:#4a524d; --neo-coral:#ff8a66; --neo-yellow:#ffd84d; --neo-mint:#6ee3a0; --neo-lilac:#b9a2ff; --neo-lilac-wash:#231e36; }
+:global(html[data-theme=dark]) :is(.surface,.header) { --neo-body:#e9e9ee; --neo-paper:#0c0c0e; --neo-surface:#141416; --neo-ink:#f5f5f7; --neo-muted:#b6b8c0; --neo-grid:#2e2f35; --neo-coral:#ff7a59; --neo-yellow:#ffd23f; --neo-mint:#4ff0a0; --neo-lilac:#b99cff; --neo-lilac-wash:#18151f; }
 :global(html[data-theme=dark]) .header { background:var(--neo-paper); }
 :global(html[data-theme=dark]) .surface.article :global(.scenario-context .eyebrow) { color:var(--neo-on-color); }
 @media(max-width:1100px) { .surface.article :global(.blueprint-header) { grid-template-columns:minmax(0,1fr) 260px; gap:32px; } .surface.article :global(.article-thesis) { grid-template-columns:200px minmax(0,1fr); gap:28px; } .journey { gap:12px; } .journey > li { font-size:12px; gap:6px; } }

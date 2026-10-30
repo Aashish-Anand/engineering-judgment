@@ -12,11 +12,11 @@
 [data-category="PERFORMANCE"] { --category-accent:#5266a4; --category-wash:#f1f4fc; --category-line:#c4cdea; }
 [data-category="DEPLOYMENT"] { --category-accent:#925a6c; --category-wash:#fcf3f5; --category-line:#e2c5ce; }
 @media screen {
-  html[data-theme="dark"] [data-category] { --category-accent:#86bfff; --category-wash:#182029; --category-line:#3c6fa6; }
-  html[data-theme="dark"] [data-category="CORRECTNESS"] { --category-accent:#6ee3a0; --category-wash:#17221d; --category-line:#2f8058; }
-  html[data-theme="dark"] [data-category="TRAFFIC"] { --category-accent:#ffc94d; --category-wash:#1d2321; --category-line:#c99227; }
-  html[data-theme="dark"] [data-category="MESSAGING"] { --category-accent:#c3a6ff; --category-wash:#1d1b26; --category-line:#6a54b0; }
-  html[data-theme="dark"] [data-category="RELIABILITY"] { --category-accent:#5edcd0; --category-wash:#162222; --category-line:#2a7a72; }
-  html[data-theme="dark"] [data-category="PERFORMANCE"] { --category-accent:#9fb0ff; --category-wash:#1a1c28; --category-line:#4a5bb0; }
-  html[data-theme="dark"] [data-category="DEPLOYMENT"] { --category-accent:#ff94b8; --category-wash:#221c20; --category-line:#a24670; }
+  html[data-theme="dark"] [data-category] { --category-accent:#86b2ff; --category-wash:#131822; --category-line:#4f86f7; }
+  html[data-theme="dark"] [data-category="CORRECTNESS"] { --category-accent:#4ff0a0; --category-wash:#131b17; --category-line:#2fbf7a; }
+  html[data-theme="dark"] [data-category="TRAFFIC"] { --category-accent:#ffc53d; --category-wash:#1a1a1d; --category-line:#f5a623; }
+  html[data-theme="dark"] [data-category="MESSAGING"] { --category-accent:#b99cff; --category-wash:#18151f; --category-line:#8b6cf0; }
+  html[data-theme="dark"] [data-category="RELIABILITY"] { --category-accent:#3fe6d6; --category-wash:#121b1b; --category-line:#1fb5a6; }
+  html[data-theme="dark"] [data-category="PERFORMANCE"] { --category-accent:#9ba8ff; --category-wash:#15172a; --category-line:#6170f0; }
+  html[data-theme="dark"] [data-category="DEPLOYMENT"] { --category-accent:#ff7eb0; --category-wash:#1a1a1d; --category-line:#f0569a; }
 }

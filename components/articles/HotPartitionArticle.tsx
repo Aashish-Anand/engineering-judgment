@@ -23,6 +23,7 @@ import {
   scenarioMetrics,
   tradeoffs,
   failureModes,
+  failureExplanations,
   expectations,
   followUps,
   judgmentQuiz,
@@ -304,7 +305,7 @@ await db.transaction(async (tx) => {
 
             <RunbookSection steps={HOT_PARTITION_RUNBOOK} />
             <TradeoffsSection tables={[{ caption: "Read and write partitioning decisions", headers: ["Decision", "What improves", "What we now own"], rows: tradeoffs }]} />
-            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response }))} />
+            <FailuresSection failures={failureModes.map(([title, signal, response]) => ({ title, signal, response, explanation: failureExplanations[title] }))} />
             <ScaleSection
               title="What breaks at ten times the traffic?"
               paragraphs={["At a million requests per second, or a celebrity with ten times the followers, the relief paths themselves become the next hot spots:"]}

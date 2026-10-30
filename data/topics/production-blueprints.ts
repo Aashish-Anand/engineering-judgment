@@ -101,23 +101,28 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     "failures": [
       [
         "Same key, different payload",
-        "Reject the mismatch. Silently returning an unrelated result conceals a caller bug."
+        "Reject the mismatch. Silently returning an unrelated result conceals a caller bug.",
+        "A client reuses a payment key but changes the amount or currency. If you return the stored result, the client believes the new payment went through when it never ran."
       ],
       [
         "Crash after remote success",
-        "Recover the persisted intent with the same provider identity. Never infer failure from silence."
+        "Recover the persisted intent with the same provider identity. Never infer failure from silence.",
+        "The provider charges the card, then your server crashes before saving the result. Your records say pending while the money has already moved."
       ],
       [
         "Provider retention expired",
-        "Stop blind resubmission; resolve through durable references or manual review."
+        "Stop blind resubmission; resolve through durable references or manual review.",
+        "The provider only remembers payment keys for a limited time. A retry after that window looks like a brand-new payment and can charge the customer again."
       ],
       [
         "Stale worker overwrites a result",
-        "A worker whose lease expired reports an old timeout after recovery confirmed success. Only allow pending-to-terminal transitions with a conditional update."
+        "A worker whose lease expired reports an old timeout after recovery confirmed success. Only allow pending-to-terminal transitions with a conditional update.",
+        "Two workers end up handling the same payment. The slow one finishes last and writes its old timeout over the success the other one confirmed."
       ],
       [
         "Duplicate or forged webhook",
-        "Verify the signature, deduplicate by provider event ID, and check amount and account against the intent before changing its state."
+        "Verify the signature, deduplicate by provider event ID, and check amount and account against the intent before changing its state.",
+        "Providers can send the same webhook more than once, and attackers can send fake ones. Acting on every webhook can change a payment twice, or on false information."
       ]
     ],
     "interview": "I would name the business intent before calling the provider, atomically claim that key locally, and reuse the same provider key across recovery. Unknown outcomes remain pending until reconciliation. This provides an effectively single business effect only within the provider’s deduplication and retention contract.",
@@ -386,15 +391,18 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     "failures": [
       [
         "Quarantine publish fails",
-        "Do not acknowledge the source until the handoff is durable."
+        "Do not acknowledge the source until the handoff is durable.",
+        "You try to move a bad message to quarantine, but that write fails. If you acknowledge the original anyway, the message is gone from both places."
       ],
       [
         "Replay duplicates an effect",
-        "Preserve IDs and atomically deduplicate with the business mutation."
+        "Preserve IDs and atomically deduplicate with the business mutation.",
+        "After fixing a bad message you replay it, but part of its work already happened before it failed. Running it again repeats that work, such as sending an email twice."
       ],
       [
         "All messages fail together",
-        "Treat a dependency outage or deployment regression before classifying every payload as poison."
+        "Treat a dependency outage or deployment regression before classifying every payload as poison.",
+        "A database or downstream service goes down, so every message fails at once. It looks like a flood of bad messages, but the messages are fine and the dependency is the problem."
       ]
     ],
     "interview": "I would classify the failure, bound retry effort, and quarantine permanent failures durably before acknowledgement. I would preserve event identity, protect per-order invariants, and assign an owner to controlled replay. Moving a message to a DLQ is an operational state, not business success.",
@@ -640,15 +648,18 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     "failures": [
       [
         "Retries in hidden layers",
-        "Inventory SDK, proxy, API, and caller attempts multiply unless one owner accounts for them."
+        "Inventory SDK, proxy, API, and caller attempts multiply unless one owner accounts for them.",
+        "The SDK, a proxy, your API, and the client all retry on their own. One user request quietly becomes dozens of calls to a service that is already struggling."
       ],
       [
         "Timeout without cancellation",
-        "The caller may leave while the dependency continues spending resources."
+        "The caller may leave while the dependency continues spending resources.",
+        "Your caller gives up and moves on, but the work it started keeps running downstream. The dependency spends its capacity on answers nobody will read."
       ],
       [
         "Breaker recovery surge",
-        "Bound half-open probes and ramp traffic instead of releasing a synchronized flood."
+        "Bound half-open probes and ramp traffic instead of releasing a synchronized flood.",
+        "The circuit breaker sees the service recover and lets all the waiting traffic through at once. The sudden flood knocks the service over again."
       ]
     ],
     "interview": "I would first distinguish a slow dependency from extra original demand. I would cap concurrent work, select one retry owner, propagate deadlines, and admit retries only within a work budget and safe-operation contract. I would degrade honestly and restore traffic through limited recovery probes.",
@@ -896,15 +907,18 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     "failures": [
       [
         "Leaked checkout",
-        "Use structured release on success, error, and cancellation; observe connections that never return."
+        "Use structured release on success, error, and cancellation; observe connections that never return.",
+        "Code borrows a connection and never gives it back, often on an error path. The pool loses one connection each time, until requests wait for connections that never return."
       ],
       [
         "Idle transaction",
-        "Remove remote waits and enforce transaction boundaries; a low query count can hide held resources."
+        "Remove remote waits and enforce transaction boundaries; a low query count can hide held resources.",
+        "A request opens a transaction, then waits on something slow such as an HTTP call. The connection and any locks stay held the whole time while doing nothing."
       ],
       [
         "Autoscaling surge",
-        "Budget for all replicas and rolling deployment overlap, not just the current pod count."
+        "Budget for all replicas and rolling deployment overlap, not just the current pod count.",
+        "Traffic rises, autoscaling adds servers, and each new server opens its own pool. Together they ask for more connections than the database allows."
       ]
     ],
     "interview": "I would separate pool acquisition time from query and checkout duration. I would inspect leaks, idle transactions, and lock waits, then allocate the shared database budget across peak replicas. Scaling the application only helps if it does not overload the database; admission control must bound waiting.",
@@ -1149,15 +1163,18 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
     "failures": [
       [
         "Backfill races with live writes",
-        "Use database-side copying or conditional version checks under a documented authority rule."
+        "Use database-side copying or conditional version checks under a documented authority rule.",
+        "The backfill reads a row, a user updates it, and then the backfill writes the old value over the new one. The user's change is lost without any error."
       ],
       [
         "Contract before old jobs drain",
-        "Old queries fail; enumerate consumers and observe the rollback window before dropping columns."
+        "Old queries fail; enumerate consumers and observe the rollback window before dropping columns.",
+        "You drop the old column, but a nightly job or an old server still uses it. That code fails the next time it runs."
       ],
       [
         "DDL waits behind a long transaction",
-        "Use a lock timeout and investigate blockers rather than allowing a deployment to queue indefinitely."
+        "Use a lock timeout and investigate blockers rather than allowing a deployment to queue indefinitely.",
+        "A schema change needs a lock and waits behind a long-running query. While it waits, every other query on that table queues behind it, and the app stalls."
       ]
     ],
     "interview": "I would expand first, deploy a compatible bridge, drain or synchronize old writers, then run a resumable backfill under an explicit source-of-truth rule. I would validate before switching readers and preserve the old representation through rollback. Contract is a separate step with evidence that old consumers are gone.",

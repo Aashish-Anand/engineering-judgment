@@ -39,6 +39,16 @@ export const failureModes = [
   ["Transaction contention on outbox inserts", "Business write latency increases", "Append-only design, no updates during the write path; partition the table"],
   ["CDC connector loses its WAL position", "Re-reads old events or skips new ones", "Durable offset storage, snapshot recovery procedure, reconciliation checks"],
 ];
+
+/** Plain-language "what happens" for each failure mode, keyed by its title. */
+export const failureExplanations: Record<string, string> = {
+  "Relay crashes after publish, before marking row": "The relay sends the event to the broker, then crashes before marking the row as sent. On restart it sends the same event again, so consumers see it twice.",
+  "Broker is down": "The relay cannot deliver, so events wait in the outbox table. Orders still save fine, but nothing downstream hears about them until the broker returns, and the table keeps growing.",
+  "Relay falls behind": "Events are written faster than the relay can publish them. Every consumer gets events later and later, even though nothing has technically failed.",
+  "Outbox table bloats": "Sent rows are never deleted, so the table grows to millions of rows. Looking up unsent events gets slower, and the database spends effort on data nobody needs.",
+  "Transaction contention on outbox inserts": "Every order also writes an outbox row, so the outbox becomes a busy spot in the database. If those inserts wait on locks, saving an order gets slower too.",
+  "CDC connector loses its WAL position": "The connector forgets where it stopped reading the database log. It may restart too early and resend old events, or too late and skip events entirely.",
+};
 export const expectations: LevelData[] = [
   { title: "Mid-level", description: "Recognize the dual-write problem and explain why it causes inconsistency.", items: ["Describe what happens when a crash occurs between DB commit and event publish", "Explain why publishing inside the transaction couples availability to the broker", "Know that the outbox pattern solves this by making the event part of the transaction"] },
   { title: "Senior", description: "Design a working outbox with relay, ordering, and failure handling.", items: ["Choose between polling and CDC for the relay and justify the trade-off", "Handle at-least-once delivery with idempotency keys on the consumer side", "Plan outbox table cleanup and monitor relay lag and table growth"] },

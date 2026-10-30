@@ -17,7 +17,7 @@ Every blueprint has the same twelve sections, in this order. They are defined on
 | 05 | `worked-example` | Topic-specific: the experiment or worked example; holds `id="workbench"` |
 | 06 | `runbook` | Respond in production |
 | 07 | `tradeoffs` | Every safeguard has a cost |
-| 08 | `failures` | Failure modes to rehearse |
+| 08 | `failures` | Failure modes to rehearse, shown as tabs. Each needs a plain-language explanation of what goes wrong, plus how you notice and what to do |
 | 09 | `scale` | Topic-specific: "What breaks at ten times …?" |
 | 10 | `interview` | Interview corner: one-minute answer, engineering level rubric, at least three common wrong answers, traps |
 | 11 | `follow-ups` | What breaks next? |

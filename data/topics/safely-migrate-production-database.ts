@@ -100,14 +100,25 @@ export const keyTradeoffs = [
 ];
 
 export const failureModes = [
-  ["CDC stops",                           "Replication lag spikes",        "Stop cutover, investigate, restart CDC"],
-  ["Missing events",                      "Reconciliation checks",         "Replay from WAL or reconcile"],
-  ["Duplicate events",                    "Business key uniqueness",       "Idempotent consumer / upsert logic"],
-  ["Target slower than source",           "Target latency increases",      "Throttle migration traffic"],
-  ["Target data diverges from source",    "Validation mismatches",         "Investigate before proceeding to cutover"],
-  ["Cutover increases error rate",        "Error and latency metrics",     "Rollback to source"],
-  ["Rollback itself creates divergence",  "Write ownership monitoring",    "Controlled reverse sync"],
+  ["CDC stops", "Replication lag climbs steadily and the CDC connector reports an error or stops sending heartbeats.", "Pause the cutover and keep A as the only writer. Fix and restart CDC from its saved position, and watch A's disk while the slot holds old log files."],
+  ["Missing events", "A scheduled comparison of row counts and checksums by key range finds rows or values on A that B does not have.", "Find which table or range is missing, re-copy it from A, and check why replication skipped it before moving on."],
+  ["Duplicate events", "Unique-key errors on B, or business totals on B that are higher than on A.", "Make B apply changes as upserts keyed by primary key, so applying the same change twice leaves the same result."],
+  ["Target slower than source", "B's apply latency and replication lag grow during busy hours, even though CDC is running.", "Slow down the backfill, add the missing index or capacity on B, and wait until lag stays low before moving any reads."],
+  ["Target data diverges from source", "Checksums for a key range differ between A and B, even though row counts match.", "Stop moving traffic. Compare the mismatched rows to find the cause, fix it, re-copy the range, and validate again."],
+  ["Cutover increases error rate", "Errors or p99 latency on B rise above A's baseline right after a traffic step.", "Route that traffic back to A, find the cause on B (often a missing index or config difference), and retry with a smaller step."],
+  ["Rollback itself creates divergence", "Writes that landed on B do not show up on A, or the reverse stream from B to A is behind or stopped.", "Fence writes, let the reverse stream finish copying B's last writes to A, then switch back. Never switch while the reverse stream is broken."],
 ];
+
+/** Plain-language "what happens" for each failure mode, keyed by its title. */
+export const failureExplanations: Record<string, string> = {
+  "CDC stops": "The process copying changes from A to B stalls or crashes. B stops receiving new writes and falls further behind every second, while A keeps old log files for it and slowly fills its disk.",
+  "Missing events": "Some changes never reach B, for example because a table was left out of replication. B looks healthy but is quietly missing rows or updates.",
+  "Duplicate events": "After a restart, CDC can resend changes that B already applied. If B blindly inserts them, you get duplicate rows or the same change applied twice.",
+  "Target slower than source": "B cannot apply changes as fast as A produces them, perhaps because of smaller hardware or a missing index. The lag grows, and switching reads now would show users stale data.",
+  "Target data diverges from source": "Row counts match, but some values differ because of a bad type conversion, a time-zone bug, or a lost update. Switching to B would serve wrong data.",
+  "Cutover increases error rate": "Traffic moves to B and errors or slow responses rise, often from a missing index, a config difference, or a query that runs differently on B.",
+  "Rollback itself creates divergence": "When you send traffic back to A, the writes that landed only on B must come back too. If the reverse stream is broken or behind, A is missing them and those writes are lost on the way back.",
+};
 
 export const tenXProblems = [
   "Snapshot duration increases significantly",

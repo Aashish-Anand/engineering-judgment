@@ -26,8 +26,6 @@
 .diagram { background:linear-gradient(140deg,var(--category-wash),var(--theme-surface,#fff)); border-color:var(--category-line); }
 .diagram li { border-left:3px solid var(--category-line); }
 .diagram li span { display:flex; align-items:center; justify-content:center; width:27px; height:27px; flex-shrink:0; border-radius:50%; color:var(--category-accent); background:var(--category-wash); }
-.diagram li:nth-child(3) { background:var(--theme-soft-blue,#f0f5fb); border-left-color:var(--theme-border-blue,#a8bfd7); }
-.diagram li:nth-child(4) { background:var(--theme-soft-amber,#fbf6e9); border-left-color:var(--theme-border-amber,#d4bc8d); }
 .body blockquote { border-color:var(--category-accent); background:var(--category-wash); border-radius:0; }
 .runbook > ol { counter-reset:response; padding:0; list-style:none; }
 .runbook > ol > li { counter-increment:response; position:relative; padding:14px 16px 14px 52px; border:1px solid var(--category-line); border-radius:0; background:linear-gradient(120deg,var(--category-wash),var(--theme-surface,#fff)); }
@@ -57,3 +55,28 @@
 /* Interview corner: one section for the spoken answer, level rubric, wrong answers, and traps. */
 .body.interviewCorner h3 { margin:24px 0 8px; font-size:18px; }
 .body .traps { padding:12px 20px 12px 36px; border-left:3px solid var(--theme-border-amber, #c59c67); background:var(--theme-soft-amber, #fbf6e9); }
+
+/* Wrong answers and failure modes: an outlined card, no tinted fill. A coral tag marks a wrong answer. */
+.body .failure { border:1px solid var(--theme-border, #d9d6cc); background:var(--theme-surface, #fff); padding:14px 18px; }
+.wrongTag { display:inline-block; margin-bottom:8px; padding:2px 10px; border-radius:999px; background:#ff7a59; color:#1a0b05; font:700 11px/1.6 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; }
+
+/* Failure modes as tabs: a vertical list of names beside the selected mode's details; wrapping pills on small screens. */
+.failureTabs { display:grid; grid-template-columns:minmax(0, 260px) minmax(0, 1fr); gap:16px; margin:1rem 0; }
+.failureList { display:flex; flex-direction:column; gap:6px; }
+.failureTab { display:flex; gap:10px; align-items:baseline; width:100%; padding:10px 12px; text-align:left; border:1px solid var(--theme-border, #d9d6cc); background:var(--theme-surface, #fff); color:var(--theme-text, #1e293b); font-size:14px; font-weight:600; line-height:1.4; cursor:pointer; }
+.failureTab > span { font:600 11px/1.6 var(--font-mono); color:var(--theme-muted, #55594f); }
+.failureTab:hover { border-color:var(--category-line); }
+.failureTab[aria-selected="true"] { border-color:var(--category-accent); box-shadow:inset 3px 0 0 var(--category-accent); background:var(--category-wash); }
+.failureTab[aria-selected="true"] > span { color:var(--category-accent); }
+.body .failurePanel { border:1px solid var(--theme-border, #d9d6cc); background:var(--theme-surface, #fff); padding:16px 20px; align-self:start; }
+.body .failurePanel h3 { font-size:18px; margin:0 0 8px; }
+.body .failurePanel p { font-size:15px; margin:0 0 6px; line-height:1.65; }
+@media (max-width: 720px) {
+  .failureTabs { grid-template-columns:minmax(0, 1fr); }
+  .failureList { flex-direction:row; flex-wrap:wrap; }
+  .failureTab { width:auto; padding:6px 12px; border-radius:999px; font-size:13px; }
+  .failureTab[aria-selected="true"] { box-shadow:none; }
+}
+@media print { .failurePanel[hidden] { display:block; } .failureList { display:none; } .failureTabs { display:block; } }
+.body .failurePanel .failureLabel { margin:14px 0 2px; font:700 11px/1.6 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--category-accent); }
+.body .failurePanel h3 + .failureLabel { margin-top:4px; }

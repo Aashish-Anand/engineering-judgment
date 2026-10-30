@@ -46,6 +46,10 @@ describe("shared blueprint format", () => {
     it(`${topic.id} has a level rubric, wrong answers, a runbook, and sources`, () => {
       expect(html).toContain('aria-label="Engineering level rubric"');
       expect(html.match(/<h3>Common wrong answers<\/h3>([\s\S]*?)<h3>/)?.[1].match(/<h4>/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
+      const failures = html.match(/<section id="failures"[\s\S]*?<\/section>/)?.[0] ?? "";
+      const failurePanels = [...failures.matchAll(/role="tabpanel"[\s\S]*?<\/div>/g)].map(match => match[0]);
+      expect(failurePanels.length).toBeGreaterThanOrEqual(3);
+      for (const panel of failurePanels) expect(panel).toMatch(/What happens<\/p><p>[^<]{40,}<\/p>/);
       expect(html.match(/<section id="runbook"[\s\S]*?<\/section>/)?.[0].match(/<li>/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
       expect(html.match(/<section id="sources"[\s\S]*?<ul>([\s\S]*?)<\/ul>/)?.[1].match(/<a href="https:/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
     });
