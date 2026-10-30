@@ -103,6 +103,8 @@ npx playwright test
 
 `npx next typegen` generates the route types (`LayoutProps`, `PageProps`) that a fresh checkout lacks; `next dev` and `next build` also create them. Playwright builds the site and serves it on port 3200. It checks layout overflow, full-page screenshots at 390, 768 and 1440 px, and axe accessibility in light and dark themes.
 
+The layout and axe specs wait for `html[data-hydrated]`, which `components/HydrationMarker.tsx` sets once React has hydrated the page. A component that renders a static fallback on the server and swaps in an interactive version (such as `StepScrubber`) would otherwise change the page height between screenshots on slower CI machines. Keep `HydrationMarker` last in the root layout.
+
 Screenshot baselines are per platform: `*-darwin.png` for macOS and `*-linux.png` for CI. Update the macOS set with `npm run test:e2e:update`. CI runs Playwright inside the official `mcr.microsoft.com/playwright` image whose tag matches the `@playwright/test` version in `package-lock.json`, so the Linux set must come from that image:
 
 - **Changed screenshots:** run the CI workflow manually (Actions → CI → Run workflow, or `gh workflow run ci.yml --ref <branch>`). Its *Regenerate Linux baselines* job uploads a `linux-snapshots` artifact. Unzip it into `e2e/layout.spec.ts-snapshots/` and commit it. Manual runs need the workflow on `main`.
