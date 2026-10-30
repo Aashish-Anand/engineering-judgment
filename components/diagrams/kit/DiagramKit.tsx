@@ -26,7 +26,9 @@ export function DiagramFigure({ id, title, caption, scroll = false, animate = tr
 
 export type SequenceStep = { from: number; to: number; label: string; detail?: string; tone?: Tone };
 
-export function Sequence({ actors, steps, window }: { actors: string[]; steps: SequenceStep[]; window?: { from: number; to: number; label: string } }) {
+/** `focus` marks the rows a step scrubber is on; rows after the last focused row are shown as not reached yet. */
+export function Sequence({ actors, steps, window, focus }: { actors: string[]; steps: SequenceStep[]; window?: { from: number; to: number; label: string }; focus?: number[] }) {
+  const reached = focus ? Math.max(...focus) : steps.length;
   const columns = { "--cols": actors.length } as CSSProperties;
   return (
     <div className={styles.sequence} style={columns}>
@@ -39,7 +41,7 @@ export function Sequence({ actors, steps, window }: { actors: string[]; steps: S
           const inWindow = window && i >= window.from && i <= window.to;
           const place = { gridColumn: `${start + 1} / span ${span}`, "--span": span, ...order(i) } as CSSProperties;
           return (
-            <li key={i} className={`${styles.stepRow} ${inWindow ? styles.inWindow : ""}`}>
+            <li key={i} className={`${styles.stepRow} ${inWindow ? styles.inWindow : ""} ${focus?.includes(i) ? styles.active : i > reached ? styles.upcoming : ""}`} aria-current={focus?.includes(i) ? "step" : undefined}>
               {window && i === window.from && <span className={styles.windowLabel}>{window.label}</span>}
               <div className={`${styles.message} ${styles[step.tone ?? "neutral"]} ${step.from === step.to ? styles.self : step.to < step.from ? styles.leftward : ""}`} style={place}>
                 <span className={styles.messageLabel}>{step.label}</span>

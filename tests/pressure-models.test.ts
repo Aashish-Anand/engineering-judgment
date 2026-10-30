@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paymentTrace, poolPressure, retryLevels, retryPressure, rollingSurgeReplicas } from "@/data/pressure-models";
+import { littlesLaw, paymentTrace, poolPressure, retryLevels, retryPressure, rollingSurgeReplicas, simulateQueue } from "@/data/pressure-models";
 import { productionBlueprints } from "@/data/topics/production-blueprints";
 import { topicCatalog } from "@/data/topics/catalog";
 
@@ -38,5 +38,54 @@ describe("new blueprint discovery", () => {
       for (const id of topic.related) expect(topicCatalog.some(entry => entry.id === id)).toBe(true);
       expect(new Set(topic.sections.map(section => section.id)).size).toBe(topic.sections.length);
     }
+  });
+});
+
+describe("queueing simulator", () => {
+  const base = { arrivalsPerSecond: 200, concurrency: 80, attempts: 1 };
+  const last = (result: ReturnType<typeof simulateQueue>) => result.samples.at(-1)!;
+
+  it("matches Little's Law when the dependency is fast", () => {
+    const end = last(simulateQueue({ ...base, serviceMs: 50 }));
+    expect(littlesLaw(200, 50)).toBe(10);
+    expect(end.inFlight).toBeCloseTo(10);
+    expect(end.queued).toBe(0);
+    expect(end.rejectedPerSecond).toBe(0);
+    expect(end.latencyMs).toBe(50);
+  });
+
+  it("turns a slowdown past capacity into a backlog, rejections, and longer latency", () => {
+    const result = simulateQueue({ ...base, serviceMs: 2000 });
+    const end = last(result);
+    expect(result.capacityPerSecond).toBe(40);
+    expect(result.samples.find(s => s.t === 4)!.queued).toBe(0);
+    expect(end.inFlight).toBeCloseTo(80);
+    expect(end.servedPerSecond).toBeCloseTo(40);
+    expect(end.queued).toBeCloseTo(200, -1);
+    expect(end.rejectedPerSecond).toBeCloseTo(160);
+    // Almost a full second of waiting on top of two seconds of service.
+    expect(end.latencyMs).toBeGreaterThan(2900);
+    expect(end.latencyMs).toBeLessThanOrEqual(3000);
+  });
+
+  it("needs no queue when the limit covers what Little's Law asks for", () => {
+    const end = last(simulateQueue({ ...base, serviceMs: 2000, concurrency: 400 }));
+    expect(end.inFlight).toBeCloseTo(littlesLaw(200, 2000));
+    expect(end.queued).toBe(0);
+    expect(end.latencyMs).toBe(2000);
+  });
+
+  it("adds retried work on top of new arrivals without serving more", () => {
+    const once = last(simulateQueue({ ...base, serviceMs: 2000 }));
+    const thrice = last(simulateQueue({ ...base, serviceMs: 2000, attempts: 3 }));
+    expect(thrice.offeredPerSecond).toBeGreaterThan(once.offeredPerSecond * 2);
+    expect(thrice.rejectedPerSecond).toBeGreaterThan(once.rejectedPerSecond * 2);
+    expect(thrice.servedPerSecond).toBeCloseTo(once.servedPerSecond);
+  });
+
+  it("accounts for every request", () => {
+    const { samples, totals } = simulateQueue({ ...base, serviceMs: 1000, attempts: 3 });
+    const end = samples.at(-1)!;
+    expect(totals.served + end.inFlight + end.queued + totals.failed).toBeCloseTo(totals.arrived, 6);
   });
 });

@@ -149,3 +149,44 @@
 .controls input[type=range] { width: 100%; accent-color: var(--neo-ink); }
 .controls output { font: 700 13px/1.4 var(--font-mono); color: var(--dk-accent); }
 .figure.figure .dots small { font: 700 12px/1.4 var(--font-mono); color: var(--tone); margin-left: 4px; align-self: center; }
+
+/* ── Step scrubber: one sequence, walked a step at a time ── */
+.stepRow.active { outline: 2px solid var(--dk-accent); outline-offset: -1px; background-color: var(--dk-accent-wash); }
+.stepRow.active .messageLabel { font-weight: 700; background: var(--dk-accent-wash); }
+.upcoming .message { --tone: var(--neo-muted); }
+.upcoming .messageLabel { font-weight: 400; color: var(--neo-muted); }
+.upcoming .arrow::before { border-top-style: dashed; }
+.scrubber { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 12px; align-items: end; width: 100%; }
+.figure.figure .scrubber label { min-width: 0; }
+.stepButton { padding: 6px 12px; border: 2px solid var(--neo-ink); background: var(--neo-surface); color: var(--neo-ink); font: 600 13px/1.4 var(--font-mono); cursor: pointer; }
+.stepButton[aria-disabled="true"] { border-color: var(--dk-line); color: var(--neo-muted); cursor: default; }
+.stepButton:focus-visible, .controls input:focus-visible { outline: 3px solid var(--dk-info); outline-offset: 2px; }
+.figure.figure .stepCaption { grid-column: 1 / -1; min-height: 3em; padding: 8px 10px; border-left: 4px solid var(--dk-accent); background: var(--dk-accent-wash); font-size: 15px; line-height: 1.5; }
+.stepCaption b { font: 700 12px/1.5 var(--font-mono); margin-right: 8px; color: var(--dk-accent); }
+.figure.figure .walkthrough { padding: 0 16px 14px; }
+.figure.figure .walkthrough ol { list-style: decimal; padding-left: 22px; font-size: 14px; line-height: 1.6; }
+.walkthrough h4 { font: 600 12px/1.6 var(--font-mono); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+@media (prefers-reduced-motion: no-preference) {
+  .stepRow { transition: background-color .25s ease, outline-color .25s ease; }
+}
+
+/* ── Queue simulator: small time series ── */
+.series { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.chart { border: 2px solid var(--tone); background: var(--neo-surface); padding: 8px 10px 6px; }
+.chartHead { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font: 600 13px/1.4 var(--font-sans); }
+.chartHead b { font: 700 13px/1.4 var(--font-mono); color: var(--tone); white-space: nowrap; }
+.plot { position: relative; height: 90px; margin-top: 6px; border-left: 1.5px solid var(--neo-ink); border-bottom: 1.5px solid var(--neo-ink); }
+.plot svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.plot .area { fill: var(--tone-wash); }
+.plot .line { fill: none; stroke: var(--tone); stroke-width: 2.5; stroke-linejoin: round; }
+.plot .mark { stroke: var(--neo-muted); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.yMax { position: absolute; top: -2px; left: 4px; font: 600 11px/1.3 var(--font-mono); color: var(--neo-muted); background: var(--neo-surface); padding: 0 2px; }
+.xAxis { position: relative; height: 16px; font: 600 11px/1.5 var(--font-mono); color: var(--neo-muted); }
+.xAxis span { position: absolute; left: calc(var(--at) - 4px); white-space: nowrap; }
+.xAxis span:last-child { left: auto; right: 0; }
+.figure.figure .law { margin-top: 16px; padding: 10px 12px; border: 2px solid var(--neo-ink); border-left-width: 6px; font-size: 15px; line-height: 1.6; }
+.figure.figure .law p + p { margin-top: 6px; }
+.law strong { font-family: var(--font-mono); font-size: 14px; }
+@media (prefers-reduced-motion: no-preference) {
+  .redraw .plot svg { animation: dk-draw .7s ease both; }
+}

@@ -3,19 +3,11 @@
 import { useId, useState } from "react";
 import { paymentTrace, poolPressure, retryLevels, rollingSurgeReplicas } from "@/data/pressure-models";
 import { Amplification, BudgetBars, DiagramFigure, Sequence, type SequenceStep, type Tone } from "./kit/DiagramKit";
+import { QueueSimulator } from "./kit/QueueSimulator";
+import { Range } from "./kit/Range";
 
 /* The blueprint diagrams that carry a real what-if. Each one replaces a separate text-only workbench;
    figures and wording mirror the article prose, so change both together. */
-
-function Range({ label, value, min, max, step = 1, unit = "", onChange }: { label: string; value: number; min: number; max: number; step?: number; unit?: string; onChange: (value: number) => void }) {
-  const id = useId();
-  return (
-    <label htmlFor={id}>
-      <span>{label}: <output htmlFor={id}>{value}{unit}</output></span>
-      <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} />
-    </label>
-  );
-}
 
 export function RetryAmplificationWorkbench() {
   const [layers, setLayers] = useState(3);
@@ -43,6 +35,11 @@ export function RetryAmplificationWorkbench() {
       />
     </DiagramFigure>
   );
+}
+
+/** The worked example's numbers: 200 requests per second, inventory slowing to 2 s, 80 concurrent calls. */
+export function RetryStormQueueSimulator() {
+  return <QueueSimulator title="From slowdown to backlog · one dependency over 30 seconds" initial={{ arrivalsPerSecond: 200, serviceMs: 2000, concurrency: 80, attempts: 3 }} />;
 }
 
 const CHECKOUTS_PER_SECOND = 400;

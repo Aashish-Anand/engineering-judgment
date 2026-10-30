@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import type { TopicId } from "@/data/topics/catalog";
 import { BranchFlow, DiagramFigure, Swimlane } from "./kit/DiagramKit";
-import { ConnectionBudgetWorkbench, PaymentCrashWorkbench, RetryAmplificationWorkbench } from "./InteractiveConceptDiagrams";
+import { ConnectionBudgetWorkbench, PaymentCrashWorkbench, RetryAmplificationWorkbench, RetryStormQueueSimulator } from "./InteractiveConceptDiagrams";
 
 /* One concept diagram per data-driven blueprint. Figures mirror the article prose; change both together. */
 
@@ -38,11 +38,11 @@ function SchemaPhases() {
   );
 }
 
-/** Where each diagram appears: after the paragraphs of the named section. `interactive` diagrams are the article's workbench. */
-export const blueprintConceptDiagrams: Partial<Record<TopicId, { sectionId: string; Diagram: ComponentType; interactive: boolean }>> = {
+/** Where each diagram appears: after the paragraphs of the named section. `interactive` diagrams are the article's workbench; `more` adds diagrams to other sections. */
+export const blueprintConceptDiagrams: Partial<Record<TopicId, { sectionId: string; Diagram: ComponentType; interactive: boolean; more?: { sectionId: string; Diagram: ComponentType }[] }>> = {
   "idempotent-api": { sectionId: "worked-example", Diagram: PaymentCrashWorkbench, interactive: true },
   "poison-messages": { sectionId: "mental-model", Diagram: PoisonAcknowledgementPaths, interactive: false },
-  "retry-storm": { sectionId: "naive", Diagram: RetryAmplificationWorkbench, interactive: true },
+  "retry-storm": { sectionId: "naive", Diagram: RetryAmplificationWorkbench, interactive: true, more: [{ sectionId: "worked-example", Diagram: RetryStormQueueSimulator }] },
   "connection-pool": { sectionId: "mental-model", Diagram: ConnectionBudgetWorkbench, interactive: true },
   "schema-evolution": { sectionId: "mental-model", Diagram: SchemaPhases, interactive: false },
 };
