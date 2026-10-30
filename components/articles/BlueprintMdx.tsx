@@ -133,7 +133,7 @@ export function MdxBlueprintArticle({ topicId }: { topicId: MdxTopicId }) {
   if (!doc || !renderContent) throw new Error(`No content/blueprints/*.mdx has topic: ${topicId}`);
   const data: BlueprintData = mdxBlueprintData[topicId];
   return (
-    <BlueprintArticleFrame topicId={topicId} toc={articleToc(doc.sections)} brief={doc.brief && <ExecutiveBlueprint {...doc.brief} />}>
+    <BlueprintArticleFrame topicId={topicId} toc={articleToc(doc.sections)} summary={doc.brief && <ExecutiveBlueprint {...doc.brief} />}>
       {renderContent({ components: mdxComponents(doc, data) })}
       <BlueprintTailSections topicId={topicId} tail={data.tail} scaleTitle={doc.sections.scale} sources={doc.sources.map(({ label, href }) => [label, href])} />
     </BlueprintArticleFrame>

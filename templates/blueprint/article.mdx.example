@@ -11,7 +11,7 @@ sections:
   architecture: "TODO: The design"
   worked-example: "TODO: Explore the failure"
   scale: "TODO: What breaks at ten times the load?"
-# Optional: the "Architecture brief & key thresholds" disclosure. Delete if unused.
+# Optional: adds a "The fix" tab to the article brief. Delete if unused.
 brief:
   bottleneck: "TODO: What saturates, with the number."
   solution: "TODO: The design in one line."

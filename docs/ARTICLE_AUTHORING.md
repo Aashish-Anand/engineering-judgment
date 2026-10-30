@@ -1,6 +1,20 @@
 # Publishing a blueprint
 
-All nine existing articles use `components/articles/BlueprintArticleFrame.tsx`, the shared sections in `components/articles/BlueprintSections.tsx`, and the shared neo-brutalist styles in `components/Neo.module.css`. Reuse that frame for every new article. The frame owns the breadcrumb, title, scenario brief, four-step journey, central idea, chapter navigation, and content width. Dedicated quiz pages inherit the same visual system automatically.
+All nine existing articles use `components/articles/BlueprintArticleFrame.tsx`, the shared sections in `components/articles/BlueprintSections.tsx`, and the shared neo-brutalist styles in `components/Neo.module.css`. Reuse that frame for every new article. The frame owns the breadcrumb, title, article brief, four-step journey, chapter navigation, and content width. Dedicated quiz pages inherit the same visual system automatically.
+
+## The article brief
+
+Everything a reader needs before section 01 sits in one tabbed block beside the title (`components/articles/ArticleBrief.tsx`, tabs in `BriefTabs.tsx`), so the first section starts high on the first screen. It stacks under the title below 1024px. You do not build it per article; it is filled from data. It opens with the article's three-step flow (`flow` in `data/topics/presentation.ts`, the same chain the home cards show), always visible above the tabs so a diagram is on the first screen; keep each step to a word or two so it fits at 390px. Then the tabs:
+
+| Tab | Source |
+|---|---|
+| Central idea (selected first) | `overview` in `data/topics/presentation.ts` |
+| Scenario | the four `scenario` facts in `data/topics/presentation.ts` |
+| Spot it | the "You are probably facing this when…" `signals` in `data/article-guides.ts` |
+| One minute | the `quick` reference in `data/article-guides.ts`, with its own Print button |
+| The fix (MDX articles only) | the optional `brief` frontmatter: bottleneck, fix, rule, key thresholds |
+
+The tabs follow the ARIA tab pattern: Left/Right arrows move between tabs (wrapping), Home and End jump to the first and last, and only the selected tab is in the Tab order. Every panel is rendered into the HTML and unselected ones are `hidden`, so search, readers without JavaScript, and print still get all of them; print shows every panel with its tab name. Keep each panel short: the longest one sets the header's height. `tests/article-layout.test.ts` checks that every article has the brief, its flow, its four standard tabs, one visible panel, and all of the text above.
 
 New articles are written in MDX. Four articles (hot partition, transactional outbox, flash sale, database migration) already work this way; the five data-driven ones in `data/topics/production-blueprints.ts` still render through `ProductionBlueprintArticle`.
 
@@ -9,7 +23,7 @@ New articles are written in MDX. Four articles (hot partition, transactional out
 | Part | File | Holds |
 |---|---|---|
 | Prose, sections 01–05 | `content/blueprints/<topic-id>.mdx` | Markdown plus the MDX components below |
-| Frontmatter | the same file | `topic`, the six topic-specific headings, optional `brief`, `sources` |
+| Frontmatter | the same file | `topic`, the six topic-specific headings, optional `brief` (the brief's "The fix" tab), `sources` |
 | Sections 06–12 | `data/topics/<topic>.ts`, `export const blueprint: BlueprintTail` | Runbook, trade-off tables, failure modes, scale list, interview corner, follow-ups, quiz, related topics |
 | Rendering | `components/articles/BlueprintMdx.tsx` | The MDX component map, `mdxBlueprintData`, and `MdxBlueprintArticle` |
 
@@ -45,7 +59,7 @@ Headings use sentence case. In MDX, the six topic-specific titles live in the fr
 ## Register the content
 
 1. Add the stable ID to `TopicId` and its metadata/route to `topicCatalog` in `data/topics/catalog.ts`. Existing data-driven topics live in `data/topics/production-catalog.ts` and are merged into that catalog.
-2. Add a presentation entry in `data/topics/presentation.ts`: a unique publication number, short title, central idea, four concise scenario facts, four journey steps, and the first section ID. Facts must agree with the article and experiment. Label illustrative assumptions clearly.
+2. Add a presentation entry in `data/topics/presentation.ts`: a unique publication number, short title, central idea, four concise scenario facts, four journey steps, a three-step `flow` with a short note, and the first section ID. Facts must agree with the article and experiment. Label illustrative assumptions clearly.
 3. Add the topic to `components/articles/registry.ts` as `() => createElement(MdxBlueprintArticle, { topicId: "<topic-id>" })`. Keep the ID consistent with the catalog, presentation entry, and the MDX `topic`. `tests/blueprint-mdx.test.ts` fails if an MDX file and `mdxBlueprintData` disagree.
 4. Add its library title, search aliases, and order to `libraryDetails` in `data/library.ts`. The library discovers registered topics automatically; homepage featured IDs are an explicit editorial choice.
 5. Add at least five scenario questions to `topicQuizzes` in `data/topics/quizzes.ts`, using the `QuizQuestion` type. Each question needs at least three distinct options, exactly one correct answer, and an explanation for every option. Vary the correct option’s position across the set.
@@ -90,7 +104,7 @@ Topic diagrams and labs (`HotPartitionLab`, `OutboxDiagram`, …) are available 
 
 ## Use the shared components
 
-- `BlueprintArticleFrame`: supply `topicId`, `toc`, and section content. Optional `brief` holds a longer architecture summary behind a native disclosure.
+- `BlueprintArticleFrame`: supply `topicId`, `toc`, and section content. Optional `summary` adds a "The fix" tab to the article brief (MDX articles pass their `brief` frontmatter through `ExecutiveBlueprint`).
 - `BlueprintSection`: supply the section ID, number, and title once. Each TOC target must resolve to one unique rendered ID.
 - `BlueprintPanel kind="diagram"`: place a labeled, responsive architecture visualization in the shared compact diagram container (up to 720px for SVG and 800px for HTML). Align it with the content’s left edge instead of stretching it to prose width. Use contained horizontal scrolling when reducing a dense diagram would make labels unreadable.
 - `BlueprintPanel`: contain an interactive client workbench with compact controls and a clear result. The article frame remains a server component; put state in the workbench.
