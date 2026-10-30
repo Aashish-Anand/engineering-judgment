@@ -6,7 +6,8 @@ Scope: all nine published blueprints, checked against primary industry sources a
 
 - **Done:** all P1 corrections (flash sale, outbox, hot partition, migration dual-write framing), plus the duplicated hot-partition trade-off table.
 - **Done:** the shared diagram kit (`components/diagrams/kit/`) and one concept diagram for each data-driven blueprint: payment crash-window sequence, poison-message acknowledgement branches, retry amplification, connection budget bars, schema-evolution swimlane.
-- **Next:** the P2 industry-practice additions, then wiring the unused migration diagrams and animating the flash-sale funnel.
+- **Done:** P2 industry-practice additions as sourced "In practice" callouts (Stripe, Google SRE, Uber/SQS/RabbitMQ/Kafka Connect, HikariCP, Parallel Change and PostgreSQL locks, DynamoDB limits and hot-key tools, Debezium Outbox Event Router, migration tooling incl. DMS loopback prevention). The two unused hand-drawn migration diagrams were replaced with kit diagrams (phase ownership swimlane, fenced cutover sequence).
+- **Remaining (P3):** flash-sale funnel animation, PgBouncer pool-mode table, AWS SDK retry quota, inbox pattern and event schema versioning in the outbox, rollback decision table in the migration article.
 
 ## Cross-cutting findings
 

@@ -18,6 +18,7 @@ import {
   OutboxSchemaExample,
 } from "@/components/diagrams/OutboxWorkedExamples";
 import { OutboxLab } from "@/components/OutboxLab";
+import { InPractice } from "@/components/InPractice";
 import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
 import { CareerRubricHub } from "@/components/CareerRubricHub";
 import {
@@ -242,6 +243,17 @@ export function TransactionalOutboxArticle() {
                     explanation: "SELECT queries do not corrupt serializability, but unindexed table scans create disk I/O bottlenecks.",
                   },
                 ]}
+              />
+
+              <InPractice
+                title="The standard CDC relay: Debezium's Outbox Event Router"
+                points={[
+                  "Debezium reads the outbox table through change data capture and expects insert-only rows. It filters out DELETE operations, so a cleanup job does not emit events.",
+                  "Its default columns are `id` (the event ID, sent as a message header), `aggregatetype`, `aggregateid`, `type`, and `payload`.",
+                  "`aggregatetype` chooses the topic (by default `outbox.event.<aggregatetype>`), and `aggregateid` becomes the Kafka message key, so every event for one order lands in the same partition, in order.",
+                  "Delivery is still at least once. Consumers deduplicate by the event ID, exactly as with a polling relay.",
+                ]}
+                sources={[["Debezium: Outbox Event Router", "https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html"]]}
               />
 
               <div className="my-6">

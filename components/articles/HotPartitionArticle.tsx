@@ -11,6 +11,7 @@ import { HotPartitionLab } from "@/components/HotPartitionLab";
 import { HotPartitionDiagram } from "@/components/diagrams/HotPartitionDiagram";
 import { HotPartitionFlow } from "@/components/diagrams/HotPartitionFlow";
 import { CodeBlock } from "@/components/CodeBlock";
+import { InPractice } from "@/components/InPractice";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
 import { InlineCheck } from "@/components/InlineCheck";
 import {
@@ -164,6 +165,21 @@ export function HotPartitionArticle() {
                     isCorrect: false,
                     explanation: "Redis clusters shard by key hash slot, not by individual counter values.",
                   },
+                ]}
+              />
+
+              <InPractice
+                title="Real systems publish the per-partition ceiling"
+                points={[
+                  "Amazon DynamoDB documents a maximum of 3,000 read units and 1,000 write units per second for every partition. One hot item cannot exceed that, however much capacity the table has.",
+                  "AWS recommends write sharding for hot keys: add a suffix to the partition key so writes spread across partitions, and accept that reads must combine the shards.",
+                  "Find the key before changing it. DynamoDB's CloudWatch Contributor Insights lists the most accessed and most throttled keys. For Redis, `redis-cli --hotkeys` samples hot keys, but only when `maxmemory-policy` is an LFU policy.",
+                ]}
+                sources={[
+                  ["AWS: DynamoDB partition key design", "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html"],
+                  ["AWS: Choosing the number of shards", "https://aws.amazon.com/blogs/database/choosing-the-right-number-of-shards-for-your-large-scale-amazon-dynamodb-table"],
+                  ["AWS: Contributor Insights for DynamoDB", "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/contributorinsights_HowItWorks.html"],
+                  ["Redis CLI", "https://redis.io/docs/latest/develop/tools/cli/"],
                 ]}
               />
             </section>

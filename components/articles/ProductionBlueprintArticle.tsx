@@ -10,6 +10,8 @@ import { InlineCheck } from "@/components/InlineCheck";
 import { ProductionPressureLab, type PressureLabKind } from "@/components/ProductionPressureLab";
 import { productionBlueprints } from "@/data/topics/production-blueprints";
 import { blueprintConceptDiagrams } from "@/components/diagrams/BlueprintConceptDiagrams";
+import { InPractice } from "@/components/InPractice";
+import { blueprintPractice } from "@/data/topics/blueprint-practice";
 import styles from "./ProductionBlueprintArticle.module.css";
 
 export function ProductionBlueprintArticle({ id }: { id: PressureLabKind }) {
@@ -30,9 +32,13 @@ export function ProductionBlueprintArticle({ id }: { id: PressureLabKind }) {
   ];
   const check = topic.conceptCheck ?? topic.questions[0];
   const concept = blueprintConceptDiagrams[id];
+  const practice = blueprintPractice[id];
+  // Practice sources join the section 15 reference list without repeating a link.
+  const sources = [...topic.sources, ...(practice?.sources ?? [])].filter(([, href], i, all) => all.findIndex(([, h]) => h === href) === i);
   const renderSection = (section: typeof topic.sections[number], index: number) => <section id={section.id} key={section.id}>
     <SectionHeader number={String(index + 1).padStart(2, "0")} id={section.id} title={section.title} />
     {section.paragraphs.map(p => <p key={p}>{p}</p>)}
+    {practice?.sectionId === section.id && <InPractice {...practice} />}
     {concept?.sectionId === section.id && <concept.Diagram />}
     {section.id === "architecture" && <figure className={styles.diagram} aria-label={`${topic.shortTitle}: architecture flow`}>
       <ol>{topic.flow.map((step, i) => <li key={step}><span aria-hidden="true">{i + 1}</span>{step}</li>)}</ol>
@@ -52,7 +58,7 @@ export function ProductionBlueprintArticle({ id }: { id: PressureLabKind }) {
           <section id="interview"><SectionHeader number="12" id="interview" title="Explain the decision" /><blockquote>{topic.interview}</blockquote><p>Start with the business invariant, walk one failure boundary, and explain what the recovery mechanism costs. State the assumption that would make you choose a different design.</p></section>
           <section id="career-rubric" className={styles.rubric}><SectionHeader number="13" id="career-rubric" title="Expectations by engineering level" />{topic.levels.map((text, i) => <div key={text}><h3>{["Mid-level", "Senior", "Staff"][i]}</h3><p>{text}</p></div>)}</section>
           <section id="follow-ups" className={styles.followups}><SectionHeader number="14" id="follow-ups" title="What breaks next?" /><p>Try answering each question before you open it.</p>{topic.followups.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</section>
-          <section id="sources"><SectionHeader number="15" id="sources" title="Sources and practice" /><p>The walkthrough is an illustrative design. Consult these primary references for the underlying mechanisms and product-specific contracts.</p><ul>{topic.sources.map(([label, href]) => <li key={href}><a href={href}>{label}</a></li>)}</ul><div id="judgment-quiz"><ArticleQuizEntry title={topic.shortTitle} questions={topic.questions} quizHref={`${topic.href}/quiz`} /></div><RelatedTopics ids={topic.related} /><ArticleNav currentId={id} /></section>
+          <section id="sources"><SectionHeader number="15" id="sources" title="Sources and practice" /><p>The walkthrough is an illustrative design. Consult these primary references for the underlying mechanisms and product-specific contracts.</p><ul>{sources.map(([label, href]) => <li key={href}><a href={href}>{label}</a></li>)}</ul><div id="judgment-quiz"><ArticleQuizEntry title={topic.shortTitle} questions={topic.questions} quizHref={`${topic.href}/quiz`} /></div><RelatedTopics ids={topic.related} /><ArticleNav currentId={id} /></section>
   </BlueprintArticleFrame>;
 }
 

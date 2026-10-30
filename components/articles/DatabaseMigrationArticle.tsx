@@ -8,6 +8,8 @@ import { InlineCheck } from "@/components/InlineCheck";
 import { NaiveMigrationDiagram } from "@/components/diagrams/NaiveMigrationDiagram";
 import { CapacitySizingLab } from "@/components/CapacitySizingLab";
 import { CutoverWorkbench } from "@/components/CutoverWorkbench";
+import { InPractice } from "@/components/InPractice";
+import { FencedCutoverSequence, MigrationOwnershipLanes } from "@/components/diagrams/MigrationPhaseDiagrams";
 import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
 import { CareerRubricHub } from "@/components/CareerRubricHub";
 
@@ -102,6 +104,7 @@ export function DatabaseMigrationArticle() {
                 id="phases"
               />
               <p className="reading-copy">Each phase has an exit condition. Move to the next one only when the evidence says the previous one is done, not when the calendar says so.</p>
+              <MigrationOwnershipLanes />
 
               <h3>1. Seed the target from a known position</h3>
               <p className="reading-copy">Create the change-data-capture (CDC) position first. In PostgreSQL that is a logical replication slot, which remembers a point in the write-ahead log (WAL), the ordered record of every committed change. Then copy existing rows in a snapshot that is consistent with that same position. The order matters: if you copy first and start capturing later, every write between the two moments is silently lost.</p>
@@ -128,8 +131,25 @@ export function DatabaseMigrationArticle() {
                 <li>Route writes to B, release the held requests, and start the reverse stream.</li>
                 <li>Watch errors, latency, and reverse-stream lag. Rolling back is the same procedure in the other direction.</li>
               </ol>
+              <FencedCutoverSequence />
               <p className="reading-copy">In practice, &ldquo;zero downtime&rdquo; means no visible outage. A write hold of a few seconds is usually part of it, and it is far safer than letting two databases accept the same writes.</p>
               <p className="reading-copy">Keep A in sync for at least one full business cycle (month-end jobs, weekly reports) before you decommission it. Some divergence only shows up when a rare query finally runs.</p>
+
+              <InPractice
+                title="Tools teams use for each phase"
+                points={[
+                  "PostgreSQL logical replication (publications and subscriptions), or Debezium's PostgreSQL connector, streams WAL changes from a replication slot.",
+                  "AWS DMS runs a full load plus ongoing replication (CDC); for PostgreSQL it reads changes through a logical replication slot. AWS states there is no latency SLA for CDC, so measure lag rather than assume it.",
+                  "Keeping a reverse stream for rollback is bidirectional replication. DMS supports it only with loopback prevention enabled, otherwise each change echoes back to the database it came from.",
+                  "Stripe's published migrations used application dual writes in four steps (dual write, move reads, move writes, remove old data) and verified read paths with GitHub's Scientist library.",
+                ]}
+                sources={[
+                  ["PostgreSQL: Logical replication", "https://www.postgresql.org/docs/current/logical-replication.html"],
+                  ["Debezium: PostgreSQL connector", "https://debezium.io/documentation/reference/stable/connectors/postgresql.html"],
+                  ["AWS DMS: Ongoing replication", "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html"],
+                  ["Stripe: Online migrations at scale", "https://stripe.com/blog/online-migrations"],
+                ]}
+              />
             </section>
 
             {/* ── 05 — Interactive Migration Workbench ─────────── */}
