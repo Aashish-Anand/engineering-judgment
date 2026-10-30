@@ -110,6 +110,33 @@ type SourcesProps = {
   related: readonly TopicId[];
 };
 
+/**
+ * Typed data for sections 06–12 of an MDX blueprint (see content/blueprints/).
+ * The scale heading and the sources come from the article's frontmatter.
+ */
+export type BlueprintTail = {
+  runbook: { steps: string[]; intro?: string; tables?: DecisionTable[] };
+  tradeoffs: DecisionTable[];
+  failures: FailureMode[];
+  scale: { paragraphs?: string[]; items?: string[] };
+  interview: InterviewProps;
+  followUps: [question: string, answer: string][];
+  quiz: SourcesProps["quiz"];
+  related: readonly TopicId[];
+};
+
+export function BlueprintTailSections({ topicId, tail, scaleTitle, sources }: { topicId: TopicId; tail: BlueprintTail; scaleTitle: string; sources: string[][] }) {
+  return <>
+    <RunbookSection {...tail.runbook} />
+    <TradeoffsSection tables={tail.tradeoffs} />
+    <FailuresSection failures={tail.failures} />
+    <ScaleSection title={scaleTitle} {...tail.scale} />
+    <InterviewSection {...tail.interview} />
+    <FollowUpsSection items={tail.followUps} />
+    <SourcesSection topicId={topicId} sources={sources} quiz={tail.quiz} related={tail.related} />
+  </>;
+}
+
 export function SourcesSection({ topicId, sources, quiz, related }: SourcesProps) {
   // The same reference can back several "In practice" notes; list it once.
   const unique = sources.filter(([, href], i, all) => all.findIndex(([, h]) => h === href) === i);

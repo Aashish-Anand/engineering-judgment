@@ -1,0 +1,153 @@
+---
+topic: hot-partition
+sections:
+  problem: One post receives 70% of the traffic
+  naive: Why more partitions do not help
+  mental-model: Reuse reads, distribute writes
+  architecture: Cache reads, salt writes
+  worked-example: Explore the skew
+  scale: What breaks at ten times the traffic?
+brief:
+  timeToRead: 30-Second Architecture Blueprint
+  bottleneck: A viral post concentrates 70,000 requests/sec onto a single database partition key. Doubling partitions does not help because all traffic shares the exact same key.
+  solution: "Dual-Path Split: Cache 100% of public post body reads at the edge with single-flight mutexes ➔ Salt write keys with user_id % 8 into 10 parallel buckets ➔ Asynchronously aggregate public totals in the background."
+  goldenRule: Never try to scale a single hot key by adding database servers; split the key on the write path and cache it on the read path.
+  keyMetrics:
+    - { label: "Hot Key Traffic", value: "70% of total cluster load" }
+    - { label: "Salt Spread", value: "8 buckets · 8,750 writes/s each" }
+    - { label: "Read Reduction", value: "99% absorbed at cache layer" }
+sources:
+  - { label: "AWS: DynamoDB partition key design", href: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html" }
+  - { label: "AWS: Choosing the number of shards", href: "https://aws.amazon.com/blogs/database/choosing-the-right-number-of-shards-for-your-large-scale-amazon-dynamodb-table" }
+  - { label: "AWS: Contributor Insights for DynamoDB", href: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/contributorinsights_HowItWorks.html" }
+  - { label: "Redis CLI", href: "https://redis.io/docs/latest/develop/tools/cli/" }
+---
+
+<Section id="problem">
+
+<ProblemStatement>
+
+Taylor Swift posts an announcement. Out of 100,000 total requests arriving each second across your 16-partition cluster, **70,000 target Taylor's single post**.
+
+<Pullquote>Cluster averages lie. 15 partitions sit idle at 2,000 RPS while partition P7 is crushed under 7× its physical limit.</Pullquote>
+
+</ProblemStatement>
+
+<ScenarioMetrics />
+
+</Section>
+
+<Section id="naive">
+
+The immediate instinct during an incident is: *“Spin up 16 more database partitions!”* But partition key routing hashes `post_id`. All 70,000 RPS still map to the exact same partition:
+
+<Diagram><HotPartitionDiagram /></Diagram>
+
+<InlineCheck
+  question="Architectural Gut Check: What happens if we write all 70,000 likes directly to Redis under the post_id key without salting?"
+  options={[
+    {
+      label: "Redis is in-memory and can easily handle 70,000 writes to a single key.",
+      isCorrect: false,
+      explanation: "Redis is single-threaded per key! 70,000 mutations/sec plus network serialization overhead pegs a single Redis core at 100% CPU and saturates 1Gbps network NICs. The hot partition simply moves from Postgres to Redis.",
+    },
+    {
+      label: "It simply relocates the hot partition to a single Redis shard, causing CPU core saturation.",
+      isCorrect: true,
+      explanation: "Spot on! In-memory data structures are fast, but a single Redis key cannot execute across multiple CPU cores or cluster nodes. You must salt keys to distribute write operations across Redis shards.",
+    },
+    {
+      label: "Redis will automatically shard the counter value across all cluster nodes.",
+      isCorrect: false,
+      explanation: "Redis clusters shard by key hash slot, not by individual counter values.",
+    },
+  ]}
+/>
+
+<InPractice title="Real systems publish the per-partition ceiling">
+
+- Amazon DynamoDB documents a maximum of 3,000 read units and 1,000 write units per second for every partition. One hot item cannot exceed that, however much capacity the table has.
+- AWS recommends write sharding for hot keys: add a suffix to the partition key so writes spread across partitions, and accept that reads must combine the shards.
+- Find the key before changing it. DynamoDB's CloudWatch Contributor Insights lists the most accessed and most throttled keys. For Redis, `redis-cli --hotkeys` samples hot keys, but only when `maxmemory-policy` is an LFU policy.
+
+</InPractice>
+
+</Section>
+
+<Section id="mental-model">
+
+<ScrollReveal>
+  <InsightCard title="The Architectural Invariant">One popular post creates two completely different kinds of work: **identical public reads** and **independent user writes**. Conflating them is why systems collapse.</InsightCard>
+</ScrollReveal>
+
+Public reads (reading post text) are identical across millions of users: cache them once and coalesce refreshes. User writes (likes, unlikes, comments) are independent: route each user to one of 8 buckets by a stable hash of their user ID. 70,000 writes per second become 8,750 per bucket, under the assumed 10,000 limit, provided the buckets land on different physical partitions.
+
+</Section>
+
+<Section id="architecture">
+
+Follow each kind of work to its separate relief path:
+
+<Diagram><HotPartitionFlow /></Diagram>
+
+A cache alone has a weak moment: the instant the popular entry expires. Every request that arrives before it is refilled misses at once, and thousands of identical queries hit the partition together. Request coalescing, often called single-flight after Go’s `singleflight` package, closes that gap. The first miss for a key fetches from the database; concurrent misses for the same key wait for that one result instead of sending their own query. Pair it with serving the slightly stale copy while one request refreshes it, so readers never wait on the refresh at all.
+
+<Diagram><DatabaseRequestGate /></Diagram>
+
+<Diagram><HotPartitionFlow writes={true} /></Diagram>
+
+<Diagram><ReactionKeyExample /></Diagram>
+
+```typescript filename="reaction-sharder.ts"
+// Write path: one durable reaction per user, routed to one of 8 buckets
+const BUCKET_COUNT = 8; // 70,000 writes/s ÷ 8 = 8,750 per bucket (< 10,000 limit)
+const bucket = stableHash(userId) % BUCKET_COUNT;
+const partitionKey = `post#${postId}#b${bucket}`;
+
+await db.transaction(async (tx) => {
+  // Conditional write: a retried op or a late, older request changes nothing
+  const changed = await tx.reactions.setIfNewer(partitionKey, userId, { liked: true, opId, version });
+  // Only a real state change emits a count delta, committed with the reaction
+  if (changed) await tx.outbox.insert({ postId, bucket, delta: +1, opId });
+});
+
+// Display total: a background aggregator applies deltas to a cached counter
+// every ~500 ms. Never scatter-gather all 8 buckets on the read path.
+```
+
+<InlineCheck
+  question="Architectural Gut Check: What breaks if we calculate the bucket using random() instead of user_id % 8?"
+  options={[
+    {
+      label: "Random salting makes un-liking and idempotency checks impossible without querying all 8 buckets.",
+      isCorrect: true,
+      explanation: "Spot on! If Alice's like was placed into bucket 4 at random, when she later clicks 'unlike', the system has no idea which bucket holds her vote without querying every bucket. Deterministic hashing by user ID guarantees that Alice's likes and unlikes always route to the exact same bucket.",
+    },
+    {
+      label: "Random salting causes PostgreSQL to abort the transaction snapshot.",
+      isCorrect: false,
+      explanation: "Random salting doesn't cause transaction aborts; it causes state loss and inability to find records.",
+    },
+    {
+      label: "Random distribution violates Redis atomic increment constraints.",
+      isCorrect: false,
+      explanation: "Redis doesn't care about random keys, but your application can never reliably find or undo Alice's reaction.",
+    },
+  ]}
+/>
+
+<Diagram><ReactionRetryExample /></Diagram>
+
+<Diagram><ReactionMigrationExample /></Diagram>
+
+<Diagram><CommentReadExample /></Diagram>
+
+</Section>
+
+<Section id="worked-example">
+
+Switch between the read and write paths. Raise the share of reads served by cache, then spread post-like writes across more partitions, and watch when the hot partition drops under its limit.
+
+<Workbench><HotPartitionLab /></Workbench>
+
+</Section>

@@ -1,0 +1,29 @@
+// Add to data/topics/<topic>.ts, then add the topic to mdxBlueprintData in
+// components/articles/BlueprintMdx.tsx. These are sections 06–12; the scale
+// heading and the sources come from the MDX frontmatter.
+import type { BlueprintTail } from "@/components/articles/BlueprintSections";
+import { topicQuizzes } from "@/data/topics/quizzes";
+
+export const blueprint: BlueprintTail = {
+  runbook: { steps: ["TODO: Detect", "TODO: Mitigate", "TODO: Verify and roll back"] },
+  tradeoffs: [{ caption: "TODO: Decisions and their costs", headers: ["Decision", "Benefit", "Cost"], rows: [["TODO", "TODO", "TODO"]] }],
+  failures: [{ title: "TODO: Failure mode", explanation: "TODO: In plain words, what goes wrong and why it hurts (two sentences).", signal: "TODO: How you notice", response: "TODO: What you do" }],
+  scale: { paragraphs: ["TODO: One sentence that frames the larger load:"], items: ["TODO: The next limit"] },
+  interview: {
+    answer: "TODO: A one-minute spoken answer. Separate paragraphs with a blank line.",
+    levels: [
+      { title: "Mid-level", description: "TODO", items: ["TODO"] },
+      { title: "Senior", description: "TODO", items: ["TODO"] },
+      { title: "Staff", description: "TODO", items: ["TODO"] },
+    ],
+    wrongAnswers: [
+      { question: "TODO: Why not the obvious fix?", explanation: "TODO" },
+      { question: "TODO: Why not the second-most tempting fix?", explanation: "TODO" },
+      { question: "TODO: Why not the fix that looks safe but moves the problem?", explanation: "TODO" },
+    ],
+    traps: ["TODO: A trap to call out"],
+  },
+  followUps: [["TODO: Follow-up question", "TODO: Answer"]],
+  quiz: { title: "TODO: Short title", questions: topicQuizzes["replace-with-registered-topic-id"], href: "/topics/<category>/<slug>/quiz" },
+  related: [],
+};

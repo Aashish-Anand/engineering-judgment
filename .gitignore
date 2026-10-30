@@ -47,3 +47,6 @@ SESSION_HANDOFF.md
 /test-results/
 /playwright-report/
 /blob-report/
+
+# velite (generated from content/)
+/.velite/

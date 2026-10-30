@@ -1,6 +1,6 @@
 import { DiagramFigure, Sequence, Swimlane } from "./kit/DiagramKit";
 
-/* Migration diagrams. They mirror the five-phase walkthrough in DatabaseMigrationArticle; change both together. */
+/* Migration diagrams. They mirror the five-phase walkthrough in content/blueprints/database-migration.mdx; change both together. */
 
 export function MigrationOwnershipLanes() {
   return (

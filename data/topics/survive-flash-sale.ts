@@ -1,3 +1,4 @@
+import type { BlueprintTail } from "@/components/articles/BlueprintSections";
 import type { TopicId } from "@/data/topics/catalog";
 import type { TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
 import { getTopicById } from "@/data/topics/catalog";
@@ -441,3 +442,59 @@ export const judgmentQuiz = [
   }
 ];
 
+
+/** Sections 06–12 of the blueprint; sections 01–05 are content/blueprints/flash-sale.mdx. */
+export const blueprint: BlueprintTail = {
+  runbook: {
+    steps: [
+      "Before the start, pre-warm capacity and load-test the whole funnel. Autoscaling cannot react to a spike that is over in seconds.",
+      "Open the waiting room before the start and admit buyers at the drip rate the inventory gate was tested for.",
+      "Watch the Redis inventory node's CPU, latency, and remaining stock. If the stock key saturates its node, short-circuit requests locally once stock reaches zero.",
+      "If Redis fails, trip the circuit breaker and reject checkouts with a clear retry message. Never fall back to the database for reservations.",
+      "Watch settlement-queue lag and the reservation sweeper. Expired holds must return to stock within the TTL.",
+      "After the sale, reconcile Redis holds, committed orders, and payments, and refund any order beyond the available stock.",
+    ],
+  },
+  tradeoffs: [
+    { caption: "Inventory concurrency approaches", headers: ["Approach", "Advantage", "Risk"], rows: inventoryApproaches },
+    { caption: "Funnel decisions", headers: ["Decision", "Benefit", "Cost"], rows: keyTradeoffs },
+  ],
+  failures: failureModes.map(([title, signal, response]) => ({ title, signal, response, explanation: failureExplanations[title] })),
+  scale: {
+    paragraphs: ["With 100 million buyers and 100,000 units, every tier of the funnel meets a new limit:"],
+    items: tenXProblems,
+  },
+  interview: {
+    answer: interviewAnswer,
+    levels: levelExpectations,
+    wrongAnswers: [
+      {
+        question: "Why not rely on Kubernetes Horizontal Pod Autoscaler (HPA)?",
+        explanation:
+          "Kubernetes HPA takes 45–90 seconds to observe metrics and spin up new pod containers. At 10,000 admitted requests per second, the 10,000 iPhones are reserved in about one second. The spike is completely over before the first new pod reaches ready status.",
+      },
+      {
+        question: "Why not process payments before deducting stock?",
+        explanation:
+          "External payment gateways (Stripe, Adyen) take 1,500–3,000ms per transaction. Bombarding them with 2,000,000 concurrent API calls triggers rate limits and causes thousands of cards to be billed for items that just sold out.",
+      },
+      {
+        question: "Why not let stock go negative and cancel excess orders?",
+        explanation:
+          "Selling 10,500 items when you only have 10,000 units requires canceling 500 orders post-sale. This creates credit card chargeback penalties, PR outrage, and legal liabilities. Zero overselling must be an inviolable invariant.",
+      },
+    ],
+    traps: avoidList,
+    whiteboardChain: [
+      { label: "1. Funnel Edge", color: "bg-rose-50 text-rose-700 border-rose-200" },
+      { label: "2. Queue Token", color: "bg-amber-50 text-amber-800 border-amber-200" },
+      { label: "3. Redis Lua", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+      { label: "4. Kafka Buffer", color: "bg-blue-50 text-blue-700 border-blue-200" },
+      { label: "5. DB Settlement", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+      { label: "6. Reconciliation", color: "bg-purple-50 text-purple-700 border-purple-200" },
+    ],
+  },
+  followUps: followUpQuestions.map(({ question, answer }) => [question, answer]),
+  quiz: { title: "The 10M-user flash sale", questions: judgmentQuiz, href: "/topics/traffic/survive-flash-sale/quiz" },
+  related: relatedTopics,
+};

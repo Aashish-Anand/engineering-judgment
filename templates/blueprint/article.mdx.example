@@ -1,0 +1,80 @@
+---
+# Copy to content/blueprints/<topic-id>.mdx. Velite validates this frontmatter
+# (velite.config.ts) and compiles the body; `npm run content` rebuilds it.
+topic: replace-with-registered-topic-id
+# Headings of the six topic-specific sections, in sentence case. They also
+# become the chapter navigation labels.
+sections:
+  problem: "TODO: The production situation"
+  naive: "TODO: Why the first design fails"
+  mental-model: "TODO: The distinction that makes it tractable"
+  architecture: "TODO: The design"
+  worked-example: "TODO: Explore the failure"
+  scale: "TODO: What breaks at ten times the load?"
+# Optional: the "Architecture brief & key thresholds" disclosure. Delete if unused.
+brief:
+  bottleneck: "TODO: What saturates, with the number."
+  solution: "TODO: The design in one line."
+  goldenRule: "TODO: The rule to remember."
+  keyMetrics:
+    - { label: "TODO", value: "TODO" }
+# Primary references. Section 12 lists them; <InPractice> cites them.
+sources:
+  - { label: "TODO: Primary source", href: "https://example.com" }
+---
+
+{/* Sections 01–05 only. Sections 06–12 come from the `blueprint` export in data/topics/<topic>.ts. */}
+
+<Section id="problem">
+
+TODO: Describe a concrete production situation, the workload, and the invariant to protect.
+
+</Section>
+
+<Section id="naive">
+
+TODO: Walk through a specific failure boundary and its observable consequence.
+
+<InlineCheck
+  question="TODO: A decision the reader should make here?"
+  options={[
+    { label: "TODO: Tempting answer", isCorrect: false, explanation: "TODO: Why it fails." },
+    { label: "TODO: Best answer", isCorrect: true, explanation: "TODO: Why it holds." },
+    { label: "TODO: Plausible distractor", isCorrect: false, explanation: "TODO: Why it fails." },
+  ]}
+/>
+
+</Section>
+
+<Section id="mental-model">
+
+TODO: Explain the distinction that makes the problem easier to reason about.
+
+</Section>
+
+<Section id="architecture">
+
+TODO: Trace one successful operation and one failure through the design.
+
+{/* Register the diagram in `diagrams` in components/articles/BlueprintMdx.tsx first. */}
+<Diagram><YourTopicDiagram /></Diagram>
+
+```typescript filename="todo.ts"
+// TODO: A short, runnable-looking example.
+```
+
+<InPractice title="TODO: How named systems do this">
+
+- TODO: One point that traces to a source in the frontmatter.
+
+</InPractice>
+
+</Section>
+
+<Section id="worked-example">
+
+TODO: Tell the reader which assumption to change and what to observe.
+
+<Workbench><YourTopicLab /></Workbench>
+
+</Section>
