@@ -2,10 +2,10 @@ import styles from "./FlashSaleArchitectureDiagram.module.css";
 
 const stages = [
   { title: "Concurrent buyers", detail: "10M buyers enter the admission funnel.", throughput: "~2,000,000 peak RPS", tone: "paper" },
-  { title: "CDN edge + WAF", detail: "Static caching and bot filtering shed 70% of traffic.", throughput: "~600,000 RPS continue", tone: "blue" },
-  { title: "Virtual waiting room", detail: "Signed queue tokens and a leaky-bucket release.", throughput: "Controlled 50,000 RPS", tone: "yellow" },
+  { title: "CDN edge + WAF", detail: "Static caching and bot filtering absorb most traffic (illustrative).", throughput: "~600,000 RPS continue", tone: "blue" },
+  { title: "Virtual waiting room", detail: "Randomized places for early arrivals, signed tokens, metered release.", throughput: "Controlled 10,000 req/s", tone: "yellow" },
   { title: "Redis stock gate", detail: "Atomic Lua reservation: DECRBY in < 0.5ms.", throughput: "Exactly 10,000 wins", tone: "mint" },
-  { title: "Kafka order buffer", detail: "Partitioned by user ID; decouples the database spike.", throughput: "Smooth 500 writes/s", tone: "lilac" },
+  { title: "Kafka order buffer", detail: "Partitioned by user ID; decouples the database spike.", throughput: "~13 orders/s (cap 500/s)", tone: "lilac" },
   { title: "Database settlement", detail: "Workers batch INSERTs with zero overdraft.", throughput: "10,000 database orders", tone: "paper" },
 ];
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { topicCatalog, type TopicId } from "@/data/topics/catalog";
+import { libraryDetails } from "@/data/library";
 
 type ArticleNavProps = {
   currentId: TopicId;
@@ -29,7 +30,7 @@ export function ArticleNav({ currentId }: ArticleNavProps) {
         >
           <span className="text-xs font-sans font-medium text-slate-400">← Previous Article</span>
           <span className="block font-sans text-sm sm:text-base font-bold text-slate-900 mt-1 group-hover:text-blue-600 transition-colors leading-snug">
-            {prev.meta.title}
+            {libraryDetails[prev.id].title}
           </span>
         </Link>
       ) : (
@@ -42,7 +43,7 @@ export function ArticleNav({ currentId }: ArticleNavProps) {
         >
           <span className="text-xs font-sans font-medium text-slate-400">Next Article →</span>
           <span className="block font-sans text-sm sm:text-base font-bold text-slate-900 mt-1 group-hover:text-blue-600 transition-colors leading-snug">
-            {next.meta.title}
+            {libraryDetails[next.id].title}
           </span>
         </Link>
       ) : (

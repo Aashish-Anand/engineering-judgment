@@ -26,7 +26,7 @@ export function SiteHeader() {
   const redesigned = path === "/" || path.startsWith("/topics/");
 
   return (
-    <header className={`sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all shadow-2xs ${redesigned ? neo.header : ""}`}>
+    <header className={`sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-200/80 shadow-2xs ${redesigned ? neo.header : ""}`}>
       <div className="page-shell site-header-row h-18 flex items-center justify-between gap-4">
         {/* Left: Clean Brand Identity */}
         <Link

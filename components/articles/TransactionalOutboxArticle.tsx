@@ -20,7 +20,6 @@ import {
 import { OutboxLab } from "@/components/OutboxLab";
 import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
 import { CareerRubricHub } from "@/components/CareerRubricHub";
-import { getTopicById } from "@/data/topics/catalog";
 import {
   tocItems,
   scenarioMetrics,
@@ -42,7 +41,7 @@ const OUTBOX_TRAPS = [
     trapNum: "TRAP 02",
     question: "Why not poll outbox with SELECT * FROM outbox WHERE published = false?",
     explanation:
-      "As the outbox table grows to millions of historical rows, sequential scans without composite indexes or high-water marks kill disk IOPS. Furthermore, un-partitioned concurrent polling creates race conditions and re-orders events.",
+      "As the outbox table grows to millions of historical rows, scans without a partial index on unpublished rows kill disk IOPS. Concurrent pollers without a fixed slice of aggregate IDs can also publish events for the same order out of order.",
   },
   {
     trapNum: "TRAP 03",
@@ -82,10 +81,7 @@ const OUTBOX_AVOID = [
 ];
 
 export function TransactionalOutboxArticle() {
-  const relatedTopics = (["database-migration", "flash-sale", "idempotent-api", "poison-messages"] as const).map((id) => {
-    const topic = getTopicById(id);
-    return { title: topic.meta.title, category: topic.meta.category, href: topic.href };
-  });
+  const relatedTopics = ["idempotent-api", "poison-messages", "database-migration", "schema-evolution"] as const;
 
   return (
     <BlueprintArticleFrame topicId="transactional-outbox" toc={tocItems} brief={
@@ -160,9 +156,9 @@ export function TransactionalOutboxArticle() {
                     explanation: "Kafka is not an XA resource and does not participate in Postgres transactions. If the broker accepts the message but the DB commit later fails, Kafka cannot 'unsend' the message. Worse, broker latency blocks DB connections.",
                   },
                   {
-                    label: "It couples database throughput to broker latency, causing rapid connection pool exhaustion.",
+                    label: "Kafka cannot roll back: the publish can succeed and the commit still fail, and every transaction now waits on the broker.",
                     isCorrect: true,
-                    explanation: "Spot on! Holding a DB connection open while awaiting a remote network round-trip to Kafka will exhaust connection pools (50–200 slots) in milliseconds under load, taking down your entire API.",
+                    explanation: "Right. The broker does not take part in the database transaction, so a publish followed by a failed commit leaves a ghost event that downstream services act on. As a second cost, each transaction holds its connection and locks while waiting on the broker, which exhausts the pool under load.",
                   },
                   {
                     label: "Kafka brokers automatically reject any messages sent from within SQL transactions.",
@@ -340,7 +336,7 @@ export function TransactionalOutboxArticle() {
                 title="Related System Architecture Deep Dives"
                 id="related"
               />
-              <RelatedTopics topics={relatedTopics} />
+              <RelatedTopics ids={relatedTopics} />
               <div className="mt-8">
                 <ArticleNav currentId="transactional-outbox" />
               </div>

@@ -125,20 +125,25 @@ export function OutboxRelayFlow({ cdc = false }: { cdc?: boolean }) {
           </Node>
           <Arrow>SELECT ... WHERE published_at IS NULL ORDER BY id LIMIT N</Arrow>
           <Node title="Batch of unpublished events" tone="yellow">
-            The relay reads events in committed order, oldest first.
+            Oldest unpublished rows first. IDs are assigned at insert, not at commit, so a row with a
+            smaller ID can become visible later. Querying unpublished rows (instead of resuming after
+            the highest ID seen) still picks it up.
           </Node>
           <Arrow>Publish each event to the broker</Arrow>
           <Node title="Broker acknowledges" tone="green">
             The relay marks the row: UPDATE outbox SET published_at = NOW() WHERE id = ?
           </Node>
-          <Arrow>Advance the high-water mark</Arrow>
+          <Arrow>Mark each published row; late commits still match the query</Arrow>
           <Node title="Next poll skips published rows" tone="blue">
             If the relay crashes after publish but before marking, it will re-publish on restart.
             Consumers must handle duplicates.
           </Node>
           <p className="text-xs sm:text-sm text-slate-600 mt-4 mb-0 font-sans leading-relaxed">
             Polling interval controls latency. A 1-second poll adds up to 1 second of delay. Shorter
-            intervals increase database load. Monitor the oldest unpublished row age.
+            intervals increase database load. Monitor the oldest unpublished row age. With several
+            workers using SKIP LOCKED, two events for the same order can be published out of order;
+            when per-order ordering matters, give each worker a fixed slice of aggregate IDs (for
+            example, hash(aggregate_id) % workers) and publish with aggregate_id as the message key.
           </p>
         </>
       )}

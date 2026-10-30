@@ -18,7 +18,7 @@ export const scenarioMetrics = [
   { label: "Message broker", value: "Kafka (or any durable message bus)" },
   { label: "Write rate (illustrative)", value: "5,000 orders/second during peak" },
   { label: "Downstream consumers", value: "Payment, inventory, notification, analytics" },
-  { label: "Correctness requirement", value: "Every committed order produces exactly one event; no ghost events" },
+  { label: "Correctness requirement", value: "Every committed order produces at least one event, and each consumer applies it once; no ghost events" },
   { label: "Availability requirement", value: "Broker downtime must not block order placement" },
 ];
 export const diagnosis = [

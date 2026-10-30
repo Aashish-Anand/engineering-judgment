@@ -157,16 +157,16 @@ export function NaiveFlashSaleDiagram() {
           fontWeight="bold"
           fill="#DC2626"
         >
-          stock = -142 (OVERSOLD!)
+          1 lock holder · thousands waiting
         </text>
 
         {/* Right side deadlock note */}
         <rect x="395" y="203" width="130" height="42" rx="6" fill="#F9DDE5" stroke="#DC2626" strokeWidth="1.2" />
         <text x="460" y="221" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fontWeight="bold" fill="#DC2626">
-          Deadlocks
+          Lock queue
         </text>
         <text x="460" y="236" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="8.5" fill="#6B7280">
-          Lock Serialization
+          One buyer at a time
         </text>
         <path d="M375 224 L395 224" stroke="#DC2626" strokeWidth="1.5" strokeDasharray="2 2" />
       </svg>

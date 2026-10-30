@@ -16,13 +16,13 @@ export function DatabaseRequestGate() {
 export function ReactionKeyExample() {
   return <figure className="my-6 rounded-xl border border-ink bg-white p-4 sm:p-6">
     <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">Same post, different partition keys</figcaption>
-    <Node title="Post: taylor-post-42">Use a stable hash of the user ID to choose one of four buckets. The bucket numbers below are illustrative.</Node>
-    <Arrow>bucket = stable_hash(user_id) % 4</Arrow>
+    <Node title="Post: taylor-post-42">Use a stable hash of the user ID to choose one of eight buckets. The bucket numbers below are illustrative.</Node>
+    <Arrow>bucket = stable_hash(user_id) % 8</Arrow>
     <div className="grid sm:grid-cols-2 gap-3">
       <Node title="Alice → bucket 0" tone="blue"><dl><dt className="font-semibold">Partition key</dt><dd className="break-all font-mono">taylor-post-42#b0</dd><dt className="font-semibold mt-2">Record inside it</dt><dd>Alice: liked = true</dd></dl></Node>
       <Node title="Bob → bucket 2" tone="green"><dl><dt className="font-semibold">Partition key</dt><dd className="break-all font-mono">taylor-post-42#b2</dd><dt className="font-semibold mt-2">Record inside it</dt><dd>Bob: liked = true</dd></dl></Node>
     </div>
-    <p className="text-sm mt-4 mb-0">To read Alice&apos;s reaction, calculate her bucket again. We can locate her record without searching all four buckets. Verify that the database spreads these keys over enough physical capacity.</p>
+    <p className="text-sm mt-4 mb-0">To read Alice&apos;s reaction, calculate her bucket again. We can locate her record without searching all eight buckets. Verify that the database spreads these keys over enough physical capacity.</p>
   </figure>;
 }
 
@@ -41,8 +41,8 @@ export function ReactionRetryExample() {
 
 export function ReactionMigrationExample() {
   return <figure className="my-6 rounded-xl border border-ink bg-white p-4 sm:p-6">
-    <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">Why switching from 4 to 8 buckets needs a plan</figcaption>
-    <Node title="Example user hash: 6">Old rule: 6 % 4 = bucket 2. New rule: 6 % 8 = bucket 6. The same user now routes to a different key.</Node>
+    <figcaption className="font-sans text-base sm:text-lg font-bold text-slate-900 mb-4">Why switching from 8 to 16 buckets needs a plan</figcaption>
+    <Node title="Example user hash: 13">Old rule: 13 % 8 = bucket 5. New rule: 13 % 16 = bucket 13. The same user now routes to a different key.</Node>
     <Arrow>A new routing rule does not move the saved record</Arrow>
     <div className="grid sm:grid-cols-3 gap-3">
       <Node title="1. Prepare" tone="blue">Keep writes on the old rule. Copy reactions into the new layout and capture changes during the copy.</Node>

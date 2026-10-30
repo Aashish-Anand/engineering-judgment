@@ -1,4 +1,5 @@
-import type { TocItem, RelatedTopicData, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
+import type { TopicId } from "@/data/topics/catalog";
+import type { TocItem, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
 import { getTopicById } from "@/data/topics/catalog";
 
 export const meta = getTopicById("database-migration").meta;
@@ -7,6 +8,7 @@ export const tocItems: TocItem[] = [
   { id: "the-problem",       label: "Workload and constraints" },
   { id: "the-mistake",       label: "Why a snapshot fails" },
   { id: "mental-model",      label: "Synchronize, then switch" },
+  { id: "phases",            label: "The five phases" },
   { id: "workbench",         label: "Migration workbench" },
   { id: "tradeoffs-hub",     label: "Trade-offs & Runbook" },
   { id: "career-rubric",     label: "Explain the decision" },
@@ -95,15 +97,13 @@ export const migrationPhases: TimelinePhaseData[] = [
 ];
 
 export const dualWriteApproaches = [
-  ["Sequential dual write", "Simple mental model",         "Partial failure — one write succeeds, the other fails"],
+  ["Application dual writes", "No CDC pipeline; the app controls transformation", "Every writer must change; a failed second write needs backfill and reconciliation"],
   ["Transactional outbox",  "Durable intent",              "More infrastructure (outbox table + processor)"],
   ["CDC from source",       "Single source of truth",      "Replication complexity and lag"],
   ["Async reconciliation",  "Eventually converges",        "Temporary inconsistency window"],
 ];
 
 export const keyTradeoffs = [
-  ["CDC",               "Keeps target current automatically",  "Operational complexity of CDC pipeline"],
-  ["Dual write",        "Fast synchronization",                "Partial-write failure risk"],
   ["Dual read",         "Validation before cutover",           "Extra read load on both databases"],
   ["Shadow traffic",    "Real-world validation under load",    "Increased infrastructure cost"],
   ["Gradual cutover",   "Lower blast radius per step",         "More operational complexity"],
@@ -195,11 +195,11 @@ export const levelExpectations: LevelData[] = [
 export const followUpQuestions: ExpandableQA[] = [
   {
     question: "Why not just stop writes during the migration?",
-    answer: "Because the requirement is zero downtime. Stopping writes means the system is unavailable for write operations — which in a production system handling 10M writes per day, means approximately 115 writes per second are being dropped or queued. For many applications, this is unacceptable even for minutes.",
+    answer: "Stopping writes for the whole copy would mean hours without writes, roughly 116 writes per second rejected or queued for the entire window. A fenced cutover does pause writes, but only for the few seconds it takes DB B to apply A's final log position. Short pauses are acceptable; hours are not.",
   },
   {
     question: "Why CDC instead of dual writes?",
-    answer: "CDC gives you a single source of truth — the source database's WAL. There's no risk of partial-write failure because you're not writing to two systems in the application layer. The trade-off is operational complexity: you need a CDC pipeline, and there's inherent replication lag.",
+    answer: "CDC keeps one writer, DB A, and derives DB B from A's log, so there is no partial-write window to repair and no writer can be forgotten. The cost is a pipeline to operate and replication lag. Dual writes avoid that pipeline but require changing every writer and reconciling failures. Both are proven; choose by who owns the writes.",
   },
   {
     question: "What happens if CDC falls behind?",
@@ -214,8 +214,8 @@ export const followUpQuestions: ExpandableQA[] = [
     answer: "Schema differences require transformation logic in the CDC pipeline or during the snapshot phase. This adds complexity: you need to test the transformation thoroughly, handle edge cases in data types, and ensure that the transformation is reversible if rollback is needed.",
   },
   {
-    question: "What happens when DB B accepts the write but DB A fails?",
-    answer: "In a dual-write setup, this creates divergence. DB B has a record that DB A doesn't. This is why dual writes are dangerous — you need either a transactional outbox pattern, CDC from a single source, or async reconciliation to handle this. Sequential dual writes are the simplest but most fragile approach.",
+    question: "When would you use application dual writes instead of CDC?",
+    answer: "When one codebase owns every write path and the data changes shape as it moves. Stripe's published approach has four phases: dual-write to old and new, read from both and compare, write only to the new store, then remove the old data. The two writes are not atomic, so a failed second write leaves the stores diverged; a backfill and continuous comparison repair that. CDC fits better when many services or ad-hoc jobs write to the database, because it captures every change without touching each writer.",
   },
   {
     question: "How do you roll back after moving 30% of traffic?",
@@ -235,16 +235,7 @@ export const followUpQuestions: ExpandableQA[] = [
   },
 ];
 
-export const relatedTopics: RelatedTopicData[] = [
-  { title: "Surviving a Flash Sale",      category: "TRAFFIC", href: "/topics/traffic/survive-flash-sale" },
-  { title: "Idempotent Write APIs",       category: "CORRECTNESS", href: "/topics/correctness/retry-payments-safely" },
-  { title: "Reconciliation Strategies",   category: "DATA" },
-  { title: "Backpressure",                category: "MESSAGING" },
-  { title: "Poison Messages",             category: "MESSAGING", href: "/topics/messaging/handle-poison-messages" },
-  { title: "Hot Partitions",              category: "DATA" },
-  { title: "Graceful Cutover",            category: "DEPLOYMENT" },
-  { title: "Schema Evolution",            category: "DEPLOYMENT", href: "/topics/deployment/change-schema-without-downtime" },
-];
+export const relatedTopics: readonly TopicId[] = ["transactional-outbox", "schema-evolution", "hot-partition", "idempotent-api"];
 
 export const migrationStrategies = [
   {

@@ -14,12 +14,6 @@ export type TocItem = {
   label: string;
 };
 
-export type RelatedTopicData = {
-  title: string;
-  category: string;
-  href?: string;
-};
-
 export type TimelinePhaseData = {
   number: string;
   title: string;

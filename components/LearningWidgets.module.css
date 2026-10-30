@@ -17,12 +17,12 @@
 .workbenchHeader { padding:14px 16px; border-bottom:1px solid var(--neo-grid); }
 .stageTabs { display:flex; gap:6px; margin-top:12px; overflow:auto; padding-bottom:4px; }
 .stageTabs button { min-height:36px; }
-.workbenchBody { display:grid; gap:12px; padding:16px; }
+.workbenchBody { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; padding:16px; }
 .topology { padding:12px; background:var(--theme-soft,#f5f6f3); border:1px solid var(--neo-grid); }
 .topology > div:first-child { flex-wrap:wrap; gap:8px; padding-bottom:8px; margin-bottom:4px; }
 .topology svg { max-width:760px; }
 .controls { border-top:1px solid var(--neo-grid); padding-top:12px; }
-.controlGrid { display:grid; grid-template-columns:1.2fr 1fr; gap:16px; }
+.controlGrid { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:16px; }
 .controlGrid > div:first-child > div { margin-bottom:12px; }
 .faultControls { display:flex; flex-wrap:wrap; align-content:start; align-items:start; gap:8px; border-left:1px solid var(--neo-grid); padding-left:20px; }
 .faultControls button { margin-left:0; }
@@ -33,7 +33,7 @@
 @media(max-width:767px) {
   .inputs { gap:10px; }
   .metrics { grid-template-columns:1fr 1fr; gap:14px; }
-  .controlGrid { grid-template-columns:1fr; gap:0; }
+  .controlGrid { grid-template-columns:minmax(0,1fr); gap:0; }
   .faultControls { border-left:0; padding:0; }
   .phaseNotes { grid-template-columns:1fr; }
   .workbenchBody { padding:12px; }

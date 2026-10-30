@@ -221,7 +221,7 @@ export function CutoverWorkbench() {
                   {activeStage === "cutover" ? `Writes: ${state.writesA.toLocaleString("en-US")} WPS` : "Writes: 250 WPS"}
                 </text>
                 <text x="75" y="86" textAnchor="middle" className="fill-emerald-600 text-[10px] font-mono font-bold">
-                  {activeStage === "cutover" && percent === 100 ? "Standby / Read-only" : "● Master Source"}
+                  {activeStage === "cutover" && percent === 100 ? "Standby / Read-only" : "● Primary (source of truth)"}
                 </text>
               </g>
 

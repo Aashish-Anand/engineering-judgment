@@ -1,4 +1,5 @@
-import type { TocItem, RelatedTopicData, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
+import type { TopicId } from "@/data/topics/catalog";
+import type { TocItem, TimelinePhaseData, LevelData, ExpandableQA } from "@/data/types";
 import { getTopicById } from "@/data/topics/catalog";
 
 export const meta = getTopicById("flash-sale").meta;
@@ -20,7 +21,7 @@ export const scenarioMetrics = [
   { label: "Peak request rate (0–5s)",   value: "~2M RPS" },
   { label: "Allowed overselling",        value: "0 units (strict invariant)" },
   { label: "Allowed double-charging",    value: "0 users" },
-  { label: "Availability target",        value: "Core purchase path 100% up" },
+  { label: "Availability target",        value: "Purchase path stays available; excess buyers get a clear sold-out or queue response" },
   { label: "Payment timeout window",     value: "10 minutes" },
 ];
 
@@ -106,13 +107,18 @@ export const flashSalePhases: TimelinePhaseData[] = [
 export const inventoryApproaches = [
   [
     "Redis Lua Atomic Gate",
-    "Sub-millisecond execution; single-threaded atomicity eliminates overselling entirely",
-    "Redis is volatile in-memory state; requires Redis Sentinel/Cluster HA and post-sale DB sync",
+    "Sub-millisecond execution; a script runs atomically, so concurrent buyers cannot oversell on one node",
+    "Replication is asynchronous, so a failover can resurrect sold units; keep a stock buffer and a conditional DB update as the final guard",
+  ],
+  [
+    "Conditional DB decrement (UPDATE … WHERE stock > 0)",
+    "One statement cannot oversell; no read-then-write window",
+    "Still one hot row, so throughput is capped; use it behind an admission gate or as the final guard",
   ],
   [
     "DB Row-Level Locking (SELECT FOR UPDATE)",
-    "ACID durability directly in primary database; guarantees absolute data integrity",
-    "Immediate lock contention collapse; connection pool exhaustion crashes the DB at >500 RPS",
+    "Never oversells; durable and simple",
+    "Serializes every buyer on one row; waiting transactions hold connections until the pool is exhausted",
   ],
   [
     "Distributed Lock (Redlock / ZooKeeper)",
@@ -223,9 +229,9 @@ Second, the API Gateway validates tokens and passes purchase requests to an in-m
 
 Third, for the 10,000 successful decrements, we create a temporary reservation with a 10-minute TTL and publish an 'order_created' event to Kafka, returning a 202 Accepted response. Background worker pools consume from Kafka and write to the database at a controlled, safe throughput.
 
-Fourth, the user completes payment within the 10-minute TTL. If payment succeeds, workers mark the order confirmed. If the TTL expires or payment fails, an expiry worker increments Redis stock back to the pool for the next buyer.
+Fourth, the user completes payment within the 10-minute TTL. If payment succeeds, workers mark the order confirmed. If the hold expires or payment fails, a sweeper removes the hold from a sorted set of expiry times and returns the unit to stock; payment and release race on that one removal, so a unit is never both sold and returned.
 
-The primary trade-offs are operational complexity and user experience: the waiting room introduces artificial queuing, and async checkout means users see a 'processing' screen rather than instant confirmation. But in exchange, the core purchase path remains 100% available, zero overselling occurs, and the primary database never experiences lock collapse.`;
+The primary trade-offs are operational complexity and user experience: the waiting room introduces artificial queuing, and async checkout means users see a 'processing' screen rather than instant confirmation. In exchange, the purchase path stays responsive, a conditional database update guarantees we never sell more than 10,000 units even if Redis fails over, and the primary database never experiences lock collapse.`;
 
 export const levelExpectations: LevelData[] = [
   {
@@ -271,7 +277,7 @@ export const followUpQuestions: ExpandableQA[] = [
   },
   {
     question: "What happens if the Redis inventory node crashes mid-sale?",
-    answer: "A circuit breaker trips immediately to prevent failing over 2M RPS to the database (which would cause instantaneous database collapse). For high availability, Redis Sentinel or Redis Cluster automatically promotes a replica within 1–3 seconds. Once promoted, an emergency reconciliation job verifies the state against database orders. Any inflight reservations whose state is uncertain are reconciled using Kafka event replay.",
+    answer: "A circuit breaker trips immediately to prevent failing over 2M RPS to the database (which would cause instantaneous database collapse). For high availability, Redis Sentinel or Redis Cluster automatically promotes a replica within 1–3 seconds. Because replication is asynchronous, the promoted replica can miss the last few decrements and show stock that was already sold. Two defences make that safe: allocate a small buffer (for example, 9,800 of 10,000 units) to Redis, and settle every order with a conditional database update (WHERE stock > 0) that cannot oversell. A reconciliation job then compares Redis holds with database orders.",
   },
   {
     question: "How do you prevent a single hot key from overloading a Redis node?",
@@ -279,7 +285,7 @@ export const followUpQuestions: ExpandableQA[] = [
   },
   {
     question: "What if a user reserves an iPhone, gets to the payment page, and closes the browser?",
-    answer: "The inventory reservation is held with a strict Time-To-Live (e.g. 10 minutes) in Redis. A background cleanup worker listens to Redis keyspace expiry events or polls a delayed queue for unconfirmed reservations. When the 10-minute timer expires without payment confirmation, the worker atomically increments the Redis inventory counter by 1 and releases the slot to the next user in the waiting room.",
+    answer: "The inventory reservation is held with a strict Time-To-Live (e.g. 10 minutes) in Redis. Do not rely on Redis keyspace expiry events: they are fire-and-forget and can arrive late. Store each hold in a sorted set scored by its expiry time. A sweeper reads expired members and, in one script, removes the hold and increments stock. Payment confirmation removes the same member first, so only one of the two can win.",
   },
   {
     question: "How does the virtual waiting room actually work under the hood?",
@@ -307,16 +313,7 @@ export const followUpQuestions: ExpandableQA[] = [
   },
 ];
 
-export const relatedTopics: RelatedTopicData[] = [
-  { title: "Database Migration Without Downtime", category: "DATA", href: "/topics/database/safely-migrate-production-database" },
-  { title: "Rate Limiting & Throttling",  category: "TRAFFIC" },
-  { title: "Cache Stampede Prevention",   category: "PERFORMANCE" },
-  { title: "Hot Partitions",              category: "DATA" },
-  { title: "Backpressure",                category: "MESSAGING" },
-  { title: "Circuit Breakers",            category: "RELIABILITY", href: "/topics/reliability/stop-retry-storms" },
-  { title: "Idempotent Write APIs",       category: "CORRECTNESS", href: "/topics/correctness/retry-payments-safely" },
-  { title: "Graceful Degradation",        category: "RELIABILITY" },
-];
+export const relatedTopics: readonly TopicId[] = ["hot-partition", "idempotent-api", "retry-storm", "connection-pool"];
 
 export const saleStrategies = [
   {

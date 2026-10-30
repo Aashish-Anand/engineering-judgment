@@ -43,12 +43,24 @@ export function TableOfContents({ items }: { items: TocItem[] }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const instance = useId();
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      const visible = entries.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top-b.boundingClientRect.top);
-      if (visible[0]) setActiveId(visible[0].target.id);
-    }, { rootMargin: "-90px 0px -65% 0px" });
-    items.forEach(item => { const el = document.getElementById(item.id); if (el) observer.observe(el); });
-    return () => observer.disconnect();
+    // Derive the active chapter from scroll position so fast scrolls and tall sections never leave a stale highlight.
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const line = Math.min(window.innerHeight * 0.35, 240);
+      let current = items[0]?.id || "";
+      for (const item of items) {
+        const el = document.getElementById(item.id);
+        if (el && el.getBoundingClientRect().top <= line) current = item.id;
+      }
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) current = items[items.length - 1]?.id || current;
+      setActiveId(current);
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); };
   }, [items]);
   useEffect(() => {
     if (!isOpen) return;

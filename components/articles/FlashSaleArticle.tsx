@@ -27,7 +27,7 @@ const FLASH_SALE_TRAPS = [
     trapNum: "TRAP 01",
     question: "Why not rely on Kubernetes Horizontal Pod Autoscaler (HPA)?",
     explanation:
-      "Kubernetes HPA takes 45–90 seconds to observe metrics and spin up new pod containers. The 10,000 iPhones sell out in 3 seconds. The spike is completely over before the first new pod reaches ready status.",
+      "Kubernetes HPA takes 45–90 seconds to observe metrics and spin up new pod containers. At 10,000 admitted requests per second, the 10,000 iPhones are reserved in about one second. The spike is completely over before the first new pod reaches ready status.",
   },
   {
     trapNum: "TRAP 02",
@@ -103,7 +103,7 @@ export function FlashSaleArticle() {
               <div className="my-5">
                 <MetricTable
                   rows={scenarioMetrics}
-                  sideNote="10,000 items sold in under 3 seconds. The challenge is 9.99M rejections without taking down the infrastructure."
+                  sideNote="All 10,000 units are reserved in about a second of admitted traffic. The challenge is 9.99M rejections without taking down the infrastructure."
                 />
               </div>
 
@@ -139,7 +139,7 @@ COMMIT;`}
               </div>
 
               <FailureCallout title="Wait... lock contention and connection pool exhaustion occur in milliseconds!">
-                Under 2,000,000 incoming requests per second, every single database connection attempts to acquire an exclusive lock on the exact same row. Database connection pools (typically 50–200 connections) are saturated within 5 milliseconds, causing cascading 504 timeouts across every other service sharing the database.
+                The lock does its job: it never oversells. But it lets exactly one transaction touch the row at a time, so every other buyer waits while holding a database connection. With 2,000,000 requests per second arriving and a pool of 50–200 connections, the pool is exhausted almost immediately, and every other service sharing the database starts timing out. The failure is throughput, not correctness.
               </FailureCallout>
 
               <InlineCheck
@@ -238,12 +238,12 @@ COMMIT;`}
                 language="lua"
                 filename="redis-atomic-gate.lua"
                 code={`-- KEYS[1]: 'stock:iphone_16'
--- KEYS[2]: 'reservation:user:' .. user_id
+-- KEYS[2]: 'holds:iphone_16'  (sorted set: user_id -> expiry time)
 -- ARGV[1]: user_id
--- ARGV[2]: ttl_seconds (600 = 10 minutes)
+-- ARGV[2]: expires_at_ms (now + 10 minutes, computed by the caller)
 
--- 1. Idempotency: Prevent the same user from clicking Buy twice
-if redis.call('exists', KEYS[2]) == 1 then
+-- 1. Idempotency: the same user clicking Buy twice keeps one hold
+if redis.call('zscore', KEYS[2], ARGV[1]) then
     return 2 -- Already reserved
 end
 
@@ -251,12 +251,32 @@ end
 local current_stock = tonumber(redis.call('get', KEYS[1]))
 if current_stock and current_stock > 0 then
     redis.call('decr', KEYS[1])
-    redis.call('set', KEYS[2], 'HELD', 'EX', ARGV[2])
-    return 1 -- Success: 1 unit held
+    redis.call('zadd', KEYS[2], ARGV[2], ARGV[1])
+    return 1 -- Success: 1 unit held until expires_at_ms
 else
     return 0 -- Sold out: shed request immediately
 end`}
               />
+
+              <p className="reading-copy">Expired holds need a reliable way back into stock. Redis keyspace expiry events are fire-and-forget and can arrive late, so they cannot be the release mechanism. Instead, each hold is a member of a sorted set scored by its expiry time. A sweeper reads members whose score has passed and releases each one with a single <code>ZREM</code>; only if that removal succeeds does it add the unit back with <code>INCR</code>. Payment confirmation removes the same member first. Whichever action removes the hold wins, so a unit can never be both paid for and returned to stock.</p>
+
+              <CodeBlock
+                language="lua"
+                filename="release-expired-hold.lua"
+                code={`-- KEYS[1]: 'stock:iphone_16'   KEYS[2]: 'holds:iphone_16'
+-- ARGV[1]: user_id               ARGV[2]: now_ms
+local expires = tonumber(redis.call('zscore', KEYS[2], ARGV[1]))
+if expires and expires <= tonumber(ARGV[2]) then
+    redis.call('zrem', KEYS[2], ARGV[1])
+    redis.call('incr', KEYS[1])
+    return 1 -- Released: the next buyer can reserve it
+end
+return 0 -- Already paid, already released, or not yet expired`}
+              />
+
+              <p className="reading-copy">Redis is the fast gate, not the source of truth. Settlement workers write each order with a conditional update, <code>UPDATE inventory SET stock = stock - 1 WHERE item_id = ? AND stock &gt; 0</code>, and treat zero affected rows as &ldquo;sold out&rdquo;. That single statement cannot oversell, so it remains the final guard if a Redis failover ever resurrects a sold unit. After the sale, reconcile Redis holds, orders, and payments, and refund any mismatch.</p>
+
+              <p className="reading-copy">Fairness belongs in the waiting room. Commercial waiting rooms such as Queue-it give everyone who arrived before the start time a random place in line, so refreshing early or running bots gives no advantage. Buyers who arrive after the start join the back of the queue in order.</p>
 
               <InlineCheck
                 className={neo.conceptCheck}
@@ -270,7 +290,7 @@ end`}
                   {
                     label: "Asynchronous replication lag between master and replica can resurrect sold stock, causing overselling.",
                     isCorrect: true,
-                    explanation: "Spot on! If the primary decrements from 1 to 0 and crashes before replicating to the standby, the replica is promoted with stock = 1. A new buyer claims that unit, resulting in 10,001 sold units. Real production systems maintain a safety buffer (e.g. allocate only 9,800 units) or use Redis WAIT.",
+                    explanation: "Spot on! If the primary decrements from 1 to 0 and crashes before replicating to the standby, the replica is promoted with stock = 1. A new buyer claims that unit, resulting in 10,001 sold units. Production systems hold back a safety buffer (for example, allocate 9,800 of 10,000 units) and keep a conditional database update as the final guard. Redis WAIT lowers the risk but does not remove it: Redis failover can still lose acknowledged writes.",
                   },
                   {
                     label: "Redis Sentinel locks all client connections until the primary reboots.",
@@ -362,7 +382,7 @@ end`}
                 title="Related System Architecture Deep Dives"
                 id="related"
               />
-              <RelatedTopics topics={relatedTopics} />
+              <RelatedTopics ids={relatedTopics} />
               <div className="mt-8">
                 <ArticleNav currentId="flash-sale" />
               </div>

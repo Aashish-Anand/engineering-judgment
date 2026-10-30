@@ -54,3 +54,7 @@
 .body .rubric > div:not(:first-child) { padding:12px 16px; }
 .body .rubric h3 { margin:0 0 8px; font-size:18px; }
 .body .rubric p { margin:0; font-size:15px; line-height:1.65; }
+
+.followups details { margin:10px 0; border:1px solid var(--category-line); border-left:3px solid var(--category-accent); background:var(--category-wash); }
+.followups summary { cursor:pointer; padding:12px 16px; font-weight:650; color:var(--theme-text,#1e293b); }
+.body .followups details p { margin:0; padding:0 16px 14px; font-size:15px; line-height:1.65; }

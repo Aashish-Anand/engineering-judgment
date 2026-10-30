@@ -150,7 +150,7 @@ export function ReservationFlowDiagram() {
           fontWeight="500"
           fill="#374151"
         >
-          Worker returns +1 to Redis · Slot given to next user
+          Sweeper removes the hold, returns +1 · Next buyer can reserve
         </text>
       </svg>
     </div>

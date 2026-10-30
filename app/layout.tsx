@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -52,7 +51,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
-      <head><Script id="appearance-preference" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeInitScript }} /></head>
+      {/* A plain inline script runs while the HTML is parsed, before first paint; next/script's beforeInteractive defers execution and caused a light-to-dark flash. */}
+      <head><script id="appearance-preference" dangerouslySetInnerHTML={{ __html: themeInitScript }} /></head>
       <body id="top" className="min-h-screen flex flex-col bg-paper text-ink font-sans antialiased" suppressHydrationWarning>
         <ReadingProgress />
         <SiteHeader />

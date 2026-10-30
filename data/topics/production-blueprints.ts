@@ -5,7 +5,7 @@ import type { TopicMeta } from "@/data/types";
 
 export type ProductionBlueprint = {
  id: TopicId; href: `/topics/${string}/${string}`; prompt: string; meta: TopicMeta; shortTitle: string; flow: string[]; diagramCaption: string;
- sections: { id: string; title: string; paragraphs: string[] }[]; runbook: string[]; tradeoffs: string[][]; failures: string[][]; interview: string; levels: string[]; followups: string[]; related: TopicId[]; sources: string[][]; questions: QuizQuestion[];
+ sections: { id: string; title: string; paragraphs: string[] }[]; runbook: string[]; tradeoffs: string[][]; failures: string[][]; interview: string; levels: string[]; followups: string[][]; related: TopicId[]; conceptCheck?: QuizQuestion; sources: string[][]; questions: QuizQuestion[];
 };
 
 const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] = [
@@ -88,6 +88,14 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       [
         "Keep records longer",
         "Longer retention protects late retries but increases data and operational costs."
+      ],
+      [
+        "Scope keys per account",
+        "Prevents one caller from colliding with or reading another caller's result, but requires an authenticated identity on every request."
+      ],
+      [
+        "Reconcile automatically",
+        "Resolves most unknown outcomes without people, but needs provider lookup APIs, rate limits, and an owned queue for the cases it cannot resolve."
       ]
     ],
     "failures": [
@@ -102,6 +110,14 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       [
         "Provider retention expired",
         "Stop blind resubmission; resolve through durable references or manual review."
+      ],
+      [
+        "Stale worker overwrites a result",
+        "A worker whose lease expired reports an old timeout after recovery confirmed success. Only allow pending-to-terminal transitions with a conditional update."
+      ],
+      [
+        "Duplicate or forged webhook",
+        "Verify the signature, deduplicate by provider event ID, and check amount and account against the intent before changing its state."
       ]
     ],
     "interview": "I would name the business intent before calling the provider, atomically claim that key locally, and reuse the same provider key across recovery. Unknown outcomes remain pending until reconciliation. This provides an effectively single business effect only within the provider’s deduplication and retention contract.",
@@ -111,9 +127,9 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Define provider contracts, retention windows, regional ownership, auditability, and reconciliation operations."
     ],
     "followups": [
-      "What should a caller see while the first request is still running?",
-      "How do refunds receive independent identities?",
-      "What evidence permits deleting an idempotency record?"
+      ["What should a caller see while the first request is still running?", "A stable in-progress answer, such as 409 Conflict or 202 Accepted with the intent ID and a status URL. The second request must not start another provider call; the caller polls or waits for a notification."],
+      ["How do refunds receive independent identities?", "A refund is its own business intent with its own key, scoped to the original payment. Reusing the payment's key would replay the charge result, and minting a fresh key on every refund retry could refund twice."],
+      ["What evidence permits deleting an idempotency record?", "The intent is terminal, both the client's retry window and the provider's deduplication window have passed, and the outcome is preserved elsewhere, such as the ledger or order history. Before that, deletion turns a late retry into a new charge."]
     ],
     "related": [
       "flash-sale",
@@ -124,8 +140,36 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       [
         "AWS: Making retries safe with idempotent APIs",
         "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/"
+      ],
+      [
+        "Stripe API: Idempotent requests",
+        "https://docs.stripe.com/api/idempotent_requests"
+      ],
+      [
+        "IETF draft: The Idempotency-Key HTTP header field",
+        "https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/"
       ]
     ],
+    "conceptCheck": {
+      "scenario": "Recovery confirmed charge C and marked intent P succeeded. Then the original worker, whose lease had expired, wakes up with a timeout from its earlier call and tries to set P to unknown. What should happen?",
+      "options": [
+        {
+          "text": "The update is applied, because the most recent write reflects the latest information",
+          "explanation": "The latest write to arrive is not the latest truth. Overwriting a confirmed result would reopen a settled payment and could trigger another charge.",
+          "isCorrect": false
+        },
+        {
+          "text": "The update is rejected: it only applies while P is still pending, so P stays succeeded",
+          "explanation": "A conditional transition such as UPDATE ... WHERE status = 'pending' affects zero rows. Terminal states never move backwards; log the stale response for investigation.",
+          "isCorrect": true
+        },
+        {
+          "text": "The worker charges again with a fresh key to get a definitive answer",
+          "explanation": "A fresh key gives the provider no way to deduplicate, so this creates the duplicate charge the design exists to prevent.",
+          "isCorrect": false
+        }
+      ]
+    },
     "questions": [
       {
         "scenario": "The provider times out after a charge request. What status should you record?",
@@ -331,9 +375,9 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Set ownership, retention, audit requirements, and outage policies across producer and consumer teams."
     ],
     "followups": [
-      "Can an invalid event be repaired without changing its business identity?",
-      "What happens if the quarantine destination is unavailable?",
-      "How do you prove replay restored the missing business state?"
+      ["Can an invalid event be repaired without changing its business identity?", "Yes, if the repair keeps the original event ID and records what changed and who approved it. Consumers deduplicate the replay by that ID. Minting a new ID turns the repair into a second event."],
+      ["What happens if the quarantine destination is unavailable?", "The consumer must not acknowledge the message. Pause or slow that partition and alert: quarantine is a durable write that has to succeed before the acknowledgement, or the evidence is lost."],
+      ["How do you prove replay restored the missing business state?", "Reconcile against the source of truth. Count and checksum the affected business keys before and after replay, and confirm downstream state such as orders or balances matches. A replay that finished without errors only proves messages were processed."]
     ],
     "related": [
       "transactional-outbox",
@@ -555,9 +599,9 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Allocate budgets across services and replicas, define degradation contracts, and test systemic recovery."
     ],
     "followups": [
-      "Who owns retries when an SDK retries internally?",
-      "Can the dependency cancel work after the caller times out?",
-      "How do you keep one tenant from consuming the recovery budget?"
+      ["Who owns retries when an SDK retries internally?", "Choose one layer, usually the one closest to the failing dependency, and disable or cap retries everywhere else. Otherwise the layers multiply: three layers of three attempts can become 27 calls."],
+      ["Can the dependency cancel work after the caller times out?", "Only if the deadline travels with the request, for example as a gRPC deadline or a deadline header, and the dependency checks it. Without that, the dependency keeps doing work nobody is waiting for, which is pure waste during overload."],
+      ["How do you keep one tenant from consuming the recovery budget?", "Apply retry budgets and concurrency limits per tenant or tenant class, and shed load from the noisiest tenant first. A single global budget lets one tenant's retries crowd out everyone else."]
     ],
     "related": [
       "idempotent-api",
@@ -775,9 +819,9 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Coordinate budgets across teams, deployment overlap, workload fairness, and database capacity planning."
     ],
     "followups": [
-      "How does a rolling deployment change the connection budget?",
-      "Which session features break under transaction pooling?",
-      "What metric distinguishes a leak from a legitimately slow transaction?"
+      ["How does a rolling deployment change the connection budget?", "Old and new replicas overlap during a rollout, so peak demand is the surge replica count times pool size. Budget for maximum surge or shrink pools during deploys, so the rollout itself does not exhaust the database."],
+      ["Which session features break under transaction pooling?", "Anything that expects state to stay on one server connection between transactions: session-level SET, advisory locks held across transactions, temporary tables, LISTEN/NOTIFY, and prepared statements unless the pooler explicitly supports them."],
+      ["What metric distinguishes a leak from a legitimately slow transaction?", "Compare pool checkout time with database activity. A leak shows connections checked out while the database sees them idle or idle in transaction; a slow transaction shows the connection actively running a query."]
     ],
     "related": [
       "retry-storm",
@@ -999,9 +1043,9 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Inventory cross-team consumers, define rollback boundaries, and budget large-table operational costs."
     ],
     "followups": [
-      "What is the last point at which the old application can safely roll back?",
-      "How would the plan change for a lossy data transformation?",
-      "How do you detect a monthly report that still reads the old column?"
+      ["What is the last point at which the old application can safely roll back?", "Just before the contract step. While the old column is still written and read correctly, the old version works. Once you stop writing it or drop it, rolling back the application also requires a data repair."],
+      ["How would the plan change for a lossy data transformation?", "Keep the original data until the new form is proven, because a lossy step cannot be undone. Backfill into a new column, validate, and keep the source column or an archive until rollback is no longer possible."],
+      ["How do you detect a monthly report that still reads the old column?", "Audit column access before contracting, using query logs or pg_stat_statements and ORM query tags. Wait at least one full reporting cycle with zero reads before dropping the column."]
     ],
     "related": [
       "database-migration",

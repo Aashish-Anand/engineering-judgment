@@ -20,7 +20,6 @@ import {
   ReactionMigrationExample,
   CommentReadExample,
 } from "@/components/diagrams/HotPartitionWorkedExamples";
-import { getTopicById } from "@/data/topics/catalog";
 import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { TradeoffDiagnosticsHub } from "@/components/TradeoffDiagnosticsHub";
 import { CareerRubricHub } from "@/components/CareerRubricHub";
@@ -68,7 +67,7 @@ const HOT_PARTITION_INTERVIEW_SYNTHESIS = `When a celebrity post creates an extr
 
 First, separate the workload into reads and writes. Public post body reads (~70,000 RPS) must never touch the database—they must be served from an edge/Redis cache with single-flight request coalescing to prevent stampedes.
 
-Second, for write contention (likes and reactions), split the single hot counter into N salted buckets (e.g. post_id + salt[0..9]), routing by user_id % N. This converts one serial bottleneck into N independent parallel writes.
+Second, for write contention (likes and reactions), split the single hot counter into N salted buckets (e.g. post_id + salt[0..7]), routing by user_id % N. This converts one serial bottleneck into N independent parallel writes.
 
 Third, display approximate counts asynchronously: a background worker lazily aggregates the bucket counters into a cached display total, saving 99% of read IOPS while ensuring authoritative user mutations remain durable.`;
 
@@ -87,21 +86,18 @@ const HOT_PARTITION_AVOID = [
 ];
 
 export function HotPartitionArticle() {
-  const relatedTopics = ["database-migration", "flash-sale"].map((id) => {
-    const topic = getTopicById(id as "database-migration" | "flash-sale");
-    return { title: topic.meta.title, category: topic.meta.category, href: topic.href };
-  });
+  const relatedTopics = ["flash-sale", "database-migration", "retry-storm", "connection-pool"] as const;
 
   return (
     <BlueprintArticleFrame topicId="hot-partition" toc={tocItems} brief={
       <ExecutiveBlueprint
           timeToRead="30-Second Architecture Blueprint"
           bottleneck="A viral post concentrates 70,000 requests/sec onto a single database partition key. Doubling partitions does not help because all traffic shares the exact same key."
-          solution="Dual-Path Split: Cache 100% of public post body reads at the edge with single-flight mutexes ➔ Salt write keys with user_id % 10 into 10 parallel buckets ➔ Asynchronously aggregate public totals in the background."
+          solution="Dual-Path Split: Cache 100% of public post body reads at the edge with single-flight mutexes ➔ Salt write keys with user_id % 8 into 10 parallel buckets ➔ Asynchronously aggregate public totals in the background."
           goldenRule="Never try to scale a single hot key by adding database servers; split the key on the write path and cache it on the read path."
           keyMetrics={[
             { label: "Hot Key Traffic", value: "70% of total cluster load" },
-            { label: "Salt Spread", value: "10-way parallel buckets" },
+            { label: "Salt Spread", value: "8 buckets · 8,750 writes/s each" },
             { label: "Read Reduction", value: "99% absorbed at cache layer" },
           ]}
         />
@@ -185,7 +181,7 @@ export function HotPartitionArticle() {
                 </InsightCard>
               </ScrollReveal>
               <p className="text-slate-700 leading-relaxed">
-                Public reads (reading post text) are identical across millions of users: cache them once and coalesce refreshes. User writes (likes, unlikes, comments) are independent: salt the counter key across 10 buckets so each write lands on a different physical partition.
+                Public reads (reading post text) are identical across millions of users: cache them once and coalesce refreshes. User writes (likes, unlikes, comments) are independent: route each user to one of 8 buckets by a stable hash of their user ID. 70,000 writes per second become 8,750 per bucket, under the assumed 10,000 limit, provided the buckets land on different physical partitions.
               </p>
             </section>
 
@@ -228,24 +224,28 @@ export function HotPartitionArticle() {
               <CodeBlock
                 language="typescript"
                 filename="reaction-sharder.ts"
-                code={`// Write Path: Salt counter across 10 buckets using user_id
-const BUCKET_COUNT = 10;
-const bucketIndex = Math.abs(hash(userId)) % BUCKET_COUNT;
-const shardKey = \`post:\${postId}:likes:bucket:\${bucketIndex}\`;
+                code={`// Write path: one durable reaction per user, routed to one of 8 buckets
+const BUCKET_COUNT = 8; // 70,000 writes/s ÷ 8 = 8,750 per bucket (< 10,000 limit)
+const bucket = stableHash(userId) % BUCKET_COUNT;
+const partitionKey = \`post#\${postId}#b\${bucket}\`;
 
-await redis.incr(shardKey);
+await db.transaction(async (tx) => {
+  // Conditional write: a retried op or a late, older request changes nothing
+  const changed = await tx.reactions.setIfNewer(partitionKey, userId, { liked: true, opId, version });
+  // Only a real state change emits a count delta, committed with the reaction
+  if (changed) await tx.outbox.insert({ postId, bucket, delta: +1, opId });
+});
 
-// Approach A (Scatter-Gather): Query all 10 shards in parallel and sum (10x read IOPS)
-// Approach B (Async Aggregator - Recommended): A background worker streams CDC deltas
-// from the 10 shards and updates a single cached counter in Redis every 500ms.`}
+// Display total: a background aggregator applies deltas to a cached counter
+// every ~500 ms. Never scatter-gather all 8 buckets on the read path.`}
               />
 
               <InlineCheck
                 className={neo.conceptCheck}
-                question="Architectural Gut Check: What breaks if we calculate the bucket using random() instead of user_id % 10?"
+                question="Architectural Gut Check: What breaks if we calculate the bucket using random() instead of user_id % 8?"
                 options={[
                   {
-                    label: "Random salting makes un-liking and idempotency checks impossible without querying all 10 buckets.",
+                    label: "Random salting makes un-liking and idempotency checks impossible without querying all 8 buckets.",
                     isCorrect: true,
                     explanation: "Spot on! If Alice's like was placed into bucket 4 at random, when she later clicks 'unlike', the system has no idea which bucket holds her vote without querying every bucket. Deterministic hashing by user ID guarantees that Alice's likes and unlikes always route to the exact same bucket.",
                   },
@@ -298,13 +298,7 @@ await redis.incr(shardKey);
                   approachesTitle="1. Read & Write Partitioning Decisions"
                   approachesHeaders={["Decision", "What Improves", "What We Now Own"]}
                   approachesRows={tradeoffs}
-                  keyTradeoffsTitle="2. Key Architectural Invariants"
-                  keyTradeoffsHeaders={["Decision", "Benefit", "Cost / Risk"]}
-                  keyTradeoffsRows={[
-                    ["Edge + Cache Reads", "Cuts 99% repeated origin work", "Staleness, memory, and cache-outage protection"],
-                    ["Bucket User Reactions", "Parallel independent writes", "Placement checks, routing versions, and migration"],
-                    ["Asynchronous Counters", "Zero synchronous row locks", "Displayed counts lag; exact totals require reconciliation"],
-                  ]}
+                  keyTradeoffsRows={[]}
                   failureModesTitle="Hot Partition Failure Modes & Telemetry Runbook"
                   failureModesHeaders={["Failure Mode", "Detection Signal", "Operational Response & Mitigation"]}
                   failureModesRows={failureModes}
@@ -366,7 +360,7 @@ await redis.incr(shardKey);
                 title="Related System Architecture Deep Dives"
                 id="related"
               />
-              <RelatedTopics topics={relatedTopics} />
+              <RelatedTopics ids={relatedTopics} />
               <div className="mt-8">
                 <ArticleNav currentId="hot-partition" />
               </div>

@@ -174,3 +174,5 @@
   .surface.article .standardTool > :last-child { padding:14px; }
   .journey > li { min-width:0; }
 }
+/* Below 1024px a sticky chapter bar sits under the header; keep jumped-to headings clear of both. */
+@media(max-width:1023px) { .surface.article :global(.article-content) > section, .surface.article .labPanel { scroll-margin-top:150px; } }

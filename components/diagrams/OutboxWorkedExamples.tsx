@@ -86,13 +86,13 @@ export function IdempotentConsumerExample() {
       <Node title="Payment service receives OrderCreated (event_id: 47291)">First delivery. The service checks: has event 47291 been processed?</Node>
       <Arrow>Not found in processed_events table → process it</Arrow>
       <div className="grid sm:grid-cols-2 gap-3 my-3">
-        <Node title="Charge the customer" tone="green">Payment API call succeeds. The service records event_id 47291 in its processed_events table.</Node>
+        <Node title="Charge the customer" tone="green">The provider call uses an idempotency key derived from the event, such as order-charge-47291. Then one local transaction records event 47291 and the charge result.</Node>
         <Node title="Relay re-delivers event 47291" tone="yellow">Relay crashed before marking the outbox row. Same event arrives again.</Node>
       </div>
       <Arrow>Consumer checks processed_events: 47291 already exists</Arrow>
-      <Node title="Skip — no double charge" tone="green">The consumer acknowledges the message without re-processing. The customer is charged exactly once.</Node>
+      <Node title="Skip — no double charge" tone="green">The consumer acknowledges the message without re-processing. The customer is charged once.</Node>
       <p className="text-xs sm:text-sm text-slate-600 mt-4 mb-0">
-        The deduplication check and the business operation should be in the same transaction on the consumer side. Otherwise, a crash between processing and recording can cause the same problem we are trying to solve.
+        Local effects belong in the same transaction as the processed_events row. A remote charge cannot join that transaction: if the service crashes after the provider accepts the charge but before recording it, the redelivered event repeats the call with the same idempotency key, and the provider returns the original charge instead of creating a second one.
       </p>
     </figure>
   );
@@ -118,7 +118,7 @@ export function OutboxSchemaExample() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {[
-              ["id", "BIGSERIAL", "Monotonic ordering for the relay; deduplication key for consumers"],
+              ["id", "BIGSERIAL", "Unique event ID and deduplication key for consumers; insert order, not commit order"],
               ["aggregate_type", "VARCHAR", "e.g. 'Order' — routes to the correct broker topic"],
               ["aggregate_id", "VARCHAR", "e.g. 'order-7842' — the broker partition key for per-entity ordering"],
               ["event_type", "VARCHAR", "e.g. 'OrderCreated' — consumers use this to deserialize the payload"],

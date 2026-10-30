@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 export function OutboxLab() {
-  const [wps, setWps] = useState(2500); // writes per second
+  const [wps, setWps] = useState(5000); // writes per second (brief peak)
   const [relayType, setRelayType] = useState<"poll" | "cdc">("poll");
-  const [pollIntervalMs, setPollIntervalMs] = useState(1000);
-  const [batchSize, setBatchSize] = useState(100);
+  const [pollIntervalMs, setPollIntervalMs] = useState(200);
+  const [batchSize, setBatchSize] = useState(500);
   const [workerCount, setWorkerCount] = useState(4);
   const [duplicateRatePercent, setDuplicateRatePercent] = useState(1.5);
 

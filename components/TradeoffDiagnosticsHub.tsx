@@ -20,13 +20,13 @@ const DEFAULT_TRAPS: TrapItem[] = [
     trapNum: "TRAP 01",
     question: "Why not a 3-hour maintenance window?",
     explanation:
-      "Maintenance windows always overrun. If a schema migration takes 5 hours instead of 3, you face an agonizing choice: abort and restart next weekend, or extend downtime during peak business hours.",
+      "Maintenance windows often overrun. If a data copy takes 5 hours instead of 3, you face an agonizing choice: abort and restart next weekend, or extend downtime during peak business hours.",
   },
   {
     trapNum: "TRAP 02",
-    question: "Why not validate with SELECT COUNT(*)??",
+    question: "Why not validate with SELECT COUNT(*)?",
     explanation:
-      "Row counts only prove quantity, not correctness. Two tables can have exactly 10,000,000 rows while having 50,000 corrupted values, truncated timestamps, or mismatched account balances. Sampled checksums are mandatory.",
+      "Row counts only prove quantity, not correctness. Two tables can have exactly 10,000,000 rows while having 50,000 corrupted values, truncated timestamps, or mismatched account balances. Compare checksums per key range as well.",
   },
   {
     trapNum: "TRAP 03",

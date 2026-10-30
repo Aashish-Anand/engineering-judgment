@@ -91,10 +91,10 @@ html { color-scheme:light; }
   html[data-theme="dark"] :is([class*="bg-white"], [class*="bg-[#FAF9F5]"]) { background-color:var(--theme-surface); }
   html[data-theme="dark"] :is([class*="text-slate-9"], [class*="text-slate-8"], [class*="text-gray-9"], [class*="text-[#171717]"]) { color:var(--theme-text); }
   html[data-theme="dark"] :is([class*="text-slate-7"], [class*="text-slate-6"], [class*="text-slate-5"], [class*="text-gray-6"], [class*="text-gray-5"], [class*="text-[#4B5563]"], [class*="text-[#6B7280]"]) { color:var(--theme-muted); }
-  html[data-theme="dark"] :is([class*="text-blue-6"], [class*="text-blue-7"], [class*="text-blue-8"], [class*="text-indigo-6"], [class*="text-indigo-7"]) { color:var(--theme-link); }
-  html[data-theme="dark"] :is([class*="text-emerald-6"], [class*="text-emerald-7"], [class*="text-emerald-8"], [class*="text-green-7"], [class*="text-green-8"], [class*="text-teal-7"]) { color:var(--theme-accent-green); }
-  html[data-theme="dark"] :is([class*="text-amber-6"], [class*="text-amber-7"], [class*="text-amber-8"], [class*="text-yellow-7"], [class*="text-yellow-8"]) { color:var(--theme-accent-amber); }
-  html[data-theme="dark"] :is([class*="text-rose-6"], [class*="text-rose-7"], [class*="text-red-6"], [class*="text-red-7"], [class*="text-pink-7"]) { color:var(--theme-accent-rose); }
+  html[data-theme="dark"] :is([class*="text-blue-6"], [class*="text-blue-7"], [class*="text-blue-8"], [class*="text-blue-9"], [class*="text-indigo-6"], [class*="text-indigo-7"]) { color:var(--theme-link); }
+  html[data-theme="dark"] :is([class*="text-emerald-6"], [class*="text-emerald-7"], [class*="text-emerald-8"], [class*="text-emerald-9"], [class*="text-green-7"], [class*="text-green-8"], [class*="text-teal-7"]) { color:var(--theme-accent-green); }
+  html[data-theme="dark"] :is([class*="text-amber-6"], [class*="text-amber-7"], [class*="text-amber-8"], [class*="text-amber-9"], [class*="text-yellow-7"], [class*="text-yellow-8"]) { color:var(--theme-accent-amber); }
+  html[data-theme="dark"] :is([class*="text-rose-6"], [class*="text-rose-7"], [class*="text-rose-8"], [class*="text-rose-9"], [class*="text-red-6"], [class*="text-red-7"], [class*="text-red-8"], [class*="text-red-9"], [class*="text-pink-7"]) { color:var(--theme-accent-rose); }
   html[data-theme="dark"] :is([class*="text-purple-6"], [class*="text-purple-7"], [class*="text-purple-8"]) { color:var(--theme-accent-purple); }
   html[data-theme="dark"] [class*="bg-[#DCEBFF]"] { background-color:var(--theme-soft-blue); }
   html[data-theme="dark"] :is([class*="bg-[#DFF3DF]"], [class*="bg-[#E7E1F8]"]) { background-color:var(--theme-soft-green); }
