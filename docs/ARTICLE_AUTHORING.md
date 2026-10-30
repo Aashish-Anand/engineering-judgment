@@ -106,6 +106,6 @@ For data-driven topics, `ProductionBlueprintArticle` renders the whole twelve-se
 
 ## Verify before publication
 
-Run `npm run lint`, `npm run content && npx tsc --noEmit`, `npm test`, and `npm run build`. Read the relevant installed Next.js guide in `node_modules/next/dist/docs/` before changing routing or rendering conventions, as required by the root AGENTS.md.
+Run `npm run lint`, `npm run content && npx tsc --noEmit`, `npm test`, and `npm run build`. CI runs the same checks plus Playwright on every pull request; see “Running the checks” in the README, including how screenshot baselines are updated. Read the relevant installed Next.js guide in `node_modules/next/dist/docs/` before changing routing or rendering conventions, as required by the root AGENTS.md.
 
 Review the article and quiz in light/dark modes at desktop and mobile widths. Verify every chapter link, the header’s experiment link, quiz submission/next/result behavior, and meaningful workbench state changes. Confirm no horizontal page overflow; local diagram/table scrolling is allowed. Check headings, scenario facts, diagrams, code samples, failure explanations, and sources against the actual content. Leave no TODOs, empty panels, or invented testimonials/metrics in a published page.
