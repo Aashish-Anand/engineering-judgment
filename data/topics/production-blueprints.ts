@@ -5,7 +5,7 @@ import type { LevelData, TopicMeta } from "@/data/types";
 
 export type ProductionBlueprint = {
  id: TopicId; href: `/topics/${string}/${string}`; prompt: string; meta: TopicMeta; shortTitle: string; flow: string[]; diagramCaption: string;
- sections: { id: string; title: string; paragraphs: string[] }[]; runbook: string[]; tradeoffs: string[][]; failures: string[][]; interview: string; levels: LevelData[]; followups: string[][]; related: TopicId[]; conceptCheck?: QuizQuestion; sources: string[][]; questions: QuizQuestion[];
+ sections: { id: string; title: string; paragraphs: string[] }[]; runbook: string[]; tradeoffs: string[][]; extraTables?: { caption: string; headers: string[]; rows: string[][] }[]; failures: string[][]; interview: string; levels: LevelData[]; wrongAnswers: { question: string; explanation: string }[]; followups: string[][]; related: TopicId[]; conceptCheck?: QuizQuestion; sources: string[][]; questions: QuizQuestion[];
 };
 
 const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] = [
@@ -149,6 +149,11 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
           "Make reconciliation and audit trails an operated, alerted process"
         ]
       }
+    ],
+    "wrongAnswers": [
+      {"question": "Why not deduplicate by customer, amount, and a short time window?", "explanation": "That rule guesses intent from a similar-looking payload. A customer who deliberately buys the same item twice gets one order rejected, and a retry that arrives after the window closes is charged again. Identity has to come from the operation itself: one key per payment intent, sent by the caller."},
+      {"question": "Why not check whether a payment exists before inserting it?", "explanation": "Two replicas can run the check at the same moment, both find nothing, and both call the provider. A read followed by a write is not a claim. The unique constraint on the scoped key is what picks one owner; the second insert fails and that caller reads the existing intent instead."},
+      {"question": "Why not wrap the provider call in the database transaction so a failure rolls everything back?", "explanation": "The database can roll back its own rows, not a charge the provider has already made. The transaction also holds a connection and its locks for the length of a network call. Commit the intent first, then call the provider with a stable key, and treat a timeout as unknown until reconciliation settles it."}
     ],
     "followups": [
       ["What should a caller see while the first request is still running?", "A stable in-progress answer, such as 409 Conflict or 202 Accepted with the intent ID and a status URL. The second request must not start another provider call; the caller polls or waits for a notification."],
@@ -422,6 +427,11 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
         ]
       }
     ],
+    "wrongAnswers": [
+      {"question": "Why not add consumers until the backlog clears?", "explanation": "The message that blocks the stream fails because of its content, not because capacity is short. More consumers fetch the same invalid event more often and raise the error rate. Classify the failure first: capacity helps a slow dependency, but only quarantine and repair move an invalid payload."},
+      {"question": "Why not catch every exception, log it, and acknowledge the message?", "explanation": "Throughput recovers and the queue looks healthy, but the business operation is gone. Nothing records which orders stopped advancing, and the log line is not a replayable copy of the event. Acknowledge only after the effect is durable or after a confirmed handoff to quarantine."},
+      {"question": "Why not move the failed event to the DLQ and let the next event for that order continue?", "explanation": "That is right for independent work such as notifications and wrong for ordered state. If event 41 reserves stock and event 42 ships, letting 42 run ships an unreserved order. Pause or quarantine that one order's stream until 41 is repaired, and keep unrelated orders moving."}
+    ],
     "followups": [
       ["Can an invalid event be repaired without changing its business identity?", "Yes, if the repair keeps the original event ID and records what changed and who approved it. Consumers deduplicate the replay by that ID. Minting a new ID turns the repair into a second event."],
       ["What happens if the quarantine destination is unavailable?", "The consumer must not acknowledge the message. Pause or slow that partition and alert: quarantine is a durable write that has to succeed before the acknowledgement, or the evidence is lost."],
@@ -586,7 +596,8 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
         "title": "Choose one retry owner",
         "paragraphs": [
           "Choose one layer with enough context to retry the operation. Disable or account for retries in lower SDKs and proxies. Retry only failures that may recover, only when the operation is safe to repeat, and only if sufficient time and retry tokens remain. A payment timeout still requires idempotency; reliability controls do not resolve an ambiguous charge.",
-          "Combine bounded concurrency and bounded waiting with per-attempt timeouts. Propagate cancellation where supported and measure whether downstream work actually stops. When the limit is reached, reject promptly or use a truthful fallback: stale product details may be acceptable, but inventing a successful inventory reservation is not."
+          "Combine bounded concurrency and bounded waiting with per-attempt timeouts. Propagate cancellation where supported and measure whether downstream work actually stops. When the limit is reached, reject promptly or use a truthful fallback: stale product details may be acceptable, but inventing a successful inventory reservation is not.",
+          "SDKs often retry before your code sees an error. AWS SDKs retry by default. In standard mode they make up to three attempts in total and takes each retry from a retry quota, a token bucket that drains on retries and refills on successes. When the bucket is empty, the SDK returns the error instead of retrying. That is a retry budget built into the client. Count those attempts when you choose the retry owner, or set max attempts to 1 where another layer owns retries."
         ]
       },
       {
@@ -670,6 +681,11 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
         ]
       }
     ],
+    "wrongAnswers": [
+      {"question": "Why not raise every timeout so slow calls have time to finish?", "explanation": "Longer timeouts keep more work in flight while the dependency is already overloaded. At 200 requests per second, a two-second call holds about 400 requests at once instead of 10. Size each attempt to the remaining deadline and cap concurrency, so excess work is rejected quickly instead of piling up."},
+      {"question": "Why not add exponential backoff with jitter and leave retries on at every layer?", "explanation": "Jitter spreads attempts over time but does not reduce how many there are. Three layers allowing three attempts each can still send up to 27 calls for one original request. Pick one retry owner, disable or account for retries below it, and cap extra attempts with a retry budget."},
+      {"question": "Why not rely on a circuit breaker to protect the dependency?", "explanation": "A breaker stops new calls after it opens, but the slow calls already running keep holding threads and connections, and every replica has its own breaker. When probes succeed, a naive breaker releases all waiting work at once. Pair it with a concurrency limit and a gradual ramp on recovery."}
+    ],
     "followups": [
       ["Who owns retries when an SDK retries internally?", "Choose one layer, usually the one closest to the failing dependency, and disable or cap retries everywhere else. Otherwise the layers multiply: three layers of three attempts can become 27 calls."],
       ["Can the dependency cancel work after the caller times out?", "Only if the deadline travels with the request, for example as a gRPC deadline or a deadline header, and the dependency checks it. Without that, the dependency keeps doing work nobody is waiting for, which is pure waste during overload."],
@@ -681,6 +697,10 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "poison-messages"
     ],
     "sources": [
+      [
+        "AWS SDKs and Tools: Retry behavior",
+        "https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html"
+      ],
       [
         "AWS: Timeouts, retries, and backoff with jitter",
         "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/"
@@ -870,6 +890,9 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
         "Protects interactive traffic but may leave some reserved capacity idle."
       ]
     ],
+    "extraTables": [
+      {"caption": "PgBouncer pool modes: what each one shares, and what breaks", "headers": ["Mode", "Connection returns to the pool", "What breaks"], "rows": [["Session", "When the client disconnects", "Nothing; every PostgreSQL feature works. Sharing is lowest, so it barely reduces database sessions for long-lived application pools."], ["Transaction", "When the transaction ends", "Session state: SET/RESET, LISTEN, WITH HOLD cursors, SQL PREPARE/DEALLOCATE, session-level advisory locks, LOAD, and temp tables that outlive a transaction. Protocol-level prepared statements need max_prepared_statements set above zero."], ["Statement", "After every statement", "Everything transaction mode breaks, plus multi-statement transactions, which are rejected. Meant for autocommit-only clients."]]}
+    ],
     "failures": [
       [
         "Leaked checkout",
@@ -913,6 +936,11 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
           "Plan database capacity alongside the services that share it"
         ]
       }
+    ],
+    "wrongAnswers": [
+      {"question": "Why not raise the pool size on every replica?", "explanation": "If the database is the bottleneck, more sessions add memory and lock contention without adding query throughput. Eight replicas with pools of 20 already reach a 160-session budget; raising each pool to 40 asks for 320. Find where the hold time goes before giving anyone more connections."},
+      {"question": "Why not let autoscaling add replicas when requests start to queue?", "explanation": "Low application CPU with rising acquisition time means work is waiting on the database, not on compute. Every new replica brings its own pool, so scaling out increases demand on the resource that is already short. Cap the replica count against the shared session budget, including the overlap during deploys."},
+      {"question": "Why not let requests wait for a connection as long as it takes?", "explanation": "A request that waits past its caller's deadline still holds memory, and it may run its query after the user has already retried. An unbounded queue turns a short slowdown into a backlog. Give acquisition a deadline, bound the queue, and return an explicit overload response."}
     ],
     "followups": [
       ["How does a rolling deployment change the connection budget?", "Old and new replicas overlap during a rollout, so peak demand is the surge replica count times pool size. Budget for maximum surge or shrink pools during deploys, so the rollout itself does not exhaust the database."],
@@ -1161,6 +1189,11 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
           "Budget lock time, replication lag, and storage for large tables"
         ]
       }
+    ],
+    "wrongAnswers": [
+      {"question": "Why not rename the column and deploy the new code right after?", "explanation": "The migration and the rollout do not commit together. Old replicas, scheduled jobs, delayed consumers, and the rollback image still query delivery_instructions, and they fail as soon as it disappears. Expand first, run a bridge release that understands both columns, and contract only when nothing still reads the old one."},
+      {"question": "Why not copy all the rows in one UPDATE?", "explanation": "One large transaction holds locks for its whole run, writes a burst of WAL, lags the replicas, and must be redone from the start if it fails. Copy in bounded chunks along a stable key, keep a checkpoint, and throttle on replication lag and API latency."},
+      {"question": "Why not switch reads as soon as the backfill reports 100%?", "explanation": "A completed copy says the statements finished, not that the two columns agree. Writes that arrived during the copy, or from writers that only know the old column, can leave mismatches. Compare old and new values, sample for drift, and switch reads behind a flag you can turn back."}
     ],
     "followups": [
       ["What is the last point at which the old application can safely roll back?", "Just before the contract step. While the old column is still written and read correctly, the old version works. Once you stop writing it or drop it, rolling back the application also requires a data repair."],

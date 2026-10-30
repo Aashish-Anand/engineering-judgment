@@ -128,6 +128,10 @@
 .motion[data-motion="play"] .dots i { animation: dk-pop .25s ease both; animation-delay: calc(var(--i, 0) * 450ms + var(--d, 0) * 25ms); }
 .motion[data-motion="play"] .segment { animation: dk-fill .8s ease both; animation-delay: calc(var(--i, 0) * 250ms); }
 
+@media (prefers-reduced-motion: no-preference) {
+  .cascade .dots i { animation: dk-pop .25s ease both; animation-delay: calc(var(--i, 0) * 380ms + var(--d, 0) * 14ms); }
+  .cascade .ampColumn li b { animation: dk-rise .3s ease both; animation-delay: calc(var(--i, 0) * 380ms); }
+}
 @media (prefers-reduced-motion: reduce) {
   .motion :is(.stepRow .message, .stepRow .arrow, .trunk li, .branch, .ampColumn li, .dots i, .budgetRow, .segment, .cell, .laneHead span) { animation: none !important; opacity: 1 !important; }
   .motion .segment { width: var(--w) !important; }

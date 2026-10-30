@@ -6,7 +6,7 @@ const stages = [
   { title: "Virtual waiting room", detail: "Randomized places for early arrivals, signed tokens, metered release.", throughput: "Controlled 10,000 req/s", tone: "yellow" },
   { title: "Redis stock gate", detail: "Atomic Lua reservation: DECRBY in < 0.5ms.", throughput: "Exactly 10,000 wins", tone: "mint" },
   { title: "Kafka order buffer", detail: "Partitioned by user ID; decouples the database spike.", throughput: "~13 orders/s (cap 500/s)", tone: "lilac" },
-  { title: "Database settlement", detail: "Workers batch INSERTs with zero overdraft.", throughput: "10,000 database orders", tone: "paper" },
+  { title: "Database settlement", detail: "Conditional updates never take stock below zero.", throughput: "10,000 database orders", tone: "paper" },
 ];
 
 export function FlashSaleArchitectureDiagram() {

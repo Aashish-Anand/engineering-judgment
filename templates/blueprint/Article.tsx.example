@@ -54,7 +54,11 @@ export function YourTopicArticle() {
         { title: "Senior", description: "TODO", items: ["TODO"] },
         { title: "Staff", description: "TODO", items: ["TODO"] },
       ]}
-      wrongAnswers={[{ question: "TODO: Why not the obvious fix?", explanation: "TODO" }]}
+      wrongAnswers={[
+        { question: "TODO: Why not the obvious fix?", explanation: "TODO" },
+        { question: "TODO: Why not the second-most tempting fix?", explanation: "TODO" },
+        { question: "TODO: Why not the fix that looks safe but moves the problem?", explanation: "TODO" },
+      ]}
       traps={["TODO: A trap to call out"]}
     />
     <FollowUpsSection items={[["TODO: Follow-up question", "TODO: Answer"]]} />

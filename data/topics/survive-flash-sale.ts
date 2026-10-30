@@ -19,7 +19,7 @@ export const difficultyFactors = [
   ["Synchronized spike",      "All traffic arrives in the exact same second — zero organic ramp-up time."],
   ["Hot key concentration",  "10 million concurrent requests target the exact same product inventory record."],
   ["Extreme read:write ratio", "10,000,000 requests compete for only 10,000 writes (0.1% success rate)."],
-  ["Race conditions",         "Unsynchronized reads and decrements guarantee overselling and negative stock."],
+  ["Race conditions",         "Unsynchronized reads and decrements oversell and drive stock negative under concurrency."],
   ["Payment uncertainty",     "Users reserve inventory but drop off or fail payment, stranding stock."],
   ["Bot automation",          "Automated scripts hit APIs at tens of thousands of requests per second."],
   ["Retry amplification",     "Failed requests cause impatient humans and scripts to hammer reload."],
@@ -53,7 +53,7 @@ export const flashSalePhases: TimelinePhaseData[] = [
     title: "Inventory Gating (Redis + Lua)",
     description: "The API Gateway validates admission tokens and forwards purchase requests to Redis. A single-threaded Lua script atomically verifies and decrements stock in under 1 millisecond.",
     details: [
-      "Single-threaded execution guarantees no race conditions",
+      "The script runs atomically, so no other command interleaves with the check and decrement",
       "Rejects 99.9% of requests with immediate 'Sold Out' status",
       "Eliminates database query load entirely during peak spike",
     ],
@@ -130,7 +130,7 @@ export const keyTradeoffs = [
   ["Inventory Sharding",    "Distributes hot key across multiple nodes",  "Added complexity aggregating global stock counters"],
   ["Aggressive Bot WAF",    "Protects real human buyers from scrapers",   "Risk of false-positive blocks on mobile cellular IPs"],
   ["Graceful Degradation",  "Saves 60%+ CPU by disabling non-essentials", "Users cannot see reviews, recommendations, or rewards"],
-  ["Pre-warming Infra",     "Zero latency shock at 12:00:00 PM launch",    "Expensive idle capacity provisioned before event"],
+  ["Pre-warming Infra",     "No cold-start lag at the 12:00:00 PM launch",    "Expensive idle capacity provisioned before event"],
 ];
 
 export const failureModes = [
@@ -146,7 +146,7 @@ export const failureModes = [
   ],
   [
     "Hot key node saturation",
-    "Redis node CPU hits 100% on inventory key",
+    "Redis node CPU saturates on the inventory key",
     "Split inventory key into N shards across nodes or short-circuit locally once stock hits zero",
   ],
   [
@@ -204,7 +204,7 @@ export const avoidList = [
   "Relying on cloud auto-scaling to react in real-time to a 12:00:00 PM spike (spin-up takes 3–7 minutes)",
   "Setting identical cache TTLs on product data across edge layers (causes massive cache stampedes)",
   "Failing to implement a reservation TTL, permanently locking inventory when users abandon cart",
-  "Falling back to database queries when Redis fails under high load (guarantees total system collapse)",
+  "Falling back to database queries when Redis fails under high load (the database cannot absorb that load)",
   "Allowing unauthenticated requests to reach the inventory decrement gate",
   "Displaying real-time exact inventory numbers to users (creates massive unnecessary read contention)",
   "Skipping automated reconciliation between Redis cache decrements and committed database orders",
@@ -221,7 +221,7 @@ Third, for the 10,000 successful decrements, we create a temporary reservation w
 
 Fourth, the user completes payment within the 10-minute TTL. If payment succeeds, workers mark the order confirmed. If the hold expires or payment fails, a sweeper removes the hold from a sorted set of expiry times and returns the unit to stock; payment and release race on that one removal, so a unit is never both sold and returned.
 
-The primary trade-offs are operational complexity and user experience: the waiting room introduces artificial queuing, and async checkout means users see a 'processing' screen rather than instant confirmation. In exchange, the purchase path stays responsive, a conditional database update guarantees we never sell more than 10,000 units even if Redis fails over, and the primary database never experiences lock collapse.`;
+The primary trade-offs are operational complexity and user experience: the waiting room introduces artificial queuing, and async checkout means users see a 'processing' screen rather than instant confirmation. In exchange, the purchase path stays responsive, a conditional database update guarantees we never sell more than 10,000 units even if Redis fails over, and the primary database sees only settlement writes, not the rush.`;
 
 export const levelExpectations: LevelData[] = [
   {
@@ -267,7 +267,7 @@ export const followUpQuestions: ExpandableQA[] = [
   },
   {
     question: "What happens if the Redis inventory node crashes mid-sale?",
-    answer: "A circuit breaker trips immediately to prevent failing over 2M RPS to the database (which would cause instantaneous database collapse). For high availability, Redis Sentinel or Redis Cluster automatically promotes a replica within 1–3 seconds. Because replication is asynchronous, the promoted replica can miss the last few decrements and show stock that was already sold. Two defences make that safe: allocate a small buffer (for example, 9,800 of 10,000 units) to Redis, and settle every order with a conditional database update (WHERE stock > 0) that cannot oversell. A reconciliation job then compares Redis holds with database orders.",
+    answer: "A circuit breaker trips immediately to prevent failing over 2M RPS to the database (far more than the database can absorb). For high availability, Redis Sentinel or Redis Cluster automatically promotes a replica within 1–3 seconds. Because replication is asynchronous, the promoted replica can miss the last few decrements and show stock that was already sold. Two defences make that safe: allocate a small buffer (for example, 9,800 of 10,000 units) to Redis, and settle every order with a conditional database update (WHERE stock > 0) that cannot oversell. A reconciliation job then compares Redis holds with database orders.",
   },
   {
     question: "How do you prevent a single hot key from overloading a Redis node?",
@@ -295,7 +295,7 @@ export const followUpQuestions: ExpandableQA[] = [
   },
   {
     question: "What is graceful degradation during a flash sale?",
-    answer: "Graceful degradation intentionally shuts down non-critical services to preserve CPU, bandwidth, and database connections for the checkout pipeline. During the 15-minute sale window, personalized recommendation engines, product reviews, loyalty point recalculations, and search autocompletion are disabled or served from static caches. The core checkout path gets 100% of system resources.",
+    answer: "Graceful degradation intentionally shuts down non-critical services to preserve CPU, bandwidth, and database connections for the checkout pipeline. During the 15-minute sale window, personalized recommendation engines, product reviews, loyalty point recalculations, and search autocompletion are disabled or served from static caches. The core checkout path keeps the capacity those features would have used.",
   },
   {
     question: "What happens if 100M users show up instead of 10M (10× scale)?",
@@ -312,7 +312,7 @@ export const saleStrategies = [
   },
   {
     name: "Redis Atomic Inventory Gate",
-    description: "Runs an atomic Lua script in Redis's single-threaded event loop to check and decrement stock in sub-milliseconds. Acts as the gatekeeper that instantly rejects 99.9% of excess traffic without touching the database.",
+    description: "Runs an atomic Lua script in Redis's single-threaded event loop to check and decrement stock in sub-milliseconds. Acts as the gatekeeper: once stock is gone, it rejects buyers immediately without touching the database.",
   },
   {
     name: "Async Order Pipeline",

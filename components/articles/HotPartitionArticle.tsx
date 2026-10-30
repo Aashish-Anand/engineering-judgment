@@ -211,6 +211,10 @@ export function HotPartitionArticle() {
                 </ScrollReveal>
               </div>
 
+              <p className="text-slate-700 leading-relaxed">
+                A cache alone has a weak moment: the instant the popular entry expires. Every request that arrives before it is refilled misses at once, and thousands of identical queries hit the partition together. Request coalescing, often called single-flight after Go&rsquo;s <code>singleflight</code> package, closes that gap. The first miss for a key fetches from the database; concurrent misses for the same key wait for that one result instead of sending their own query. Pair it with serving the slightly stale copy while one request refreshes it, so readers never wait on the refresh at all.
+              </p>
+
               <div className="my-6">
                 <ScrollReveal>
                   <BlueprintPanel kind="diagram"><DatabaseRequestGate /></BlueprintPanel>

@@ -86,6 +86,8 @@ const OUTBOX_RUNBOOK = [
 const OUTBOX_SOURCES: [label: string, href: string][] = [
   ["Debezium: Outbox Event Router", "https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html"],
   ["PostgreSQL: SELECT locking clause (SKIP LOCKED)", "https://www.postgresql.org/docs/current/sql-select.html"],
+  ["microservices.io: Idempotent Consumer", "https://microservices.io/patterns/communication-style/idempotent-consumer.html"],
+  ["Confluent: Schema evolution and compatibility", "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html"],
 ];
 
 const toc = articleToc({
@@ -256,6 +258,16 @@ export function TransactionalOutboxArticle() {
                   <BlueprintPanel kind="diagram"><IdempotentConsumerExample /></BlueprintPanel>
                 </ScrollReveal>
               </div>
+
+              <h3 className="font-sans font-bold text-lg text-slate-900 mt-8 mb-2">The inbox: the outbox&rsquo;s counterpart</h3>
+              <p className="text-slate-700 leading-relaxed">
+                The outbox makes publishing reliable; it cannot stop a redelivery. The consumer-side answer is an inbox table, which microservices.io calls the Idempotent Consumer pattern. The consumer inserts each event ID into the inbox in the same local transaction as its business update, with a unique constraint on the ID. A redelivered event fails that insert and is skipped, so at-least-once delivery still produces one effect. Prune inbox rows only after the longest redelivery or replay window has passed.
+              </p>
+
+              <h3 className="font-sans font-bold text-lg text-slate-900 mt-8 mb-2">Version the event, not just the table</h3>
+              <p className="text-slate-700 leading-relaxed">
+                An outbox payload is a public contract. Consumers you do not control may read it days later, and a replay reads it again much later still. Put a schema version in every event and make compatible changes only: add optional fields, and never rename or retype one in place. A schema registry such as Confluent&rsquo;s can reject an incompatible schema before it ships. For a breaking change, publish a new event type or version alongside the old one until every consumer has moved.
+              </p>
             </section>
 
             {/* ── 05 — Experiment ─────────────────────────────── */}

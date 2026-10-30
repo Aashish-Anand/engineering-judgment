@@ -43,8 +43,9 @@ describe("shared blueprint format", () => {
       for (const { title } of Object.values(fixedSections)) expect(html).toContain(`>${title}</h2>`);
     });
 
-    it(`${topic.id} has a level rubric, a runbook, and sources`, () => {
+    it(`${topic.id} has a level rubric, wrong answers, a runbook, and sources`, () => {
       expect(html).toContain('aria-label="Engineering level rubric"');
+      expect(html.match(/<h3>Common wrong answers<\/h3>([\s\S]*?)<h3>/)?.[1].match(/<h4>/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
       expect(html.match(/<section id="runbook"[\s\S]*?<\/section>/)?.[0].match(/<li>/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
       expect(html.match(/<section id="sources"[\s\S]*?<ul>([\s\S]*?)<\/ul>/)?.[1].match(/<a href="https:/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
     });

@@ -14,6 +14,8 @@ import { FlashSaleArchitectureDiagram } from "@/components/diagrams/FlashSaleArc
 import { InventoryRaceDiagram } from "@/components/diagrams/InventoryRaceDiagram";
 import { ReservationFlowDiagram } from "@/components/diagrams/ReservationFlowDiagram";
 import { FlashSaleLab } from "@/components/FlashSaleLab";
+import { InPractice } from "@/components/InPractice";
+import { FlashSaleFunnelMotion } from "@/components/diagrams/MotionDiagrams";
 
 import * as article from "@/data/topics/survive-flash-sale";
 import { articleToc } from "@/data/topics/article-format";
@@ -55,7 +57,7 @@ const FLASH_SALE_RUNBOOK = [
   "After the sale, reconcile Redis holds, committed orders, and payments, and refund any order beyond the available stock.",
 ];
 
-const FLASH_SALE_SOURCES = [
+const FLASH_SALE_SOURCES: [label: string, href: string][] = [
   ["Redis: Scripting with Lua", "https://redis.io/docs/latest/develop/programmability/eval-intro/"],
   ["Redis: Replication", "https://redis.io/docs/latest/operate/oss_and_stack/management/replication/"],
   ["Redis: WAIT", "https://redis.io/docs/latest/commands/wait/"],
@@ -92,7 +94,7 @@ export function FlashSaleArticle() {
       <ExecutiveBlueprint
           timeToRead="30-Second Architecture Blueprint"
           bottleneck="10M concurrent users hit a single inventory counter at 12:00:00 PM (~2M RPS). Relational row locks serialize, starving database connection pools in 5ms."
-          solution="Multi-Tier Admission Funnel: Edge Virtual Waiting Room sheds 99.5% ➔ In-memory atomic Redis Lua script reserves stock with 10m TTL ➔ Kafka buffers DB settlement."
+          solution="Multi-Tier Admission Funnel: Edge Virtual Waiting Room sheds most traffic ➔ In-memory atomic Redis Lua script reserves stock with 10m TTL ➔ Kafka buffers DB settlement."
           goldenRule="Never allow incoming traffic to touch relational storage during the sale; decouple in-memory reservation from asynchronous payment settlement."
           keyMetrics={[
             { label: "Available Stock", value: "Strictly 10,000 units (0 overselling)" },
@@ -181,7 +183,7 @@ COMMIT;`}
                 </InsightCard>
               </ScrollReveal>
               <p className="text-slate-700 leading-relaxed">
-                Do not let 10 million buyers touch your transaction layer. First, shed 99.5% of traffic at the edge and queue layers using cryptographically signed admission tokens. Second, serialize the final 10,000 item allocations in memory using an atomic Lua script in Redis. Third, confirm orders asynchronously via decoupled Kafka queues.
+                Do not let 10 million buyers touch your transaction layer. First, shed most of the traffic at the edge and queue layers using cryptographically signed admission tokens. Second, serialize the final 10,000 item allocations in memory using an atomic Lua script in Redis. Third, confirm orders asynchronously via decoupled Kafka queues.
               </p>
             </section>
 
@@ -197,6 +199,8 @@ COMMIT;`}
                   <BlueprintPanel kind="diagram"><FlashSaleArchitectureDiagram /></BlueprintPanel>
                 </ScrollReveal>
               </div>
+
+              <FlashSaleFunnelMotion />
 
               {/* 4 Clean Strategy Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
@@ -275,6 +279,16 @@ return 0 -- Already paid, already released, or not yet expired`}
               <p className="reading-copy">Redis is the fast gate, not the source of truth. Settlement workers write each order with a conditional update, <code>UPDATE inventory SET stock = stock - 1 WHERE item_id = ? AND stock &gt; 0</code>, and treat zero affected rows as &ldquo;sold out&rdquo;. That single statement cannot oversell, so it remains the final guard if a Redis failover ever resurrects a sold unit. After the sale, reconcile Redis holds, orders, and payments, and refund any mismatch.</p>
 
               <p className="reading-copy">Fairness belongs in the waiting room. Commercial waiting rooms such as Queue-it give everyone who arrived before the start time a random place in line, so refreshing early or running bots gives no advantage. Buyers who arrive after the start join the back of the queue in order.</p>
+
+              <InPractice
+                title="Real sales shed load before it reaches stock"
+                points={[
+                  "Queue-it's waiting room can give early arrivals a random place in line, then sends visitors on to the store at a rate the store chooses. The store's servers only see the outflow, never the full rush.",
+                  "Amazon's Builders' Library advises rejecting excess requests early and cheaply, so a server spends its capacity finishing the work it accepted instead of starting work that will time out.",
+                  "Redis runs a Lua script atomically: no other command runs while it executes, so the stock check and the decrement cannot interleave. Replication is asynchronous, and even `WAIT` does not stop a failover from losing acknowledged writes, which is why the database keeps the final guard.",
+                ]}
+                sources={FLASH_SALE_SOURCES}
+              />
 
               <InlineCheck
                 className={neo.conceptCheck}

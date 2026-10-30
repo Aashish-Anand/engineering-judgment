@@ -22,24 +22,31 @@ export type WrongAnswer = { question: string; explanation: string };
 
 const cx = (...names: (string | undefined)[]) => names.filter(Boolean).join(" ");
 
-export function RunbookSection({ steps, intro }: { steps: string[]; intro?: string }) {
+/** A captioned table whose first cell in each row is the row header. */
+export function DecisionTableView({ caption, headers, rows }: DecisionTable) {
+  return <div className={styles.tableWrap} tabIndex={0} role="region" aria-label={caption}>
+    <table>
+      <caption>{caption}</caption>
+      <thead><tr>{headers.map(header => <th key={header} scope="col">{header}</th>)}</tr></thead>
+      <tbody>{rows.map(([label, ...cells]) => <tr key={label}><th scope="row">{label}</th>{cells.map(cell => <td key={cell}>{cell}</td>)}</tr>)}</tbody>
+    </table>
+  </div>;
+}
+
+/** `tables` holds decision criteria that belong next to the steps, such as when to roll back. */
+export function RunbookSection({ steps, intro, tables = [] }: { steps: string[]; intro?: string; tables?: DecisionTable[] }) {
   return <section id="runbook" className={cx(styles.body, styles.runbook)}>
     <SectionHeader number={sectionNumber("runbook")} id="runbook" title={fixedSections.runbook.title} />
     {intro && <p>{intro}</p>}
     <ol>{steps.map(step => <li key={step}>{step}</li>)}</ol>
+    {tables.map(table => <DecisionTableView key={table.caption} {...table} />)}
   </section>;
 }
 
 export function TradeoffsSection({ tables }: { tables: DecisionTable[] }) {
   return <section id="tradeoffs" className={styles.body}>
     <SectionHeader number={sectionNumber("tradeoffs")} id="tradeoffs" title={fixedSections.tradeoffs.title} />
-    {tables.map(table => <div key={table.caption} className={styles.tableWrap} tabIndex={0} role="region" aria-label={table.caption}>
-      <table>
-        <caption>{table.caption}</caption>
-        <thead><tr>{table.headers.map(header => <th key={header} scope="col">{header}</th>)}</tr></thead>
-        <tbody>{table.rows.map(([label, ...cells]) => <tr key={label}><th scope="row">{label}</th>{cells.map(cell => <td key={cell}>{cell}</td>)}</tr>)}</tbody>
-      </table>
-    </div>)}
+    {tables.map(table => <DecisionTableView key={table.caption} {...table} />)}
   </section>;
 }
 
@@ -69,11 +76,11 @@ type InterviewProps = {
   answer: string;
   levels: LevelData[];
   traps: string[];
-  wrongAnswers?: WrongAnswer[];
+  wrongAnswers: WrongAnswer[];
   whiteboardChain?: WhiteboardStep[];
 };
 
-export function InterviewSection({ answer, levels, traps, wrongAnswers = [], whiteboardChain }: InterviewProps) {
+export function InterviewSection({ answer, levels, traps, wrongAnswers, whiteboardChain }: InterviewProps) {
   return <section id="interview" className={cx(styles.body, styles.interviewCorner)}>
     <SectionHeader number={sectionNumber("interview")} id="interview" title={fixedSections.interview.title} />
     <h3>Explain the decision in a minute</h3>

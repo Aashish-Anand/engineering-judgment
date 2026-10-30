@@ -89,13 +89,14 @@ const MAX_DOTS = 32;
 
 export type AmplificationColumn = { title: string; tone: Tone; levels: { label: string; calls: number }[]; total: string };
 
-export function Amplification({ columns }: { columns: AmplificationColumn[] }) {
+/** `cascadeKey` above zero replays the calls level by level, so a slider change shows the multiplication happen. */
+export function Amplification({ columns, cascadeKey = 0 }: { columns: AmplificationColumn[]; cascadeKey?: number }) {
   return (
-    <div className={styles.amplification}>
+    <div className={`${styles.amplification} ${cascadeKey > 0 ? styles.cascade : ""}`}>
       {columns.map(column => (
         <section key={column.title} className={`${styles.ampColumn} ${styles[column.tone]}`}>
           <h4>{column.title}</h4>
-          <ol>
+          <ol key={cascadeKey}>
             {column.levels.map((level, i) => (
               <li key={level.label} style={order(i)}>
                 <span className={styles.ampLabel}>{level.label}</span>

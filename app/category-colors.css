@@ -1,4 +1,5 @@
-/* Category identity: quiet washes in light mode, muted pigments in dark mode. */
+/* Category identity: quiet washes in light mode. In dark mode, washes stay near neutral, because dark tints of
+   amber, rose, and purple read as brown or maroon; the hue lives in the accent and line colors instead. */
 [data-category] {
   --category-accent:#416b94;
   --category-wash:#f0f5fb;
@@ -11,11 +12,11 @@
 [data-category="PERFORMANCE"] { --category-accent:#5266a4; --category-wash:#f1f4fc; --category-line:#c4cdea; }
 [data-category="DEPLOYMENT"] { --category-accent:#925a6c; --category-wash:#fcf3f5; --category-line:#e2c5ce; }
 @media screen {
-  html[data-theme="dark"] [data-category] { --category-accent:#aac9ec; --category-wash:#1c2b38; --category-line:#405d77; }
-  html[data-theme="dark"] [data-category="CORRECTNESS"] { --category-accent:#abd1b6; --category-wash:#20362a; --category-line:#486b52; }
-  html[data-theme="dark"] [data-category="TRAFFIC"] { --category-accent:#e5c38a; --category-wash:#342e21; --category-line:#75613e; }
-  html[data-theme="dark"] [data-category="MESSAGING"] { --category-accent:#cab4e6; --category-wash:#2d263b; --category-line:#65537d; }
-  html[data-theme="dark"] [data-category="RELIABILITY"] { --category-accent:#9bccc6; --category-wash:#1e3332; --category-line:#426e68; }
-  html[data-theme="dark"] [data-category="PERFORMANCE"] { --category-accent:#bac7f3; --category-wash:#252e44; --category-line:#52658d; }
-  html[data-theme="dark"] [data-category="DEPLOYMENT"] { --category-accent:#e2b0c1; --category-wash:#382931; --category-line:#805a6a; }
+  html[data-theme="dark"] [data-category] { --category-accent:#86bfff; --category-wash:#182029; --category-line:#3c6fa6; }
+  html[data-theme="dark"] [data-category="CORRECTNESS"] { --category-accent:#6ee3a0; --category-wash:#17221d; --category-line:#2f8058; }
+  html[data-theme="dark"] [data-category="TRAFFIC"] { --category-accent:#ffc94d; --category-wash:#1d2321; --category-line:#c99227; }
+  html[data-theme="dark"] [data-category="MESSAGING"] { --category-accent:#c3a6ff; --category-wash:#1d1b26; --category-line:#6a54b0; }
+  html[data-theme="dark"] [data-category="RELIABILITY"] { --category-accent:#5edcd0; --category-wash:#162222; --category-line:#2a7a72; }
+  html[data-theme="dark"] [data-category="PERFORMANCE"] { --category-accent:#9fb0ff; --category-wash:#1a1c28; --category-line:#4a5bb0; }
+  html[data-theme="dark"] [data-category="DEPLOYMENT"] { --category-accent:#ff94b8; --category-wash:#221c20; --category-line:#a24670; }
 }

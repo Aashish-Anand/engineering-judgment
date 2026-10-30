@@ -20,6 +20,7 @@ function Range({ label, value, min, max, step = 1, unit = "", onChange }: { labe
 export function RetryAmplificationWorkbench() {
   const [layers, setLayers] = useState(3);
   const [attempts, setAttempts] = useState(3);
+  const [cascade, setCascade] = useState(0);
   const { everyLayer, oneOwner } = retryLevels(layers, attempts);
   const worst = everyLayer.at(-1)!.calls;
   return (
@@ -28,12 +29,13 @@ export function RetryAmplificationWorkbench() {
       animate={false}
       title="Calls reaching each hop · every attempt fails"
       controls={<>
-        <Range label="Retrying layers" value={layers} min={1} max={4} onChange={setLayers} />
-        <Range label="Attempts per layer (including first)" value={attempts} min={1} max={4} onChange={setAttempts} />
+        <Range label="Retrying layers" value={layers} min={1} max={4} onChange={n => { setLayers(n); setCascade(c => c + 1); }} />
+        <Range label="Attempts per layer (including first)" value={attempts} min={1} max={4} onChange={n => { setAttempts(n); setCascade(c => c + 1); }} />
       </>}
       caption={<>Nested retries multiply: {attempts} attempts across {layers} {layers === 1 ? "layer" : "layers"} is {attempts}<sup>{layers}</sup> = {worst} {worst === 1 ? "call" : "calls"} at the dependency for one original request. Jitter spreads the timing but not this count; one retry owner, a deadline, and a retry budget cap it.</>}
     >
       <Amplification
+        cascadeKey={cascade}
         columns={[
           { title: `Every layer retries (${attempts} attempts each)`, tone: worst > attempts ? "bad" : "neutral", levels: everyLayer, total: `${worst} ${worst === 1 ? "call hits" : "calls hit"} a dependency that may already be slow.` },
           { title: "One retry owner (next to the dependency)", tone: "ok", levels: oneOwner, total: `At most ${attempts} ${attempts === 1 ? "call" : "calls"}, inside the deadline and the retry budget.` },

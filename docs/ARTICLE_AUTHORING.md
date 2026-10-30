@@ -19,7 +19,7 @@ Every blueprint has the same twelve sections, in this order. They are defined on
 | 07 | `tradeoffs` | Every safeguard has a cost |
 | 08 | `failures` | Failure modes to rehearse |
 | 09 | `scale` | Topic-specific: "What breaks at ten times …?" |
-| 10 | `interview` | Interview corner: one-minute answer, engineering level rubric, common wrong answers, traps |
+| 10 | `interview` | Interview corner: one-minute answer, engineering level rubric, at least three common wrong answers, traps |
 | 11 | `follow-ups` | What breaks next? |
 | 12 | `sources` | Sources and practice, followed by the quiz entry and related reading |
 

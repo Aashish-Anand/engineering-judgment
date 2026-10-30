@@ -1,4 +1,5 @@
 import { BlueprintArticleFrame } from "./BlueprintArticleFrame";
+import { MigrationLsnTimeline } from "@/components/diagrams/MotionDiagrams";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { SectionHeader } from "@/components/SectionHeader";
 import { InlineCheck } from "@/components/InlineCheck";
@@ -46,6 +47,16 @@ const MIGRATION_RUNBOOK = [
   "To switch writes, fence writes on A, wait until B has applied A's final WAL position, then route writes to B and start the reverse stream.",
   "If errors or latency rise after the switch, roll back with the same fenced procedure in the other direction. The reverse stream keeps A current.",
   "Keep A in sync for a full business cycle before decommissioning it, and drop its replication slot when you do.",
+];
+
+// Thresholds are illustrative starting points; set real ones from the baseline measured before the migration.
+const MIGRATION_ROLLBACK_ROWS = [
+  ["Error rate on B", "Above A's baseline for 5 minutes at the current traffic step", "Route traffic back to A. While A owns writes, this is a routing change."],
+  ["p99 latency on B", "More than 20% above A's baseline at the same step", "Hold the ramp. Roll back if it does not recover within the step's soak time."],
+  ["Forward CDC lag", "Above the cutover threshold (for example, one second) or still growing", "Pause the ramp and keep A as the only writer until lag is steady."],
+  ["Validation divergence", "Any mismatch in a checksummed key range", "Stop. Repair and re-validate the affected range before moving more traffic."],
+  ["Reverse-stream lag after the write switch", "Growing, or the reverse stream has stopped", "Fix the reverse stream before anything else. Without it, rolling back to A loses writes."],
+  ["Retained WAL on A", "Approaching the disk alarm", "Drop or advance the stalled slot deliberately. A full disk takes A down."],
 ];
 
 const MIGRATION_SOURCES: [label: string, href: string][] = [
@@ -136,6 +147,7 @@ export function DatabaseMigrationArticle() {
               </p>
               <p className="reading-copy">There are two proven ways to keep the target synchronized. <strong>Change data capture</strong> reads the source database&apos;s log, so one writer stays authoritative and every change is captured, including writes from jobs and other services. <strong>Application dual writes</strong> change the code to write both stores. Stripe&apos;s published migrations use four phases: dual-write, read from both and compare, write only to the new store, then remove the old. Dual writes suit a single codebase that owns every write and needs to reshape data; CDC suits databases with many writers. This blueprint uses CDC.</p>
               <p className="reading-copy">The rest of this blueprint follows that split: five phases that build confidence in the target, and one short, fenced moment where write ownership actually moves.</p>
+              <MigrationLsnTimeline />
               <div className={neo.decisionNote}><span className="eyebrow">A decision to carry forward</span><h3>Copied ≠ caught up.<br />Caught up ≠ safe to switch.</h3><p>Verify the data, drain in-flight writes, and protect the rollback path before transferring ownership.</p></div>
             </section>
 
@@ -200,7 +212,7 @@ export function DatabaseMigrationArticle() {
               </ScrollReveal>
             </section>
 
-            <RunbookSection steps={MIGRATION_RUNBOOK} />
+            <RunbookSection steps={MIGRATION_RUNBOOK} tables={[{ caption: "When to hold or roll back", headers: ["Signal", "Threshold", "Action"], rows: MIGRATION_ROLLBACK_ROWS }]} />
             <TradeoffsSection tables={[
               { caption: "Ways to keep the target in sync", headers: ["Approach", "Advantage", "Cost"], rows: dualWriteApproaches },
               { caption: "Validation and cutover decisions", headers: ["Decision", "Benefit", "Cost"], rows: keyTradeoffs },
