@@ -8,7 +8,7 @@ import { libraryHref } from "@/data/library";
 import neo from "@/components/Neo.module.css";
 import learning from "@/components/learning/Learning.module.css";
 import { pathsForTopic } from "@/data/learning-paths";
-import { ArticleGuide } from "@/components/learning/ArticleGuide";
+import { ArticleBrief } from "./ArticleBrief";
 
 export type BlueprintTocItem = { id: string; label: string };
 
@@ -16,14 +16,15 @@ type Props = {
   topicId: TopicId;
   toc: BlueprintTocItem[];
   children: ReactNode;
-  brief?: ReactNode;
+  /** Optional extra "The fix" tab for the article brief. */
+  summary?: ReactNode;
   bodyClassName?: string;
   /** Header link text for #workbench; static-diagram articles say "diagram" instead of "workbench". */
   workbenchLabel?: string;
 };
 
 /** Shared published article layout. Keep topic-specific content in its article/data file. */
-export function BlueprintArticleFrame({ topicId, toc, children, brief, bodyClassName = "", workbenchLabel = "Jump into the workbench" }: Props) {
+export function BlueprintArticleFrame({ topicId, toc, children, summary, bodyClassName = "", workbenchLabel = "Jump into the workbench" }: Props) {
   const topic = getTopicById(topicId);
   const presentation: ArticlePresentation = articlePresentations[topicId];
   return (
@@ -38,15 +39,9 @@ export function BlueprintArticleFrame({ topicId, toc, children, brief, bodyClass
             <p className="article-deck">{presentation.deck ?? topic.meta.subtitle}</p>
             <div className={neo.articleActions}><a href={`#${presentation.startId}`} className={neo.action}>Follow the blueprint <span aria-hidden="true">↓</span></a><a href="#workbench">{workbenchLabel} ↗</a></div>
           </div>
-          <aside className="scenario-context" aria-label="Scenario assumptions">
-            <span className="eyebrow">Your production brief ↙</span>
-            <dl>{presentation.scenario.map(fact => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>
-          </aside>
+          <ArticleBrief topicId={topicId} presentation={presentation} summary={summary} />
         </header>
         <ol className={neo.journey} aria-label="The blueprint journey">{presentation.journey.map((step, index) => <li key={step}><b>{String(index + 1).padStart(2, "0")}</b>{step}</li>)}</ol>
-        <div className="article-thesis"><span className="eyebrow">The central idea</span><p>{presentation.overview}</p></div>
-        <ArticleGuide topicId={topicId} />
-        {brief && <details className={neo.brief}><summary>Architecture brief &amp; key thresholds</summary>{brief}</details>}
         <div className="article-layout">
           <TableOfContents items={toc.map(item => ({ ...item, label: item.label.replace(/^\d+\s*·\s*/, "") }))} />
           <div className={`article-content min-w-0 ${bodyClassName}`}>{children}</div>

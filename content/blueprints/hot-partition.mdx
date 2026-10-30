@@ -8,7 +8,6 @@ sections:
   worked-example: Explore the skew
   scale: What breaks at ten times the traffic?
 brief:
-  timeToRead: 30-Second Architecture Blueprint
   bottleneck: A viral post concentrates 70,000 requests/sec onto a single database partition key. Doubling partitions does not help because all traffic shares the exact same key.
   solution: "Dual-Path Split: Cache 100% of public post body reads at the edge with single-flight mutexes ➔ Salt write keys with user_id % 8 into 10 parallel buckets ➔ Asynchronously aggregate public totals in the background."
   goldenRule: Never try to scale a single hot key by adding database servers; split the key on the write path and cache it on the read path.

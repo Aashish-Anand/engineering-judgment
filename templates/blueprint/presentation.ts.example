@@ -13,4 +13,6 @@ export const presentation = {
     { label: "Approach", value: "TODO: Main mechanism" },
   ],
   journey: ["Frame the constraint", "Find the failure", "Try the safeguard", "Verify recovery"],
+  // Shown first in the article brief (and on the home card if featured). Short steps: it must fit at 390px.
+  flow: { nodes: ["TODO", "TODO", "TODO"], note: "TODO: The idea in five words." },
 } satisfies ArticlePresentation;

@@ -4,17 +4,9 @@ import { Hero } from "@/components/Hero";
 import { ArchitecturePressurePreview } from "@/components/ArchitecturePressurePreview";
 import { HomeLearning } from "@/components/learning/HomeLearning";
 import { topicCatalog } from "@/data/topics/catalog";
+import { articlePresentations } from "@/data/topics/presentation";
 import styles from "@/components/Home.module.css";
 import neo from "@/components/Neo.module.css";
-
-const previews = [
-  { nodes: ["SOURCE", "CDC", "TARGET"], note: "Keep the writes. Change the owner." },
-  { nodes: ["REQUEST", "KEY", "ONCE"], note: "Same request. One effect." },
-  { nodes: ["HOT KEY", "SALT", "SHARDS"], note: "Spread the heat." },
-  { nodes: ["QUEUE", "RETRY", "DLQ"], note: "Give bad messages a way out." },
-  { nodes: ["TIMEOUT", "BACKOFF", "RETRY"], note: "Give the system room to recover." },
-  { nodes: ["EXPAND", "MOVE", "CONTRACT"], note: "Let old and new coexist." },
-];
 
 export default function Home() {
   return (
@@ -27,7 +19,7 @@ export default function Home() {
         <nav className={styles.categories} aria-label="Browse by category">{libraryCategories.map(c => <Link href={libraryHref("", c.slug)} key={c.slug}>{c.label}<span>{c.count}</span></Link>)}</nav>
         <div className={styles.cards}>{featuredIds.map((id, index) => {
           const topic = topicCatalog.find(t => t.id === id)!;
-          const preview = previews[index];
+          const preview = articlePresentations[id].flow;
           return <Link className={styles.card} href={topic.href} key={id}>
             <div className={styles.cardArt}><div className={styles.cardArtLabel}><span>{topic.meta.category}</span><span>0{index + 1} ↗</span></div><div className={styles.miniFlow}>{preview.nodes.map((node, i) => <span key={node}>{i > 0 && <b aria-hidden="true">→</b>}<strong>{node}</strong></span>)}</div><p>{preview.note}</p></div>
             <div className={styles.cardBody}><h3>{libraryDetails[id].title}</h3><p>{topic.meta.subtitle}</p><div className={styles.cardFoot}><span>{topic.meta.readingTime}</span><span>Open blueprint ↗</span></div></div>

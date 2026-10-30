@@ -184,7 +184,7 @@ The five data-driven blueprints no longer have a separate "Try the failure scena
 Reviewed AlgoMaster, Hello Interview, Educative, and EnjoyAlgorithms (`docs/RETENTION_REVIEW.md`). Built Tier 1:
 - **Learning paths** (`data/learning-paths.ts`): every article declares depth and prerequisites; paths are ordered article lists. Tests enforce coverage, non-decreasing depth, prerequisite order, and no cycles, so the structure scales as articles are added. `/paths` page, "Paths" in the header, a homepage section, an in-article path line, and `ArticleNav` rewritten as path-aware end-of-article navigation (previous and next within the reader's path instead of catalog order).
 - **Progress without accounts** (`data/progress.ts`, `components/useProgress.ts`): localStorage only, synced across tabs. Articles are marked read when the path panel scrolls into view (or by checkbox); quizzes save the best score; the homepage offers "Continue where you left off"; ✓ marks in the library and navigator.
-- **Recognize it / remember it** (`data/article-guides.ts`, `components/learning/ArticleGuide.tsx`): three recognition signals and a collapsible, printable quick-reference card under each article's central idea.
+- **Recognize it / remember it** (`data/article-guides.ts`): three recognition signals and a printable quick-reference card, shown as the "Spot it" and "One minute" tabs of the article brief (`components/articles/ArticleBrief.tsx`) beside the title.
 RSS and newsletter are deferred until about 25 articles. Print rules live in `app/globals.css` because CSS modules reject selectors without a local class.
 
 ## Retention Tier 2, part 1 — 2026-10-31

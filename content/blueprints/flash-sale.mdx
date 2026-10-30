@@ -8,7 +8,6 @@ sections:
   worked-example: Explore the sale
   scale: What breaks at ten times the buyers?
 brief:
-  timeToRead: 30-Second Architecture Blueprint
   bottleneck: 10M concurrent users hit a single inventory counter at 12:00:00 PM (~2M RPS). Relational row locks serialize, starving database connection pools in 5ms.
   solution: "Multi-Tier Admission Funnel: Edge Virtual Waiting Room sheds most traffic ➔ In-memory atomic Redis Lua script reserves stock with 10m TTL ➔ Kafka buffers DB settlement."
   goldenRule: Never allow incoming traffic to touch relational storage during the sale; decouple in-memory reservation from asynchronous payment settlement.

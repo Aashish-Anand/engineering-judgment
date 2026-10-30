@@ -8,7 +8,6 @@ sections:
   worked-example: Explore the relay
   scale: What breaks at ten times the events?
 brief:
-  timeToRead: 30-Second Architecture Blueprint
   bottleneck: Writing to PostgreSQL and publishing to Kafka in the same HTTP request is an uncoordinated dual write. Crashes cause silent data loss (lost events) or phantom records (ghost events).
   solution: "Transactional Outbox Pattern: Insert the event payload into an outbox table in the exact same database transaction as the business entity ➔ Asynchronously relay via Polling or Debezium CDC ➔ Deduplicate at consumer with event IDs."
   goldenRule: Never execute two uncoordinated remote network writes in the same user request; make the event part of the database transaction.

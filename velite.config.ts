@@ -46,9 +46,8 @@ const blueprints = defineCollection({
       "worked-example": s.string(),
       scale: s.string(),
     }),
-    /** Optional "Architecture brief & key thresholds" disclosure. */
+    /** Optional "The fix" tab in the article brief. */
     brief: s.object({
-      timeToRead: s.string().optional(),
       bottleneck: s.string(),
       solution: s.string(),
       goldenRule: s.string(),
