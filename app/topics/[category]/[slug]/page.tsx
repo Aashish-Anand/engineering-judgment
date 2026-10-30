@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { articleComponents } from "@/components/articles/registry";
+import { socialMetadata } from "@/data/site";
 import { getTopicByRoute, getTopicStaticParams } from "@/data/topics/catalog";
 
 type PageProps = {
@@ -21,13 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: topic.meta.title,
     description: topic.meta.subtitle,
-    alternates: { canonical: topic.href },
-    openGraph: {
-      title: topic.meta.title,
-      description: topic.meta.subtitle,
-      type: "article",
-      url: topic.href,
-    },
+    ...socialMetadata({ title: topic.meta.title, description: topic.meta.subtitle, path: topic.href, type: "article" }),
   };
 }
 

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
+import { socialMetadata } from "@/data/site";
 import { ReviewSession } from "@/components/learning/ReviewSession";
 import neo from "@/components/Neo.module.css";
 
-export const metadata: Metadata = {
-  title: "Review your decisions",
-  description: "Quiz decisions you missed come back at spaced intervals so the reasoning sticks.",
-  robots: { index: false },
-};
+const title = "Review your decisions";
+const description = "Quiz decisions you missed come back at spaced intervals so the reasoning sticks.";
+export const metadata: Metadata = { title, description, robots: { index: false }, ...socialMetadata({ title, description, path: "/review" }) };
 
 export default function ReviewPage() {
   return (

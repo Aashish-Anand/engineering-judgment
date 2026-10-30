@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArchitectureQuiz } from "@/components/ArchitectureQuiz";
+import { socialMetadata } from "@/data/site";
 import { getTopicByRoute, getTopicStaticParams } from "@/data/topics/catalog";
 import { topicQuizzes } from "@/data/topics/quizzes";
 import neo from "@/components/Neo.module.css";
@@ -13,7 +14,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category, slug } = await params;
   const topic = getTopicByRoute(category, slug);
   if (!topic) return {};
-  return { title: `Quiz: ${topic.meta.title}`, description: `Practice the decisions in ${topic.meta.title}.`, alternates: { canonical: `${topic.href}/quiz` } };
+  const title = `Quiz: ${topic.meta.title}`;
+  const description = `Practice the decisions in ${topic.meta.title}.`;
+  return { title, description, ...socialMetadata({ title, description, path: `${topic.href}/quiz` }) };
 }
 export default async function QuizPage({ params }: Props) {
   const { category, slug } = await params;

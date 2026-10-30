@@ -113,7 +113,7 @@ When a CI run fails, the `playwright-report` (HTML report) and `test-results` (d
 
 ### Site URL
 
-For deployment, set `NEXT_PUBLIC_SITE_URL` to the public origin before building:
+For deployment, set `NEXT_PUBLIC_SITE_URL` to the public origin before building (on Vercel it defaults to the production domain from `VERCEL_PROJECT_PRODUCTION_URL`):
 
 ```dotenv
 NEXT_PUBLIC_SITE_URL=https://your-domain.example

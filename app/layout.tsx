@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { BackToTop } from "@/components/BackToTop";
-import { siteConfig } from "@/data/site";
+import { siteConfig, socialMetadata } from "@/data/site";
 import { themeInitScript } from "@/data/theme";
 import "./globals.css";
 import "./theme.css";
@@ -32,16 +32,11 @@ export const metadata: Metadata = {
     template: "%s | Engineering Judgment",
   },
   description: siteConfig.description,
-  alternates: { canonical: "/" },
-  openGraph: {
+  ...socialMetadata({
     title: siteConfig.title,
-    description:
-      "Real-world bottlenecks, failure modes, and architecture trade-offs — explained without the usual system-design fluff.",
-    type: "website",
-    locale: "en_US",
-    url: "/",
-    siteName: siteConfig.name,
-  },
+    description: "Real-world bottlenecks, failure modes, and architecture trade-offs — explained without the usual system-design fluff.",
+    path: "/",
+  }),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
