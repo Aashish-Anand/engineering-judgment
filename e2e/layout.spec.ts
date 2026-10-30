@@ -5,6 +5,8 @@ for (const path of pages) {
   test.describe(path, () => {
     test.beforeEach(async ({ page }) => {
       await page.goto(path);
+      // Measure the hydrated page: some components swap a static server fallback for their interactive version.
+      await page.waitForSelector("html[data-hydrated]", { state: "attached" });
       await page.evaluate(() => document.fonts.ready);
     });
 

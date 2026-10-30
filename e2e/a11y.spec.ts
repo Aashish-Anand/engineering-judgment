@@ -9,6 +9,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     for (const path of pages) {
       test(`${path} has no serious accessibility violations`, async ({ page }) => {
         await page.goto(path);
+        await page.waitForSelector("html[data-hydrated]", { state: "attached" });
         const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
         const serious = violations
           .filter((v) => v.impact === "serious" || v.impact === "critical")

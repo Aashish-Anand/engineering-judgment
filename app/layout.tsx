@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { BackToTop } from "@/components/BackToTop";
+import { HydrationMarker } from "@/components/HydrationMarker";
 import { siteConfig, socialMetadata } from "@/data/site";
 import { themeInitScript } from "@/data/theme";
 import "./globals.css";
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="flex-1">{children}</main>
         <SiteFooter />
         <BackToTop />
+        <HydrationMarker />
       </body>
     </html>
   );
