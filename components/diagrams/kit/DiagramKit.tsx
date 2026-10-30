@@ -9,10 +9,11 @@ export type Tone = "neutral" | "accent" | "info" | "ok" | "warn" | "bad";
 
 const order = (i: number) => ({ "--i": i }) as CSSProperties;
 
-export function DiagramFigure({ title, caption, scroll = false, children }: { title: string; caption?: ReactNode; scroll?: boolean; children: ReactNode }) {
+export function DiagramFigure({ id, title, caption, scroll = false, animate = true, controls, children }: { id?: string; title: string; caption?: ReactNode; scroll?: boolean; animate?: boolean; controls?: ReactNode; children: ReactNode }) {
   return (
-    <figure className={styles.figure} aria-label={title}>
-      <DiagramMotion title={title}>
+    <figure id={id} className={styles.figure} aria-label={title}>
+      <DiagramMotion title={title} enabled={animate}>
+        {controls && <div className={styles.controls}>{controls}</div>}
         {scroll && <p className={styles.scrollHint}>Scroll sideways to see every column →</p>}
         <div className={scroll ? styles.scroll : styles.body}>{children}</div>
       </DiagramMotion>
@@ -84,6 +85,8 @@ export function BranchFlow({ trunk, branches }: { trunk: string[]; branches: Bra
 
 /* ── Amplification: how many calls reach each layer ────────────────── */
 
+const MAX_DOTS = 32;
+
 export type AmplificationColumn = { title: string; tone: Tone; levels: { label: string; calls: number }[]; total: string };
 
 export function Amplification({ columns }: { columns: AmplificationColumn[] }) {
@@ -97,7 +100,8 @@ export function Amplification({ columns }: { columns: AmplificationColumn[] }) {
               <li key={level.label} style={order(i)}>
                 <span className={styles.ampLabel}>{level.label}</span>
                 <span className={styles.dots} aria-hidden="true">
-                  {Array.from({ length: level.calls }, (_, d) => <i key={d} style={{ "--d": d } as CSSProperties} />)}
+                  {Array.from({ length: Math.min(level.calls, MAX_DOTS) }, (_, d) => <i key={d} style={{ "--d": d } as CSSProperties} />)}
+                  {level.calls > MAX_DOTS && <small>+{level.calls - MAX_DOTS}</small>}
                 </span>
                 <b>{level.calls} {level.calls === 1 ? "call" : "calls"}</b>
               </li>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { featuredIds, libraryCategories, libraryDetails, libraryHref } from "@/data/library";
 import { Hero } from "@/components/Hero";
 import { ArchitecturePressurePreview } from "@/components/ArchitecturePressurePreview";
+import { HomeLearning } from "@/components/learning/HomeLearning";
 import { topicCatalog } from "@/data/topics/catalog";
 import styles from "@/components/Home.module.css";
 import neo from "@/components/Neo.module.css";
@@ -34,11 +35,15 @@ export default function Home() {
         })}</div>
         <div className={styles.browse}><Link className={styles.button} href="/library">Explore all {topicCatalog.length} blueprints <span aria-hidden="true">↗</span></Link><span>Follow your curiosity. Bring your skepticism.</span></div>
       </section>
+      <section id="paths" className={styles.library} aria-labelledby="paths-heading">
+        <div className={styles.sectionIntro}><div><p className={styles.eyebrow}>02 / Learning paths</p><h2 id="paths-heading">Pick a path.<br />Build on each step.</h2></div><p>Each path orders the blueprints from core ideas to advanced scenarios. Progress stays in this browser; no account needed. <Link href="/paths">See every path ↗</Link></p></div>
+        <HomeLearning />
+      </section>
       <section id="labs" className={styles.labBand}><div className={styles.labs}>
-        <div className={styles.labCopy}><p className={styles.eyebrow}>02 / Less theory. More “what if?”</p><h2>Turn a knob.<br />Break an <span>assumption.</span></h2><p>What happens when traffic spikes? When replication falls behind? Change the load and watch the consequence.</p><div className={styles.labSteps}><span>01 &nbsp; Pick a system</span><span>02 &nbsp; Add some pressure</span><span>03 &nbsp; Follow the failure</span></div><p className={styles.simulationNote}>Illustrative simulations. Each blueprint explains the assumptions and gives you deeper controls.</p></div>
+        <div className={styles.labCopy}><p className={styles.eyebrow}>03 / Less theory. More “what if?”</p><h2>Turn a knob.<br />Break an <span>assumption.</span></h2><p>What happens when traffic spikes? When replication falls behind? Change the load and watch the consequence.</p><div className={styles.labSteps}><span>01 &nbsp; Pick a system</span><span>02 &nbsp; Add some pressure</span><span>03 &nbsp; Follow the failure</span></div><p className={styles.simulationNote}>Illustrative simulations. Each blueprint explains the assumptions and gives you deeper controls.</p></div>
         <div className={styles.workbench}><div className={styles.workbenchLabel}>YOUR EXPERIMENT STARTS HERE <span aria-hidden="true">↘</span></div><ArchitecturePressurePreview /></div>
       </div></section>
-      <section id="about" className={styles.about}><div><p className={styles.eyebrow}>03 / The engineering mindset</p><h2>The diagram is<br />just the beginning.</h2></div><div><p>What is the constraint? Where does the first failure appear? What does this decision make harder later?</p><p>Engineering Judgment is a collection of worked problems for engineers who want to understand how systems behave in production. Build intuition through explanations, architecture diagrams, and experiments you control.</p><div className={styles.reasoning}><span>Constraint</span><b>→</b><span>Decision</span><b>→</b><span>Trade-off</span><b>→</b><span>Consequence</span></div><Link className={styles.secondaryLink} href="/topics/database/safely-migrate-production-database#career-rubric">Learn to explain the decision ↗</Link></div></section>
+      <section id="about" className={styles.about}><div><p className={styles.eyebrow}>04 / The engineering mindset</p><h2>The diagram is<br />just the beginning.</h2></div><div><p>What is the constraint? Where does the first failure appear? What does this decision make harder later?</p><p>Engineering Judgment is a collection of worked problems for engineers who want to understand how systems behave in production. Build intuition through explanations, architecture diagrams, and experiments you control.</p><div className={styles.reasoning}><span>Constraint</span><b>→</b><span>Decision</span><b>→</b><span>Trade-off</span><b>→</b><span>Consequence</span></div><Link className={styles.secondaryLink} href="/topics/database/safely-migrate-production-database#career-rubric">Learn to explain the decision ↗</Link></div></section>
     </div>
   );
 }

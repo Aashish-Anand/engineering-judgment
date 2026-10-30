@@ -16,7 +16,10 @@ The template has eight sections: constraints, first failure, mental model, archi
 4. Add its library title, search aliases, and order to `libraryDetails` in `data/library.ts`. The library discovers registered topics automatically; homepage featured IDs are an explicit editorial choice.
 5. Add at least five scenario questions to `topicQuizzes` in `data/topics/quizzes.ts`, using the `QuizQuestion` type. Each question needs at least three distinct options, exactly one correct answer, and an explanation for every option. Vary the correct option’s position across the set.
 
-The topic route, quiz route, static parameters, sitemap, and previous/next navigation are generated from the catalog. Do not create a separate route layout for the new topic.
+6. Place the article in learning paths (`data/learning-paths.ts`): add its `depth` (Core, Applied, Advanced) and `buildsOn` prerequisites to `topicLearning`, then insert it into at least one path in depth order. Tests reject an article in no path, a path whose depth goes backwards, a prerequisite placed later in the same path, or a prerequisite cycle. Split a path into a follow-on path once it passes about six steps.
+7. Add recognition signals and a quick reference to `data/article-guides.ts`: three "you are probably facing this when" signals, plus the invariant, decision, three things to remember, and the top failure. Restate only what the article itself says.
+
+The topic route, quiz route, static parameters, sitemap, and end-of-article path navigation are generated from the catalog and paths. Do not create a separate route layout for the new topic.
 
 ## Use the shared components
 
@@ -27,7 +30,7 @@ The topic route, quiz route, static parameters, sitemap, and previous/next navig
 - `BlueprintPanel kind="detail"`: contain a comparison, diagnostics hub, or career rubric.
 - `InlineCheck className={neo.conceptCheck}`: use a contextual decision checkpoint. `ArticleQuizEntry` links to the dedicated quiz, so questions do not dominate the reading page.
 - `CareerRubricHub initiallyExpanded={false}`: show the rubric while keeping the longer candidate synthesis available on demand.
-- Diagram kit (`components/diagrams/kit/DiagramKit.tsx`): `DiagramFigure` wraps `Sequence`, `BranchFlow`, `Amplification`, `BudgetBars`, or `Swimlane`. They are server-rendered HTML that reflows, use the neo and category tokens (light and dark), and animate only once scrolled into view, never under reduced motion. Tones: neutral, accent (category), info, ok, warn, bad. Pass `scroll` for wide diagrams so they scroll inside the panel on phones. Data-driven blueprints register one diagram and its section in `components/diagrams/BlueprintConceptDiagrams.tsx`; a test requires it.
+- Diagram kit (`components/diagrams/kit/DiagramKit.tsx`): `DiagramFigure` wraps `Sequence`, `BranchFlow`, `Amplification`, `BudgetBars`, or `Swimlane`. They are server-rendered HTML that reflows, use the neo and category tokens (light and dark), and animate only once scrolled into view, never under reduced motion. Tones: neutral, accent (category), info, ok, warn, bad. Pass `scroll` for wide diagrams so they scroll inside the panel on phones. Data-driven blueprints register one diagram and its section in `components/diagrams/BlueprintConceptDiagrams.tsx`; a test requires it. That diagram carries `id="workbench"` for the header link. When the topic has a genuine what-if, make the diagram itself interactive (`DiagramFigure` `controls`, `animate={false}`, see `InteractiveConceptDiagrams.tsx`) instead of adding a separate text-output workbench; set `interactive: true` so the header reads "Jump into the workbench".
 - `InPractice` (`components/InPractice.tsx`): a sourced note on how named systems or teams implement the idea just explained. Every point must trace to a listed primary source; backticks render as code. Data-driven blueprints register theirs in `data/topics/blueprint-practice.ts`, and the sources join the article's reference list automatically.
 - `RelatedTopics ids={[...]}`: pass published `TopicId`s only. Titles come from `libraryDetails`, so do not add placeholder topics or hand-written titles.
 

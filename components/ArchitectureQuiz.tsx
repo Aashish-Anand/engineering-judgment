@@ -1,12 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { recordQuiz } from "@/data/progress";
+import { updateProgress } from "@/components/useProgress";
 
 export type QuizOption = { text: string; isCorrect: boolean; explanation: string };
 export type QuizQuestion = { scenario: string; options: QuizOption[] };
-type Props = { title?: string; questions: QuizQuestion[] };
+/** `topicId` saves the best score in the reader's browser progress. */
+type Props = { title?: string; questions: QuizQuestion[]; topicId?: string };
 
-export function ArchitectureQuiz({ title = "Test your judgment", questions }: Props) {
+export function ArchitectureQuiz({ title = "Test your judgment", questions, topicId }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -68,7 +71,7 @@ export function ArchitectureQuiz({ title = "Test your judgment", questions }: Pr
       )}
       <div className="quiz-actions">
         <span>{submitted ? "Take a moment to consider the reasoning." : "Choose an answer before checking it."}</span>
-        {submitted ? <button type="button" className="editorial-button" onClick={() => moveTo(currentIdx + 1)}>{currentIdx === questions.length - 1 ? "See your results" : "Next scenario"} →</button> : <button type="button" className="editorial-button" disabled={selectedOption === null} onClick={() => { if (selectedOption !== null) setAnswers([...answers, selectedOption]); }}>Check answer →</button>}
+        {submitted ? <button type="button" className="editorial-button" onClick={() => { if (currentIdx === questions.length - 1 && topicId) updateProgress(p => recordQuiz(p, topicId, score, questions.length)); moveTo(currentIdx + 1); }}>{currentIdx === questions.length - 1 ? "See your results" : "Next scenario"} →</button> : <button type="button" className="editorial-button" disabled={selectedOption === null} onClick={() => { if (selectedOption !== null) setAnswers([...answers, selectedOption]); }}>Check answer →</button>}
       </div>
     </section>
   );

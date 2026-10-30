@@ -10,14 +10,14 @@ type MotionState = "static" | "armed" | "play";
  * Server HTML stays fully visible ("static"); motion is only armed in the browser,
  * only for diagrams still below the fold, and never under prefers-reduced-motion.
  */
-export function DiagramMotion({ title, children }: { title: string; children: ReactNode }) {
+export function DiagramMotion({ title, enabled = true, children }: { title: string; enabled?: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<MotionState>("static");
   const [run, setRun] = useState(0);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!enabled || !el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (el.getBoundingClientRect().top < window.innerHeight * 0.85) return;
     // Arming hides the elements for the entrance; it must happen after hydration, so the effect sets state once.
     setState("armed");
@@ -26,7 +26,7 @@ export function DiagramMotion({ title, children }: { title: string; children: Re
     }, { threshold: 0.3 });
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [enabled]);
 
   function replay() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { QuizQuestion } from "@/components/JudgmentQuiz";
+import { topicCatalog } from "@/data/topics/catalog";
+import { useProgress } from "@/components/useProgress";
 
 type Props = { title?: string; questions: QuizQuestion[]; quizHref: string };
 
@@ -10,6 +12,8 @@ export function ArticleQuizEntry({ title = "Test your judgment", questions, quiz
   const entryRef = useRef<HTMLDivElement>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const topicId = topicCatalog.find(topic => `${topic.href}/quiz` === quizHref)?.id;
+  const best = useProgress().quiz[topicId ?? ""];
 
   useEffect(() => {
     if (dismissed) return;
@@ -43,7 +47,7 @@ export function ArticleQuizEntry({ title = "Test your judgment", questions, quiz
         <h3>{title}</h3>
         <p>Work through {questions.length} scenarios from this blueprint. Choose a response, then unpack the trade-off behind it.</p>
         <Link href={quizHref} aria-label={`Take the quiz: ${title}`} className="editorial-button">Take the quiz <span aria-hidden="true">↗</span></Link>
-        <span className="quiz-entry-note">Self-paced · Explanations for every answer</span>
+        <span className="quiz-entry-note">{best ? `Your best: ${best.score} of ${best.total} · Try again any time` : "Self-paced · Explanations for every answer"}</span>
       </div>
       {showPrompt && !dismissed && (
         <aside className="quiz-reading-prompt" aria-label="Quiz invitation">

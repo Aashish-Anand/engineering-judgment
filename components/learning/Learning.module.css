@@ -1,0 +1,87 @@
+/* Learning paths and progress. Neo tokens with fallbacks so badges also work outside the neo surface. */
+.readBadge { display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border:1.5px solid var(--neo-ink, currentColor); background:var(--neo-mint, #bfdfc5); color:var(--neo-on-color, #20231f); font:700 12px/1.6 var(--font-mono); white-space:nowrap; }
+
+/* ── End-of-article path navigation ── */
+.pathNav.pathNav { margin:40px 0 0; border:2px solid var(--neo-ink); background:var(--neo-surface); box-shadow:4px 4px 0 var(--neo-ink); color:var(--neo-ink); }
+.pathNav.pathNav .pathHead { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:6px 16px; padding:12px 18px; border-bottom:2px solid var(--neo-ink); background:var(--neo-lilac-wash); }
+.pathNav.pathNav .pathHead p { margin:0; font:600 12px/1.6 var(--font-mono); text-transform:uppercase; letter-spacing:.06em; color:var(--neo-muted); }
+.pathNav.pathNav .pathHead h2 { margin:2px 0 0; font-size:20px; line-height:1.3; }
+.pathNav.pathNav .pathHead a { font:600 13px/1.6 var(--font-sans); color:var(--neo-ink); }
+.pathNav.pathNav .steps { list-style:none; margin:0; padding:14px 18px 6px; display:grid; gap:6px; }
+.pathNav.pathNav .steps li { margin:0; padding:0; }
+.pathNav.pathNav .steps li a { display:flex; align-items:center; gap:10px; padding:7px 10px; border:1.5px solid var(--neo-grid); color:var(--neo-ink); text-decoration:none; font-size:14px; line-height:1.4; }
+.pathNav.pathNav .steps li a:hover { border-color:var(--neo-ink); }
+.pathNav.pathNav .steps li b { flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border:1.5px solid var(--neo-ink); font:700 12px/1 var(--font-mono); }
+.pathNav.pathNav .steps li[data-state="read"] b { background:var(--neo-mint); color:var(--neo-on-color); }
+.pathNav.pathNav .steps li[data-state="current"] a { border:2px solid var(--neo-ink); background:var(--neo-yellow); color:var(--neo-on-color); font-weight:700; }
+.pathNav.pathNav .steps li[data-state="current"] b { background:var(--neo-surface); color:var(--neo-ink); }
+.pathNav.pathNav .steps li span { flex:1; }
+.pathNav.pathNav .steps li small { font:600 12px/1.4 var(--font-mono); color:inherit; opacity:.8; }
+.pathNav.pathNav .moves { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; padding:10px 18px 14px; }
+.pathNav.pathNav .moves a { display:block; padding:10px 14px; border:2px solid var(--neo-ink); color:var(--neo-ink); text-decoration:none; font-size:14px; line-height:1.4; }
+.pathNav.pathNav .moves a small { display:block; font:600 12px/1.6 var(--font-mono); text-transform:uppercase; color:var(--neo-muted); }
+.pathNav.pathNav .moves a.primary { background:var(--neo-coral); color:var(--neo-on-color); box-shadow:3px 3px 0 var(--neo-ink); text-align:right; }
+.pathNav.pathNav .moves a.primary small { color:inherit; opacity:.85; }
+.pathNav.pathNav .pathFoot { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px 16px; padding:10px 18px 14px; border-top:1px solid var(--neo-grid); font-size:13px; color:var(--neo-muted); }
+.pathNav.pathNav .pathFoot label { display:inline-flex; align-items:center; gap:8px; cursor:pointer; color:var(--neo-ink); font-weight:600; }
+.pathNav.pathNav .pathFoot input { width:16px; height:16px; accent-color:var(--neo-ink); }
+.pathNav.pathNav .pathFoot button { padding:0; border:0; background:none; color:var(--neo-ink); font:inherit; font-weight:600; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+
+/* ── Paths page ── */
+.page { max-width:1100px; margin:0 auto; padding:40px clamp(16px,4vw,48px) 80px; }
+.page h1 { font-size:clamp(30px,4vw,44px); line-height:1.1; letter-spacing:-.05em; margin:6px 0 12px; }
+.intro { max-width:62ch; font-size:16px; line-height:1.7; color:var(--neo-muted); margin:0 0 28px; }
+.pathList { display:grid; gap:24px; }
+.pathCard { border:2px solid var(--neo-ink); background:var(--neo-surface); box-shadow:4px 4px 0 var(--neo-ink); scroll-margin-top:96px; }
+.pathCard header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 20px; padding:16px 20px; border-bottom:2px solid var(--neo-ink); background:var(--neo-lilac-wash); }
+.pathCard h2 { margin:0; font-size:22px; line-height:1.3; }
+.pathCard header p { margin:6px 0 0; max-width:62ch; font-size:15px; line-height:1.6; color:var(--neo-ink); }
+.meter { align-self:start; text-align:right; font:700 13px/1.6 var(--font-mono); }
+.meter span { display:block; width:140px; height:10px; margin-top:6px; border:1.5px solid var(--neo-ink); background:var(--neo-surface); }
+.meter span i { display:block; height:100%; background:var(--neo-mint); }
+.pathCard ol { list-style:none; margin:0; padding:14px 20px; display:grid; gap:8px; counter-reset:step; }
+.pathCard li { display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; }
+.pathCard li > b { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border:1.5px solid var(--neo-ink); font:700 13px/1 var(--font-mono); }
+.pathCard li[data-read="true"] > b { background:var(--neo-mint); color:var(--neo-on-color); }
+.pathCard li a { color:var(--neo-ink); font-weight:700; text-decoration:none; }
+.pathCard li a:hover { text-decoration:underline; }
+.pathCard li small { display:block; font-size:13px; line-height:1.5; color:var(--neo-muted); font-weight:400; }
+.depth { font:600 12px/1.6 var(--font-mono); padding:1px 7px; border:1px solid var(--neo-grid); color:var(--neo-muted); white-space:nowrap; }
+.pathCard footer { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; padding:12px 20px 16px; border-top:1px solid var(--neo-grid); font-size:13px; color:var(--neo-muted); }
+.start { display:inline-block; padding:9px 16px; border:2px solid var(--neo-ink); background:var(--neo-coral); color:var(--neo-on-color); box-shadow:3px 3px 0 var(--neo-ink); font-weight:700; font-size:14px; text-decoration:none; }
+
+/* ── Homepage continue strip ── */
+.continue { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+.continue a.tile { display:flex; flex-direction:column; gap:6px; padding:16px 18px; border:2px solid var(--neo-ink); background:var(--neo-surface); color:var(--neo-ink); text-decoration:none; box-shadow:3px 3px 0 var(--neo-ink); }
+.continue a.tile small { font:600 12px/1.6 var(--font-mono); text-transform:uppercase; letter-spacing:.05em; color:var(--neo-muted); }
+.continue a.tile strong { font-size:17px; line-height:1.35; }
+.continue a.tile span { font-size:14px; line-height:1.5; color:var(--neo-muted); }
+
+/* ── In-article path line under the eyebrow ── */
+.pathLine { margin:-4px 0 14px; font:600 12px/1.7 var(--font-mono); color:var(--neo-muted); }
+.pathLine a { color:var(--neo-ink); text-underline-offset:3px; }
+
+@media (max-width:640px) {
+  .pathCard li { grid-template-columns:30px minmax(0,1fr); align-items:start; }
+  .pathCard li .depth { grid-column:2; justify-self:start; }
+  .pathNav.pathNav .moves a.primary { text-align:left; }
+}
+
+/* ── Recognize it / remember it ── */
+.guide { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:16px; align-items:start; margin:0 0 28px; }
+.signals { border:2px solid var(--neo-ink); background:var(--neo-surface); padding:14px 18px; color:var(--neo-ink); }
+.signals h2 { margin:0 0 6px; font:700 12px/1.6 var(--font-mono); text-transform:uppercase; letter-spacing:.06em; color:var(--neo-muted); }
+.signals ul { margin:0; padding-left:20px; list-style:disc; }
+.signals li { margin:5px 0; font-size:15px; line-height:1.55; }
+.quickRef { border:2px solid var(--neo-ink); background:var(--neo-yellow); color:var(--neo-on-color); box-shadow:3px 3px 0 var(--neo-ink); }
+.quickRef summary { cursor:pointer; padding:12px 16px; font:700 14px/1.5 var(--font-sans); }
+.quickRef dl { margin:0; padding:0 16px 6px; display:grid; gap:10px; }
+.quickRef dt { font:700 12px/1.6 var(--font-mono); text-transform:uppercase; letter-spacing:.06em; }
+.quickRef dd { margin:2px 0 0; font-size:14px; line-height:1.55; }
+.quickRef.quickRef dd ul { margin:0; padding-left:18px; list-style:disc; }
+.quickRef.quickRef :is(dd, li) { color:var(--neo-on-color); }
+.signals.signals li { color:var(--neo-ink); }
+.printButton { margin:6px 16px 14px; padding:5px 12px; border:1.5px solid var(--neo-on-color); background:transparent; color:inherit; font:600 13px/1.5 var(--font-sans); cursor:pointer; }
+@media (max-width:900px) { .guide { grid-template-columns:minmax(0,1fr); } }
+@media print { .printButton { display:none; } }
+

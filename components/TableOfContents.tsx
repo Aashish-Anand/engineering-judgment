@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { topicCatalog } from "@/data/topics/catalog";
 import { libraryCategories, libraryDetails, libraryHref, matchesTopic } from "@/data/library";
+import { useProgress } from "@/components/useProgress";
+import learning from "@/components/learning/Learning.module.css";
 import styles from "./ArticleNavigator.module.css";
 
 type TocItem = { id: string; label: string };
@@ -13,9 +15,10 @@ type Mode = "article" | "library";
 function LibraryGroup({ slug, label, currentPath, close, expanded, toggle }: { slug: string; label: string; currentPath: string; close: () => void; expanded: boolean; toggle: () => void }) {
   const topics = topicCatalog.filter(t => t.meta.categorySlug === slug);
   const id = useId();
+  const { read } = useProgress();
   return <div className={styles.group}>
     <button type="button" aria-expanded={expanded} aria-controls={id} onClick={toggle}>{label}<span>{topics.length} {expanded ? "−" : "+"}</span></button>
-    <ul id={id} hidden={!expanded}>{topics.map(t => <li key={t.id}><Link href={t.href} onClick={close} aria-current={t.href === currentPath ? "page" : undefined}>{libraryDetails[t.id].title}</Link></li>)}</ul>
+    <ul id={id} hidden={!expanded}>{topics.map(t => <li key={t.id}><Link href={t.href} onClick={close} aria-current={t.href === currentPath ? "page" : undefined}>{libraryDetails[t.id].title}{read[t.id] && <span className={learning.readBadge} aria-label="read">✓</span>}</Link></li>)}</ul>
   </div>;
 }
 

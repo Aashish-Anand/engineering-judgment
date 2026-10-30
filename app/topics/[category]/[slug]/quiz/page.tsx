@@ -23,7 +23,7 @@ export default async function QuizPage({ params }: Props) {
     <div className={`quiz-page page-shell ${neo.surface} ${neo.quizPage}`}>
       <Link href={`${topic.href}#judgment-quiz`} className="text-link">← Back to the blueprint</Link>
       <header className="quiz-page-header"><p className="eyebrow">{topic.meta.category} / Judgment practice</p><h1>{topic.meta.title}</h1><p>{topicQuizzes[topic.id].length} production scenarios · Self-paced<br />Read the scenario, make a decision, and examine the reasoning. You can return to the article whenever you need it.</p></header>
-      <ArchitectureQuiz title="Practice your judgment" questions={topicQuizzes[topic.id]} />
+      <ArchitectureQuiz title="Practice your judgment" questions={topicQuizzes[topic.id]} topicId={topic.id} />
     </div>
   );
 }

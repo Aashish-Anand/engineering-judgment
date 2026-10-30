@@ -1,6 +1,7 @@
-import type { PressureLabKind } from "@/components/ProductionPressureLab";
+/** The data-driven blueprints rendered by ProductionBlueprintArticle. */
+export type DataBlueprintId = "idempotent-api" | "poison-messages" | "retry-storm" | "connection-pool" | "schema-evolution";
 
-export const blueprintExamples: Record<PressureLabKind, { language: string; code: string; note: string; avoid: string[] }> = {
+export const blueprintExamples: Record<DataBlueprintId, { language: string; code: string; note: string; avoid: string[] }> = {
   "idempotent-api": {
     language: "pseudocode",
     code: `intent = claim_unique(account_id, operation, key, request_hash)

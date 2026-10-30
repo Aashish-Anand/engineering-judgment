@@ -847,3 +847,11 @@ main > article > .wide-width { max-width: 1080px; }
 @media (prefers-reduced-motion: reduce) {
   .editorial-home .hero-feature:hover, .editorial-home .blueprint-row:hover { box-shadow: none; }
 }
+
+/* Print only the quick-reference card when its Print button sets body[data-print]. */
+@media print {
+  body[data-print="quick-reference"] * { visibility: hidden; }
+  body[data-print="quick-reference"] [data-quick-reference],
+  body[data-print="quick-reference"] [data-quick-reference] * { visibility: visible; }
+  body[data-print="quick-reference"] [data-quick-reference] { position: absolute; inset: 0 auto auto 0; width: 100%; box-shadow: none; background: #fff; color: #000; }
+}
