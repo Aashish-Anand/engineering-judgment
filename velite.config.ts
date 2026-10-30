@@ -57,6 +57,8 @@ const blueprints = defineCollection({
     /** Primary references: listed in section 12 and cited by <InPractice>. */
     sources: s.array(s.object({ label: s.string(), href: s.string().url() })).min(1),
     body: s.mdx(),
+    /** The MDX source, for the build-time search index (data/search-index.ts). */
+    raw: s.raw(),
   }),
 });
 
