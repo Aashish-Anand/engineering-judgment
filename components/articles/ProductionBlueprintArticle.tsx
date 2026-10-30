@@ -7,6 +7,7 @@ import { InlineCheck } from "@/components/InlineCheck";
 import { productionBlueprints } from "@/data/topics/production-blueprints";
 import { blueprintConceptDiagrams } from "@/components/diagrams/BlueprintConceptDiagrams";
 import { InPractice } from "@/components/InPractice";
+import { IncidentBox } from "@/components/IncidentBox";
 import { blueprintPractice } from "@/data/topics/blueprint-practice";
 import { articleToc, sectionNumber, type ArticleSectionId } from "@/data/topics/article-format";
 import { FailuresSection, FollowUpsSection, InterviewSection, RunbookSection, ScaleSection, SourcesSection, TradeoffsSection } from "./BlueprintSections";
@@ -24,6 +25,7 @@ export function ProductionBlueprintArticle({ id }: { id: DataBlueprintId }) {
   const renderSection = (section: typeof topic.sections[number]) => <section id={section.id} key={section.id}>
     <SectionHeader number={sectionNumber(section.id as ArticleSectionId)} id={section.id} title={section.title} />
     {section.paragraphs.map(p => <p key={p}>{p}</p>)}
+    {topic.incident?.sectionId === section.id && <IncidentBox {...topic.incident} />}
     {practice?.sectionId === section.id && <InPractice {...practice} />}
     {concept?.sectionId === section.id && <concept.Diagram />}
     {concept?.more?.filter(extra => extra.sectionId === section.id).map(({ Diagram }, i) => <Diagram key={i} />)}
@@ -42,7 +44,7 @@ export function ProductionBlueprintArticle({ id }: { id: DataBlueprintId }) {
           <ScaleSection title={scale.title} paragraphs={scale.paragraphs} />
           <InterviewSection answer={topic.interview} levels={topic.levels} wrongAnswers={topic.wrongAnswers} traps={example.avoid} />
           <FollowUpsSection items={topic.followups as [string, string][]} />
-          <SourcesSection topicId={id} sources={[...topic.sources, ...(practice?.sources ?? [])]} quiz={{ title: topic.shortTitle, questions: topic.questions, href: `${topic.href}/quiz` }} related={topic.related} />
+          <SourcesSection topicId={id} sources={[...topic.sources, ...(practice?.sources ?? []), ...(topic.incident ? [topic.incident.source] : [])]} quiz={{ title: topic.shortTitle, questions: topic.questions, href: `${topic.href}/quiz` }} related={topic.related} />
   </BlueprintArticleFrame>;
 }
 

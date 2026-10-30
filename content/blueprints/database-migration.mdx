@@ -12,6 +12,7 @@ sources:
   - { label: "Debezium: PostgreSQL connector", href: "https://debezium.io/documentation/reference/stable/connectors/postgresql.html" }
   - { label: "AWS DMS: Ongoing replication", href: "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html" }
   - { label: "Stripe: Online migrations at scale", href: "https://stripe.com/blog/online-migrations" }
+  - { label: "GitHub: October 21 post-incident analysis", href: "https://github.blog/news-insights/company-news/oct21-post-incident-analysis/" }
 ---
 
 <Section id="problem">
@@ -52,6 +53,12 @@ The initial instinct is often: **dump the database using pg\_dump and restore it
     },
   ]}
 />
+
+<Incident title="GitHub moved its primaries before every write had arrived" when="October 2018" source="GitHub: October 21 post-incident analysis">
+
+This was an automated failover, not a planned migration, but it hit the same cutover risk. On October 21, 2018, a 43-second network loss led GitHub's automation to move its MySQL primaries from the US East Coast to the West Coast. The East Coast servers held a brief window of writes that had never replicated west, so each site now had writes the other lacked and GitHub could not safely fail back. It chose data integrity over a fast recovery, and service stayed degraded for 24 hours and 11 minutes while the data was restored and reconciled.
+
+</Incident>
 
 </Section>
 
@@ -116,7 +123,7 @@ In practice, “zero downtime” means no visible outage. A write hold of a few 
 
 Keep A in sync for at least one full business cycle (month-end jobs, weekly reports) before you decommission it. Some divergence only shows up when a rare query finally runs.
 
-<InPractice title="Tools teams use for each phase">
+<InPractice title="Tools teams use for each phase" sources={["PostgreSQL: Logical replication", "Debezium: PostgreSQL connector", "AWS DMS: Ongoing replication", "Stripe: Online migrations at scale"]}>
 
 - PostgreSQL logical replication (publications and subscriptions), or Debezium's PostgreSQL connector, streams WAL changes from a replication slot.
 - AWS DMS runs a full load plus ongoing replication (CDC); for PostgreSQL it reads changes through a logical replication slot. AWS states there is no latency SLA for CDC, so measure lag rather than assume it.

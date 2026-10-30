@@ -7,3 +7,6 @@
 .practice.practice code { font-size: 13px; padding: 1px 4px; background: var(--neo-surface); border: 1px solid var(--neo-grid); }
 .practice.practice .sources { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--neo-muted); }
 .practice.practice .sources a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+/* IncidentBox: the same panel with a coral edge and prose instead of a list. */
+.practice.incident { border-left-color: var(--neo-coral); }
+.practice.incident p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--neo-ink); }

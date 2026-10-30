@@ -22,6 +22,7 @@ sources:
   - { label: "Redis: WAIT", href: "https://redis.io/docs/latest/commands/wait/" }
   - { label: "Queue-it: How the virtual waiting room works", href: "https://queue-it.com/how-does-queue-it-work/" }
   - { label: "AWS Builders' Library: Using load shedding to avoid overload", href: "https://aws.amazon.com/builders-library/using-load-shedding-to-avoid-overload/" }
+  - { label: "Ticketmaster: The Eras Tour onsale explained", href: "https://business.ticketmaster.com/press-release/taylor-swift-the-eras-tour-onsale-explained/" }
 ---
 
 <Section id="problem">
@@ -35,6 +36,12 @@ An e-commerce retailer is launching a high-profile flash sale: **10,000 discount
 </ProblemStatement>
 
 <ScenarioMetrics sideNote="All 10,000 units are reserved in about a second of admitted traffic. The challenge is 9.99M rejections without taking down the infrastructure." />
+
+<Incident title="The Eras Tour presale hit four times Ticketmaster's peak" when="November 2022" source="Ticketmaster: The Eras Tour onsale explained">
+
+Ticketmaster sent about 1.5 million Verified Fans codes for the Taylor Swift presale on November 15, 2022. Bot attacks and fans without codes still drove 3.5 billion total system requests, four times its previous peak. To stabilize its systems, it slowed down some sales and pushed back others, so fans waited longer in the queue. Ticketmaster estimated that about 15% of interactions across the site had issues, including passcode errors that cost fans tickets they had carted.
+
+</Incident>
 
 </Section>
 
@@ -142,7 +149,7 @@ Redis is the fast gate, not the source of truth. Settlement workers write each o
 
 Fairness belongs in the waiting room. Commercial waiting rooms such as Queue-it give everyone who arrived before the start time a random place in line, so refreshing early or running bots gives no advantage. Buyers who arrive after the start join the back of the queue in order.
 
-<InPractice title="Real sales shed load before it reaches stock">
+<InPractice title="Real sales shed load before it reaches stock" sources={["Redis: Scripting with Lua", "Redis: Replication", "Redis: WAIT", "Queue-it: How the virtual waiting room works", "AWS Builders' Library: Using load shedding to avoid overload"]}>
 
 - Queue-it's waiting room can give early arrivals a random place in line, then sends visitors on to the store at a rate the store chooses. The store's servers only see the outflow, never the full rush.
 - Amazon's Builders' Library advises rejecting excess requests early and cheaply, so a server spends its capacity finishing the work it accepted instead of starting work that will time out.

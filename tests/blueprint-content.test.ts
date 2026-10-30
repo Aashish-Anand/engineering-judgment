@@ -26,6 +26,10 @@ describe("data-driven blueprint content", () => {
       expect(blueprint.sections.map(section => section.id)).toContain(practice!.sectionId);
       expect(practice!.sources.length).toBeGreaterThan(0);
       for (const [, href] of practice!.sources) expect(href).toMatch(/^https:\/\//);
+      if (blueprint.incident) {
+        expect(blueprint.sections.map(section => section.id)).toContain(blueprint.incident.sectionId);
+        expect(blueprint.incident.source[1]).toMatch(/^https:\/\//);
+      }
       if (blueprint.conceptCheck) {
         expect(blueprint.conceptCheck.options.filter(option => option.isCorrect)).toHaveLength(1);
         expect(blueprint.questions.map(question => question.scenario)).not.toContain(blueprint.conceptCheck.scenario);

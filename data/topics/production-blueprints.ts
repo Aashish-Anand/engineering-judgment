@@ -2,10 +2,13 @@ import { productionCatalog } from "./production-catalog";
 import type { QuizQuestion } from "@/components/JudgmentQuiz";
 import type { TopicId } from "./catalog";
 import type { LevelData, TopicMeta } from "@/data/types";
+import type { Incident } from "@/components/IncidentBox";
 
 export type ProductionBlueprint = {
  id: TopicId; href: `/topics/${string}/${string}`; prompt: string; meta: TopicMeta; shortTitle: string; flow: string[]; diagramCaption: string;
  sections: { id: string; title: string; paragraphs: string[] }[]; runbook: string[]; tradeoffs: string[][]; extraTables?: { caption: string; headers: string[]; rows: string[][] }[]; failures: string[][]; interview: string; levels: LevelData[]; wrongAnswers: { question: string; explanation: string }[]; followups: string[][]; related: TopicId[]; conceptCheck?: QuizQuestion; sources: string[][]; questions: QuizQuestion[];
+ /** A public incident that shows this failure, shown after the named section (01 or 02). Its source joins the reference list. */
+ incident?: Incident & { sectionId: "problem" | "naive" };
 };
 
 const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] = [
@@ -19,6 +22,16 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Reconciler: resolve unknown result",
       "API: replay stored outcome"
     ],
+    "incident": {
+      "sectionId": "problem",
+      "title": "Twilio charged cards it could not record",
+      "when": "July 2013",
+      "summary": "On July 18, 2013, a mistaken restart left the Redis primary behind Twilio’s billing system with every balance at zero and in read-only mode. Card charges still went through, but the payments could not be recorded against the balance. For customers on auto-recharge, the unchanged balance looked unpaid, so the recharge was attempted multiple times. About 1.4% of customers were affected, and Twilio refunded the erroneous charges. Its fix: when balances cannot be read or written, do not charge cards.",
+      "source": [
+        "Twilio: Billing incident post-mortem",
+        "https://www.twilio.com/en-us/blog/company/communications/billing-incident-post-mortem-breakdown-analysis-and-root-cause-html"
+      ]
+    },
     "diagramCaption": "The provider call is outside the local database transaction. A timeout leaves an unresolved intent; it does not prove the provider rejected the payment.",
     "sections": [
       {
@@ -317,6 +330,16 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Permanent: durable quarantine",
       "Replayer: repair + rate limit"
     ],
+    "incident": {
+      "sectionId": "problem",
+      "title": "One bad event kept crashing incident.io",
+      "when": "November 2022",
+      "summary": "On 18 November 2022, incident.io’s app crashed again and again, adding up to 13 minutes of downtime in about half an hour. The team suspected a “poison pill”: one bad Pub/Sub event that crashed the app whenever it was processed. A panic in a goroutine started by the Pub/Sub client escaped their recovery handler and took down the whole app. They recovered by purging the affected subscriptions, accepting the lost events because async work was best-effort. Afterwards they recovered panics in every handler and moved async workers off the web tier.",
+      "source": [
+        "incident.io: Intermittent downtime from repeated crashes",
+        "https://incident.io/blog/intermittent-downtime"
+      ]
+    },
     "diagramCaption": "Retry and quarantine are alternative outcomes, not sequential processing stages. Acknowledge only after a durable effect or confirmed durable handoff.",
     "sections": [
       {
@@ -573,6 +596,16 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Dependency: timed attempt",
       "Fallback or explicit rejection"
     ],
+    "incident": {
+      "sectionId": "naive",
+      "title": "Google Cloud’s restarts overloaded the table they needed",
+      "when": "June 2025",
+      "summary": "On June 12, 2025, a bad policy update crashed Google’s Service Control in every region, and Google Cloud APIs returned 503 errors. After the fix rolled out, smaller regions recovered first. In large regions such as us-central1, the restarting tasks all hit the same Spanner table at once and overloaded it, because Service Control lacked randomized exponential backoff. Recovery there took up to about 2 hours 40 minutes while engineers throttled task creation. Google committed to auditing its systems for randomized exponential backoff.",
+      "source": [
+        "Google Cloud: Service Health incident report, June 12, 2025",
+        "https://status.cloud.google.com/incidents/ow5i3PPK96RduMcb1SsW"
+      ]
+    },
     "diagramCaption": "A failed attempt loops back only if it is safe, retryable, within deadline, and within budget. A circuit breaker can stop new attempts while a separate concurrency limit bounds work already in flight.",
     "sections": [
       {
@@ -830,6 +863,16 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Query or transaction: hold time",
       "Release: always return connection"
     ],
+    "incident": {
+      "sectionId": "problem",
+      "title": "Deadlocked queries held Val Town’s pool for hours",
+      "when": "December 2024",
+      "summary": "Val Town’s post-mortem describes a burst of parallel edits that made a few database queries deadlock. The pool had no query timeouts, so those stuck connections kept their slots until one server’s pool was exhausted. Most requests on that server then stalled in a pending state. Its health checks did not look at the database, so it stayed in service from 12:15am to 7:04am ET, when a user report led the team to terminate it. The fixes were timeouts on pool queries and health checks that include pool health.",
+      "source": [
+        "Val Town: Post-mortem, exhausted host connection pool",
+        "https://blog.val.town/blog/post-mortem-exhausted-host-connection-pool"
+      ]
+    },
     "diagramCaption": "Every replica has its own pool. The database limit is shared across application replicas, workers, deployment overlap, and operational sessions.",
     "sections": [
       {
@@ -1089,6 +1132,16 @@ const blueprintContent: Omit<ProductionBlueprint, "meta" | "href" | "prompt">[] 
       "Switch: validate new readers",
       "Contract: remove old after rollback window"
     ],
+    "incident": {
+      "sectionId": "naive",
+      "title": "GitHub dropped a column its ORM still queried",
+      "when": "August 2025",
+      "summary": "On August 5, 2025, GitHub ran a migration that dropped a column no longer in direct use, but its ORM still referenced it in some pull request queries. Errors rose across pushes, webhooks, notifications, and pull requests for 32 minutes, peaking at about 4% of web and REST API traffic. On August 27, a similar column drop on a Copilot table failed an average of 36% of Copilot requests. GitHub then temporarily blocked all drop-column operations while it added safeguards.",
+      "source": [
+        "GitHub: Availability report, August 2025",
+        "https://github.blog/news-insights/company-news/github-availability-report-august-2025/"
+      ]
+    },
     "diagramCaption": "Each arrow is a separately verified phase. Deploying new code does not prove old workers, reports, or rollback versions have stopped using the old column.",
     "sections": [
       {
