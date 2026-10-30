@@ -5,7 +5,8 @@ Scope: all nine published blueprints, checked against primary industry sources a
 ## Status
 
 - **Done:** all P1 corrections (flash sale, outbox, hot partition, migration dual-write framing), plus the duplicated hot-partition trade-off table.
-- **Next:** the shared diagram kit for the five data-driven blueprints, then the P2 industry-practice additions.
+- **Done:** the shared diagram kit (`components/diagrams/kit/`) and one concept diagram for each data-driven blueprint: payment crash-window sequence, poison-message acknowledgement branches, retry amplification, connection budget bars, schema-evolution swimlane.
+- **Next:** the P2 industry-practice additions, then wiring the unused migration diagrams and animating the flash-sale funnel.
 
 ## Cross-cutting findings
 

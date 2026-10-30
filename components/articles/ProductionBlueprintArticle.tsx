@@ -9,6 +9,7 @@ import { ArticleQuizEntry } from "@/components/ArticleQuizEntry";
 import { InlineCheck } from "@/components/InlineCheck";
 import { ProductionPressureLab, type PressureLabKind } from "@/components/ProductionPressureLab";
 import { productionBlueprints } from "@/data/topics/production-blueprints";
+import { blueprintConceptDiagrams } from "@/components/diagrams/BlueprintConceptDiagrams";
 import styles from "./ProductionBlueprintArticle.module.css";
 
 export function ProductionBlueprintArticle({ id }: { id: PressureLabKind }) {
@@ -28,9 +29,11 @@ export function ProductionBlueprintArticle({ id }: { id: PressureLabKind }) {
     { id: "sources", label: "Sources and practice" },
   ];
   const check = topic.conceptCheck ?? topic.questions[0];
+  const concept = blueprintConceptDiagrams[id];
   const renderSection = (section: typeof topic.sections[number], index: number) => <section id={section.id} key={section.id}>
     <SectionHeader number={String(index + 1).padStart(2, "0")} id={section.id} title={section.title} />
     {section.paragraphs.map(p => <p key={p}>{p}</p>)}
+    {concept?.sectionId === section.id && <concept.Diagram />}
     {section.id === "architecture" && <figure className={styles.diagram} aria-label={`${topic.shortTitle}: architecture flow`}>
       <ol>{topic.flow.map((step, i) => <li key={step}><span aria-hidden="true">{i + 1}</span>{step}</li>)}</ol>
       <figcaption>{topic.diagramCaption}</figcaption>

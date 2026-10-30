@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { productionBlueprints } from "@/data/topics/production-blueprints";
 import { topicCatalog } from "@/data/topics/catalog";
+import { blueprintConceptDiagrams } from "@/components/diagrams/BlueprintConceptDiagrams";
 
 const publishedIds = new Set(topicCatalog.map(topic => topic.id));
 
@@ -16,6 +17,9 @@ describe("data-driven blueprint content", () => {
         expect(publishedIds.has(id)).toBe(true);
         expect(id).not.toBe(blueprint.id);
       }
+      const diagram = blueprintConceptDiagrams[blueprint.id];
+      expect(diagram, "every data-driven blueprint has a concept diagram").toBeDefined();
+      expect(blueprint.sections.map(section => section.id)).toContain(diagram!.sectionId);
       if (blueprint.conceptCheck) {
         expect(blueprint.conceptCheck.options.filter(option => option.isCorrect)).toHaveLength(1);
         expect(blueprint.questions.map(question => question.scenario)).not.toContain(blueprint.conceptCheck.scenario);
