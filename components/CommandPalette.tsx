@@ -1,27 +1,96 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useId } from "react";
 import { useRouter } from "next/navigation";
 import { matchesTopic } from "@/data/library";
-import { topicCatalog } from "@/data/topics/catalog";
+import { topicCatalog, type TopicCatalogEntry } from "@/data/topics/catalog";
 import { TERM_GLOSSARY, type TermDef } from "@/components/TermTooltip";
+import { matchScore, searchArticles, type SearchArticle, type SearchHit } from "@/data/search";
 
 type SearchResult = {
-  type: "topic" | "term";
+  key: string;
   title: string;
   subtitle: string;
   badge: string;
   badgeColor: string;
   href?: string;
-  termKey?: string;
 };
+
+type ResultGroup = { key: string; label: string; results: SearchResult[] };
+
+const hitBadges: Record<SearchHit["kind"], { badge: string; badgeColor: string }> = {
+  section: { badge: "SECTION", badgeColor: "bg-[#DFF3DF]" },
+  heading: { badge: "SECTION", badgeColor: "bg-[#DFF3DF]" },
+  failure: { badge: "FAILURE MODE", badgeColor: "bg-[#F9DDE5]" },
+  "wrong-answer": { badge: "WRONG ANSWER", badgeColor: "bg-[#F9DDE5]" },
+  "follow-up": { badge: "FOLLOW-UP", badgeColor: "bg-[#E7E1F8]" },
+};
+
+const topicResult = (topic: TopicCatalogEntry): SearchResult => ({
+  key: topic.href,
+  title: topic.meta.title,
+  subtitle: topic.meta.subtitle,
+  badge: topic.meta.category,
+  badgeColor: "bg-[#DCEBFF]",
+  href: topic.href,
+});
+
+const conceptResults: SearchResult[] = Object.entries(TERM_GLOSSARY).map(([key, def]: [string, TermDef]) => ({
+  key: `term:${key}`,
+  title: def.term,
+  subtitle: def.definition,
+  badge: "CONCEPT",
+  badgeColor: "bg-[#FFF0B8]",
+}));
+
+// Section and term search: built at build time, fetched once on first open.
+let searchIndex: Promise<SearchArticle[]> | undefined;
+function loadSearchIndex() {
+  searchIndex ??= fetch("/search-index.json")
+    .then((response) => (response.ok ? response.json() : []))
+    .catch(() => {
+      searchIndex = undefined;
+      return [];
+    });
+  return searchIndex;
+}
+
+/**
+ * One group per article: its matching sections and terms, plus the article
+ * itself when the article matches. A title or slug match scores like a hit;
+ * a tag or alias match scores lowest, so "rollback" lands on the section.
+ */
+function articleGroups(index: readonly SearchArticle[], q: string): ResultGroup[] {
+  const hitsByArticle = new Map(searchArticles(index, q).map((group) => [group.article.id, group]));
+  const groups = topicCatalog.map((topic) => {
+    const titleScore = Math.max(
+      matchScore(topic.meta.title, q),
+      matchScore(topic.prompt, q),
+      matchScore(topic.meta.slug.replaceAll("-", " "), q),
+    );
+    const topicScore = titleScore || (matchesTopic(topic, q) ? 1 : 0);
+    const hits = hitsByArticle.get(topic.id)?.hits ?? [];
+    const scored = [
+      ...(topicScore ? [{ score: topicScore, result: topicResult(topic) }] : []),
+      ...hits.map((hit) => ({
+        score: hit.score,
+        result: { key: `${hit.href}:${hit.text}`, title: hit.text, subtitle: hit.section, href: hit.href, ...hitBadges[hit.kind] },
+      })),
+    ].sort((a, b) => b.score - a.score);
+    return { key: topic.id, label: topic.prompt, score: scored[0]?.score ?? 0, results: scored.map(({ result }) => result) };
+  });
+  return groups.filter((group) => group.score > 0).sort((a, b) => b.score - a.score);
+}
 
 export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [index, setIndex] = useState<SearchArticle[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const id = useId();
 
   function openPalette() {
     setQuery("");
@@ -51,45 +120,33 @@ export function CommandPalette() {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
       document.body.style.overflow = "hidden";
+      loadSearchIndex().then(setIndex);
     } else {
       document.body.style.overflow = "";
     }
   }, [isOpen]);
 
-  // Prepare searchable items
-  const allResults: SearchResult[] = [
-    // Topics
-    ...topicCatalog.map((topic) => ({
-      type: "topic" as const,
-      title: topic.meta.title,
-      subtitle: topic.meta.subtitle,
-      badge: topic.meta.category,
-      badgeColor: "bg-[#DCEBFF]",
-      href: topic.href,
-    })),
-    // Terms from Glossary
-    ...Object.entries(TERM_GLOSSARY).map(([key, def]: [string, TermDef]) => ({
-      type: "term" as const,
-      title: def.term,
-      subtitle: def.definition,
-      badge: "CONCEPT",
-      badgeColor: "bg-[#FFF0B8]",
-      termKey: key,
-    })),
-  ];
-
-  // Filter results
+  // Filter results: matching articles with their sections, then concepts
   const q = query.toLowerCase().trim();
-  const matchingTopicHrefs = new Set<string>(topicCatalog.filter(t => matchesTopic(t, q)).map(t => t.href));
-  const filtered = q
-    ? allResults.filter(
-        (item) =>
-          item.title.toLowerCase().includes(q) ||
-          item.subtitle.toLowerCase().includes(q) ||
-          item.badge.toLowerCase().includes(q) ||
-          (item.type === "topic" && !!item.href && matchingTopicHrefs.has(item.href))
-      )
-    : allResults.slice(0, 8); // Default recent/top items
+  const groups: ResultGroup[] = q
+    ? [
+        ...articleGroups(index, q),
+        {
+          key: "concepts",
+          label: "Concepts",
+          results: conceptResults.filter(
+            (item) => item.title.toLowerCase().includes(q) || item.subtitle.toLowerCase().includes(q),
+          ),
+        },
+      ].filter((group) => group.results.length > 0)
+    : [{ key: "articles", label: "Articles", results: topicCatalog.slice(0, 8).map(topicResult) }]; // Default recent/top items
+  const filtered = groups.flatMap((group) => group.results);
+  const optionId = (idx: number) => `${id}-option-${idx}`;
+
+  // Keep the selected result visible while arrowing through a long list
+  useEffect(() => {
+    listRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex, isOpen]);
 
   // Handle keyboard selection
   function handleInputKeyDown(e: React.KeyboardEvent) {
@@ -153,6 +210,9 @@ export function CommandPalette() {
           onClick={() => setIsOpen(false)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search articles, sections, and concepts"
             className="w-full max-w-xl bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[75vh]"
             onClick={(e) => e.stopPropagation()}
           >
@@ -169,6 +229,12 @@ export function CommandPalette() {
                   setSelectedIndex(0);
                 }}
                 onKeyDown={handleInputKeyDown}
+                role="combobox"
+                aria-expanded="true"
+                aria-controls={`${id}-results`}
+                aria-activedescendant={filtered[selectedIndex] ? optionId(selectedIndex) : undefined}
+                aria-autocomplete="list"
+                aria-label="Search"
                 placeholder="Search topics, failure modes, CDC, partition keys..."
                 className="w-full bg-transparent text-sm sm:text-base font-sans text-slate-900 outline-hidden placeholder:text-slate-400"
               />
@@ -181,43 +247,56 @@ export function CommandPalette() {
               </button>
             </div>
 
-            {/* Results List */}
-            <div className="overflow-y-auto p-2 divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <div className="py-8 text-center text-sm font-sans text-slate-600">
-                  No matching engineering topics or concepts found.
-                </div>
-              ) : (
-                filtered.map((item, idx) => {
-                  const isSelected = idx === selectedIndex;
-                  return (
-                    <div
-                      key={item.title}
-                      onClick={() => handleSelect(item)}
-                      onMouseEnter={() => setSelectedIndex(idx)}
-                      className={`p-3 rounded-xl cursor-pointer transition-colors border ${
-                        isSelected
-                          ? "bg-blue-50/80 border-blue-200 shadow-2xs"
-                          : "border-transparent hover:bg-slate-50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="font-sans font-bold text-sm sm:text-base text-slate-900 line-clamp-1">
-                          {item.title}
-                        </span>
-                        <span
-                          className={`shrink-0 text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border border-slate-200 ${item.badgeColor}`}
-                        >
-                          {item.badge}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 line-clamp-2 m-0 leading-relaxed font-sans">
-                        {item.subtitle}
-                      </p>
+            {/* Results List, grouped by article */}
+            {filtered.length === 0 && (
+              <div className="py-8 text-center text-sm font-sans text-slate-600">
+                No matching engineering topics or concepts found.
+              </div>
+            )}
+            <div ref={listRef} id={`${id}-results`} role="listbox" aria-label="Search results" hidden={filtered.length === 0} className="overflow-y-auto p-2">
+              {groups.map((group, groupIdx) => {
+                const offset = groups.slice(0, groupIdx).reduce((total, g) => total + g.results.length, 0);
+                return (
+                  <div key={group.key} role="group" aria-labelledby={`${id}-group-${groupIdx}`} className="py-1 border-t border-slate-100 first:border-t-0">
+                    <div id={`${id}-group-${groupIdx}`} role="presentation" className="px-3 pt-2 pb-1 text-[11px] font-mono font-bold uppercase tracking-wide text-slate-600 line-clamp-1">
+                      {group.label}
                     </div>
-                  );
-                })
-              )}
+                    {group.results.map((item, i) => {
+                      const idx = offset + i;
+                      const isSelected = idx === selectedIndex;
+                      return (
+                        <div
+                          key={item.key}
+                          id={optionId(idx)}
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => handleSelect(item)}
+                          onMouseEnter={() => setSelectedIndex(idx)}
+                          className={`p-3 rounded-xl cursor-pointer transition-colors border ${
+                            isSelected
+                              ? "bg-blue-50/80 border-blue-200 shadow-2xs"
+                              : "border-transparent hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="font-sans font-bold text-sm sm:text-base text-slate-900 line-clamp-1">
+                              {item.title}
+                            </span>
+                            <span
+                              className={`shrink-0 text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border border-slate-200 ${item.badgeColor}`}
+                            >
+                              {item.badge}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600 line-clamp-2 m-0 leading-relaxed font-sans">
+                            {item.subtitle}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Footer with Keyboard Hints */}

@@ -18,7 +18,7 @@ New articles are written in MDX. Four articles (hot partition, transactional out
 ## Start from the saved templates
 
 1. Copy `templates/blueprint/article.mdx.example` to `content/blueprints/<topic-id>.mdx`.
-2. Copy `templates/blueprint/blueprint-data.ts.example` into the topic's data file in `data/topics/`, and add the topic to `mdxBlueprintData` in `components/articles/BlueprintMdx.tsx`.
+2. Copy `templates/blueprint/blueprint-data.ts.example` into the topic's data file in `data/topics/`, and add the topic to `mdxBlueprintData` in `components/articles/BlueprintMdx.tsx` and to `mdxTails` in `data/search-index.ts`, which feeds the ⌘K palette's section search. `tests/search-index.test.ts` fails if an article is missing from the index.
 3. Copy the entry in `templates/blueprint/presentation.ts.example` into `data/topics/presentation.ts`, under the new topic ID.
 
 These example files are deliberately excluded from compilation and publishing. Replace every TODO before registering a published article.
