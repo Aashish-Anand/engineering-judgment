@@ -1,0 +1,491 @@
+---
+topic: cache-stampede
+sections:
+  problem: A hot cache key expires during peak traffic
+  naive: Why a cache miss turns into thousands of queries
+  mental-model: Expiry is a decision, not an accident
+  architecture: One rebuild per key, stale reads while it runs
+  worked-example: Count the rebuild queries
+  scale: What breaks at ten times the keys?
+brief:
+  bottleneck: "When one hot key expires, every request in the rebuild window misses: 12,000 req/s × 300 ms ≈ 3,600 identical queries against a database that can run about 150."
+  solution: "Soft expiry ➔ serve the stale value ➔ one request wins a short Redis lock (or a lease) and refreshes in the background ➔ jittered TTLs so keys never expire together."
+  goldenRule: Never let the number of requests decide the number of rebuilds. One key, one rebuild, however many readers.
+  keyMetrics:
+    - { label: "Rebuilds per expiry", value: "1, not 3,600" }
+    - { label: "Readers waiting", value: "0 while a stale value exists" }
+    - { label: "Facebook leases", value: "17K/s → 1.3K/s peak DB queries" }
+sources:
+  - { label: "Facebook: Scaling Memcache at Facebook (NSDI 2013)", href: "https://www.usenix.org/system/files/conference/nsdi13/nsdi13-final170_update.pdf" }
+  - { label: "Vattani et al.: Optimal Probabilistic Cache Stampede Prevention (VLDB 2015)", href: "https://www.vldb.org/pvldb/vol8/p886-vattani.pdf" }
+  - { label: "RFC 5861: HTTP Cache-Control Extensions for Stale Content", href: "https://www.rfc-editor.org/rfc/rfc5861" }
+  - { label: "Go: golang.org/x/sync/singleflight", href: "https://pkg.go.dev/golang.org/x/sync/singleflight" }
+  - { label: "Redis: SET command (NX, PX)", href: "https://redis.io/docs/latest/commands/set/" }
+---
+
+<Section id="problem">
+
+<ProblemStatement>
+
+The home page for each region is built from one expensive query: featured products, prices, stock, and personalised rails joined across six tables. It takes **300 ms** on a healthy database, so the result is cached in Redis under `home:eu` with a 60-second TTL. At peak, that one key serves **12,000 requests per second**, and the cache hit ratio is above 99.9%.
+
+<Pullquote>The cache works perfectly for 59.7 seconds of every minute. The outage happens in the other 300 milliseconds.</Pullquote>
+
+</ProblemStatement>
+
+<ScenarioMetrics sideNote="Numbers are illustrative. The database headroom is how many of these rebuild queries it can run at once before latency climbs." />
+
+A **cache stampede** (also called a thundering herd or dog-piling) is what happens when a popular cached value disappears and every reader tries to recreate it at the same time. The cache was hiding how expensive the value is. The moment it stops hiding it, the database sees the true cost multiplied by the traffic.
+
+</Section>
+
+<Section id="naive">
+
+The usual read path is *cache-aside*: read the cache, and on a miss, query the database and write the result back.
+
+<CodeTabs>
+
+```typescript filename="home-feed.ts"
+async function getHome(region: string) {
+  const cached = await redis.get(`home:${region}`);
+  if (cached) return JSON.parse(cached);
+
+  const feed = await db.buildHomeFeed(region);   // 300 ms
+  await redis.set(`home:${region}`, JSON.stringify(feed), { EX: 60 });
+  return feed;
+}
+```
+
+```python filename="home_feed.py"
+def get_home(region: str) -> dict:
+    cached = redis.get(f"home:{region}")
+    if cached:
+        return json.loads(cached)
+
+    feed = db.build_home_feed(region)   # 300 ms
+    redis.set(f"home:{region}", json.dumps(feed), ex=60)
+    return feed
+```
+
+```go filename="home_feed.go"
+func GetHome(ctx context.Context, region string) (HomeFeed, error) {
+	key := "home:" + region
+	var feed HomeFeed
+	if cached, err := rdb.Get(ctx, key).Bytes(); err == nil {
+		return feed, json.Unmarshal(cached, &feed)
+	}
+
+	feed, err := db.BuildHomeFeed(ctx, region) // 300 ms
+	if err != nil {
+		return HomeFeed{}, err
+	}
+	data, _ := json.Marshal(feed)
+	rdb.Set(ctx, key, data, 60*time.Second)
+	return feed, nil
+}
+```
+
+```java filename="HomeFeed.java"
+HomeFeed getHome(String region) throws JsonProcessingException {
+    String key = "home:" + region;
+    String cached = redis.get(key);
+    if (cached != null) return json.readValue(cached, HomeFeed.class);
+
+    HomeFeed feed = db.buildHomeFeed(region);   // 300 ms
+    redis.set(key, json.writeValueAsString(feed), SetParams.setParams().ex(60));
+    return feed;
+}
+```
+
+```cpp filename="home_feed.cpp"
+HomeFeed get_home(const std::string& region) {
+    const auto key = "home:" + region;
+    if (auto cached = redis.get(key)) return json::parse(*cached).get<HomeFeed>();
+
+    HomeFeed feed = db.build_home_feed(region);   // 300 ms
+    redis.set(key, json(feed).dump(), std::chrono::seconds(60));
+    return feed;
+}
+```
+
+</CodeTabs>
+
+Nothing in this code is wrong for one request. The problem is the gap between the miss and the `SET`. For 300 ms the key does not exist, and every request that arrives in that gap takes the same branch. At 12,000 requests per second that is about 3,600 identical queries, all computing the same answer:
+
+<Diagram><StampedeSequence /></Diagram>
+
+<FailureCallout title="The feedback loop">The 3,600 queries do not just add load; they slow every query, including the one that would have repaired the cache. A 300 ms rebuild that takes 3 seconds under load leaves a window ten times longer, which lets in ten times more misses. The database can stay pinned long after the original expiry, and a restart that empties the cache does the same thing to every key at once.</FailureCallout>
+
+Three situations cause it, and they need different fixes:
+
+- **One hot key expires.** The scenario above. The fix limits rebuilds per key.
+- **Many keys expire together.** A deploy, a cache warm-up job, or a batch import writes thousands of keys with the same 60-second TTL, so they all expire in the same second. The fix spreads expiry times.
+- **The cache is empty.** A Redis failover, a flush, or a new region starts cold. No stale value exists, so the only options are to rebuild carefully or to limit how fast traffic arrives.
+
+<InlineCheck
+  question="The team doubles the TTL from 60 to 120 seconds. What happens to the stampede?"
+  options={[
+    { label: "It disappears, because the key is almost always cached.", isCorrect: false, explanation: "The key still expires; it just happens half as often. Each expiry still sends every request in the rebuild window to the database." },
+    { label: "It happens half as often but is exactly as large each time.", isCorrect: true, explanation: "Right. The size of a stampede is request rate × rebuild time, and the TTL changes neither. A longer TTL also serves older data, so it trades freshness for frequency without fixing the cause." },
+    { label: "It gets worse, because more requests pile up over 120 seconds.", isCorrect: false, explanation: "Requests that arrive while the key is cached are hits. Only those inside the rebuild window miss, and that window does not depend on the TTL." },
+  ]}
+/>
+
+</Section>
+
+<Section id="mental-model">
+
+<ScrollReveal>
+  <InsightCard title="The invariant">The number of rebuilds must depend on the number of **keys**, never on the number of **readers**. And a reader should wait for a rebuild only when there is no value at all to give it.</InsightCard>
+</ScrollReveal>
+
+That splits into two separate questions, and most designs only answer one:
+
+1. **Who rebuilds?** Exactly one caller per key, whatever the fleet size. Everyone else either waits for that caller or does something else.
+2. **What do the others get meanwhile?** If a slightly old value is acceptable, give them that, and the rebuild is invisible. If it is not, they have to wait, and you need to bound that wait.
+
+The trick that answers both is to stop treating expiry as the moment the value vanishes. Store two times with each value: a **soft expiry**, after which it should be refreshed, and a **hard expiry**, after which it must not be served. Between the two, the value is stale but present, so readers keep getting answers while one of them refreshes it. HTTP caches have the same idea as `Cache-Control: stale-while-revalidate`, defined in RFC 5861.
+
+</Section>
+
+<Section id="architecture">
+
+The read path checks which of three states the key is in:
+
+<Diagram><StampedeProtectionFlow /></Diagram>
+
+### Store the value with its own soft expiry
+
+Keep Redis's TTL as the hard expiry, and put the soft expiry inside the value. Add jitter to both, so keys written together do not expire together.
+
+<CodeTabs>
+
+```typescript filename="cache-entry.ts"
+type Entry<T> = { value: T; softExpiresAt: number; rebuildMs: number };
+
+const SOFT_TTL_MS = 60_000;
+const HARD_TTL_MS = 10 * 60_000;            // how stale you are willing to serve
+
+const jitter = (ms: number) => ms * (0.9 + Math.random() * 0.2); // ±10%
+
+async function store<T>(key: string, value: T, rebuildMs: number) {
+  const entry: Entry<T> = { value, rebuildMs, softExpiresAt: Date.now() + jitter(SOFT_TTL_MS) };
+  await redis.set(key, JSON.stringify(entry), { PX: Math.round(jitter(HARD_TTL_MS)) });
+}
+```
+
+```python filename="cache_entry.py"
+SOFT_TTL_MS = 60_000
+HARD_TTL_MS = 10 * 60_000             # how stale you are willing to serve
+
+def jitter(ms: float) -> float:
+    return ms * random.uniform(0.9, 1.1)   # ±10%
+
+def now_ms() -> float:
+    return time.time() * 1000
+
+def store(key: str, value, rebuild_ms: float) -> None:
+    entry = {"value": value, "rebuild_ms": rebuild_ms, "soft_expires_at": now_ms() + jitter(SOFT_TTL_MS)}
+    redis.set(key, json.dumps(entry), px=round(jitter(HARD_TTL_MS)))
+```
+
+```go filename="cache_entry.go"
+type Entry[T any] struct {
+	Value         T     `json:"value"`
+	SoftExpiresAt int64 `json:"softExpiresAt"` // unix ms
+	RebuildMs     int64 `json:"rebuildMs"`
+}
+
+const (
+	softTTL = 60 * time.Second
+	hardTTL = 10 * time.Minute // how stale you are willing to serve
+)
+
+func jitter(d time.Duration) time.Duration {
+	return time.Duration(float64(d) * (0.9 + rand.Float64()*0.2)) // ±10%
+}
+
+func store[T any](ctx context.Context, key string, value T, rebuild time.Duration) error {
+	entry := Entry[T]{Value: value, RebuildMs: rebuild.Milliseconds(),
+		SoftExpiresAt: time.Now().Add(jitter(softTTL)).UnixMilli()}
+	data, err := json.Marshal(entry)
+	if err != nil {
+		return err
+	}
+	return rdb.Set(ctx, key, data, jitter(hardTTL)).Err()
+}
+```
+
+```java filename="CacheEntry.java"
+record Entry<T>(T value, long softExpiresAt, long rebuildMs) {}
+
+static final long SOFT_TTL_MS = 60_000;
+static final long HARD_TTL_MS = 10 * 60_000;   // how stale you are willing to serve
+
+static long jitter(long ms) {
+    return (long) (ms * ThreadLocalRandom.current().nextDouble(0.9, 1.1));   // ±10%
+}
+
+<T> void store(String key, T value, long rebuildMs) throws JsonProcessingException {
+    var entry = new Entry<>(value, System.currentTimeMillis() + jitter(SOFT_TTL_MS), rebuildMs);
+    redis.set(key, json.writeValueAsString(entry), SetParams.setParams().px(jitter(HARD_TTL_MS)));
+}
+```
+
+```cpp filename="cache_entry.cpp"
+using namespace std::chrono;
+
+struct Entry {
+    json value;
+    std::int64_t soft_expires_at;   // unix ms
+    std::int64_t rebuild_ms;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Entry, value, soft_expires_at, rebuild_ms)
+
+constexpr milliseconds kSoftTtl = minutes(1);
+constexpr milliseconds kHardTtl = minutes(10);   // how stale you are willing to serve
+
+milliseconds jitter(milliseconds d) {           // ±10%
+    thread_local std::mt19937 rng{std::random_device{}()};
+    std::uniform_real_distribution<double> factor(0.9, 1.1);
+    return duration_cast<milliseconds>(d * factor(rng));
+}
+
+std::int64_t now_ms() {
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
+void store(const std::string& key, const json& value, milliseconds rebuild) {
+    Entry entry{value, now_ms() + jitter(kSoftTtl).count(), rebuild.count()};
+    redis.set(key, json(entry).dump(), jitter(kHardTtl));
+}
+```
+
+</CodeTabs>
+
+### Let exactly one caller refresh
+
+A short lock in Redis picks the winner. `SET … NX` only succeeds if the key does not exist, and `PX` makes the lock expire on its own if the winner crashes, so a dead process cannot block refreshes forever. Size the lock's lifetime above the slowest normal rebuild.
+
+<CodeTabs>
+
+```typescript filename="get-with-refresh.ts"
+async function get<T>(key: string, rebuild: () => Promise<T>): Promise<T> {
+  const entry = await read<T>(key);
+
+  if (entry && Date.now() < entry.softExpiresAt) return entry.value;   // fresh
+
+  if (entry) {                                                         // stale but present
+    refreshInBackground(key, rebuild);                                 // fire and forget
+    return entry.value;
+  }
+
+  // Missing: one caller rebuilds, the others poll the cache for up to 2 s.
+  if (await redis.set(`lock:${key}`, "1", { NX: true, PX: 5_000 })) {
+    return rebuildAndStore(key, rebuild);
+  }
+  return waitForValue<T>(key, { timeoutMs: 2_000, pollMs: 50 });
+}
+
+async function refreshInBackground<T>(key: string, rebuild: () => Promise<T>) {
+  if (!(await redis.set(`lock:${key}`, "1", { NX: true, PX: 5_000 }))) return; // someone else is on it
+  rebuildAndStore(key, rebuild).catch(logRefreshFailure);                      // keep serving stale on failure
+}
+```
+
+```python filename="get_with_refresh.py"
+def get(key: str, rebuild: Callable[[], Any]):
+    entry = read(key)
+
+    if entry and now_ms() < entry["soft_expires_at"]:       # fresh
+        return entry["value"]
+
+    if entry:                                                 # stale but present
+        refresh_in_background(key, rebuild)
+        return entry["value"]
+
+    # Missing: one caller rebuilds, the others poll the cache for up to 2 s.
+    if redis.set(f"lock:{key}", "1", nx=True, px=5_000):
+        return rebuild_and_store(key, rebuild)
+    return wait_for_value(key, timeout_ms=2_000, poll_ms=50)
+
+
+def refresh_in_background(key: str, rebuild: Callable[[], Any]) -> None:
+    if not redis.set(f"lock:{key}", "1", nx=True, px=5_000):
+        return                                                # someone else is on it
+    future = refresh_pool.submit(rebuild_and_store, key, rebuild)
+    future.add_done_callback(log_refresh_failure)             # keep serving stale on failure
+```
+
+```go filename="get_with_refresh.go"
+func Get[T any](ctx context.Context, key string, rebuild func(context.Context) (T, error)) (T, error) {
+	entry, found := read[T](ctx, key)
+
+	if found && time.Now().UnixMilli() < entry.SoftExpiresAt { // fresh
+		return entry.Value, nil
+	}
+
+	if found { // stale but present
+		refreshInBackground(key, rebuild)
+		return entry.Value, nil
+	}
+
+	// Missing: one caller rebuilds, the others poll the cache for up to 2 s.
+	if won, _ := rdb.SetNX(ctx, "lock:"+key, "1", 5*time.Second).Result(); won {
+		return rebuildAndStore(ctx, key, rebuild)
+	}
+	return waitForValue[T](ctx, key, 2*time.Second, 50*time.Millisecond)
+}
+
+func refreshInBackground[T any](key string, rebuild func(context.Context) (T, error)) {
+	go func() {
+		// Not the request's context: the refresh must outlive the reader that triggered it.
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if won, _ := rdb.SetNX(ctx, "lock:"+key, "1", 5*time.Second).Result(); !won {
+			return // someone else is on it
+		}
+		if _, err := rebuildAndStore(ctx, key, rebuild); err != nil {
+			logRefreshFailure(key, err) // keep serving stale on failure
+		}
+	}()
+}
+```
+
+```java filename="CacheReader.java"
+<T> T get(String key, Class<T> type, Supplier<T> rebuild) {
+    Entry<T> entry = read(key, type);
+
+    if (entry != null && System.currentTimeMillis() < entry.softExpiresAt()) {   // fresh
+        return entry.value();
+    }
+
+    if (entry != null) {                                                        // stale but present
+        refreshInBackground(key, rebuild);
+        return entry.value();
+    }
+
+    // Missing: one caller rebuilds, the others poll the cache for up to 2 s.
+    if ("OK".equals(redis.set("lock:" + key, "1", SetParams.setParams().nx().px(5_000)))) {
+        return rebuildAndStore(key, rebuild);
+    }
+    return waitForValue(key, type, Duration.ofSeconds(2), Duration.ofMillis(50));
+}
+
+<T> void refreshInBackground(String key, Supplier<T> rebuild) {
+    if (!"OK".equals(redis.set("lock:" + key, "1", SetParams.setParams().nx().px(5_000)))) {
+        return;                                                                 // someone else is on it
+    }
+    CompletableFuture.runAsync(() -> rebuildAndStore(key, rebuild), refreshPool)
+        .exceptionally(e -> { logRefreshFailure(key, e); return null; });      // keep serving stale on failure
+}
+```
+
+```cpp filename="get_with_refresh.cpp"
+using namespace std::chrono_literals;
+using sw::redis::UpdateType;
+
+template <typename Rebuild>
+void refresh_in_background(const std::string& key, Rebuild rebuild) {
+    if (!redis.set("lock:" + key, "1", 5000ms, UpdateType::NOT_EXIST)) return;   // someone else is on it
+    refresh_pool.post([key, rebuild] {         // copies: the request may be gone when this runs
+        try { rebuild_and_store(key, rebuild); }
+        catch (const std::exception& e) { log_refresh_failure(key, e); }        // keep serving stale on failure
+    });
+}
+
+template <typename Rebuild>
+json get(const std::string& key, Rebuild rebuild) {
+    std::optional<Entry> entry = read(key);
+
+    if (entry && now_ms() < entry->soft_expires_at) return entry->value;       // fresh
+
+    if (entry) {                                                               // stale but present
+        refresh_in_background(key, rebuild);
+        return entry->value;
+    }
+
+    // Missing: one caller rebuilds, the others poll the cache for up to 2 s.
+    if (redis.set("lock:" + key, "1", 5000ms, UpdateType::NOT_EXIST)) {
+        return rebuild_and_store(key, rebuild);
+    }
+    return wait_for_value(key, /*timeout=*/2000ms, /*poll=*/50ms);
+}
+```
+
+</CodeTabs>
+
+Two details matter. A failed refresh must leave the stale value in place, so a database outage degrades freshness instead of availability (RFC 5861 calls this `stale-if-error`). And the waiters in the cold path need a deadline and a fallback, such as a simpler default page, because the lock holder can be slow too.
+
+### Inside one process, coalesce first
+
+Before any request reaches Redis's lock, collapse duplicate calls within the process. Go's `singleflight` package does exactly this: concurrent callers with the same key share one execution and its result. It is cheap and needs no network, but it only deduplicates per instance: 40 instances still send 40 queries, and autoscaling to 200 sends 200. Use it to cut lock traffic, not as the fleet-wide guard.
+
+### Refresh early, at random
+
+A lock still leaves one moment per key when the refresh starts. For the hottest keys you can avoid even that by refreshing *before* the soft expiry, with a probability that rises as expiry approaches. Vattani, Chierichetti, and Lowenstein proved this approach optimal and called it XFetch:
+
+<CodeTabs>
+
+```typescript filename="xfetch.ts"
+// beta = 1 is the paper's default; above 1 refreshes earlier.
+function shouldRefreshEarly(entry: Entry<unknown>, beta = 1) {
+  return Date.now() - entry.rebuildMs * beta * Math.log(Math.random()) >= entry.softExpiresAt;
+}
+```
+
+```python filename="xfetch.py"
+# beta = 1 is the paper's default; above 1 refreshes earlier.
+def should_refresh_early(entry: dict, beta: float = 1.0) -> bool:
+    lookahead = -entry["rebuild_ms"] * beta * math.log(1.0 - random.random())   # 1 - random() is never 0
+    return now_ms() + lookahead >= entry["soft_expires_at"]
+```
+
+```go filename="xfetch.go"
+// beta = 1 is the paper's default; above 1 refreshes earlier.
+func shouldRefreshEarly[T any](e Entry[T], beta float64) bool {
+	lookahead := -float64(e.RebuildMs) * beta * math.Log(rand.Float64())
+	return float64(time.Now().UnixMilli())+lookahead >= float64(e.SoftExpiresAt)
+}
+```
+
+```java filename="XFetch.java"
+// beta = 1 is the paper's default; above 1 refreshes earlier.
+static boolean shouldRefreshEarly(Entry<?> e, double beta) {
+    double lookahead = -e.rebuildMs() * beta * Math.log(ThreadLocalRandom.current().nextDouble());
+    return System.currentTimeMillis() + lookahead >= e.softExpiresAt();
+}
+```
+
+```cpp filename="xfetch.cpp"
+// beta = 1 is the paper's default; above 1 refreshes earlier.
+bool should_refresh_early(const Entry& e, double beta = 1.0) {
+    thread_local std::mt19937 rng{std::random_device{}()};
+    std::uniform_real_distribution<double> uniform(0.0, 1.0);
+    double lookahead = -e.rebuild_ms * beta * std::log(uniform(rng));
+    return now_ms() + lookahead >= e.soft_expires_at;
+}
+```
+
+</CodeTabs>
+
+The logarithm of a random number between 0 and 1 is negative, so the check looks ahead by a random multiple of the rebuild time. Expensive values start refreshing earlier, and with thousands of readers per second one of them almost always refreshes shortly before expiry, with no lock and no coordination.
+
+<InPractice title="Leases at Facebook's memcache tier" sources={["Facebook: Scaling Memcache at Facebook (NSDI 2013)"]}>
+
+- On a miss, memcached hands the client a **lease** token: permission to fill that key. Each server returns a token for a key at most once every 10 seconds by default.
+- Other clients that miss within those 10 seconds are told to wait briefly and retry; by then the lease holder has usually set the value.
+- After a delete, a get can return data **marked as stale**, so applications that tolerate it never wait for the database.
+- On a set of keys prone to thundering herds, measured over a week, leases cut the peak database query rate from 17K/s to 1.3K/s.
+
+</InPractice>
+
+</Section>
+
+<Section id="worked-example">
+
+Start at the scenario: 12,000 requests per second, a 300 ms rebuild, 40 app instances. Then autoscale the fleet past 150 instances and watch per-instance coalescing turn into a stampede of its own, or slow the rebuild down to see how the unprotected window grows.
+
+<Workbench><CacheStampedeWorkbench /></Workbench>
+
+</Section>

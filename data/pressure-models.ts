@@ -131,3 +131,49 @@ export function simulateQueue({ arrivalsPerSecond, serviceMs, concurrency, attem
 
   return { samples, totals, capacityPerSecond: concurrency * 1000 / serviceMs };
 }
+
+/**
+ * Rebuild queries the database receives when one hot key expires. Every request that arrives while the value
+ * is being rebuilt misses: unprotected, each of them runs the query; single-flight lets one request per app
+ * instance through; a lock or lease lets one through for the whole fleet. Serving stale also sends one, but
+ * nobody waits for it. `waiting` counts requests that block on a rebuild.
+ */
+export function stampedeLoad(requestsPerSecond: number, rebuildMs: number, instances: number) {
+  const misses = Math.round(requestsPerSecond * rebuildMs / 1000);
+  return {
+    misses,
+    unprotected: { queries: misses, waiting: misses },
+    singleFlight: { queries: Math.min(instances, misses), waiting: misses },
+    lock: { queries: Math.min(1, misses), waiting: misses },
+    serveStale: { queries: Math.min(1, misses), waiting: 0 },
+  };
+}
+
+/**
+ * Most requests one client gets through in the two seconds around a window boundary, against a limit of
+ * `perMinute`. A fixed window resets at the boundary, so a client spends the old allowance and the new one;
+ * counting on each gateway separately multiplies that by the instance count. A sliding-window counter still
+ * weighs the previous minute, and a token bucket can only spend what it has saved plus two seconds of refill.
+ */
+export function boundaryBurst(perMinute: number, burst: number, gateways: number) {
+  const perSecond = perMinute / 60;
+  return {
+    fixedWindow: 2 * perMinute,
+    localCounters: 2 * perMinute * gateways,
+    slidingWindow: perMinute,
+    tokenBucket: Math.min(perMinute, Math.round(burst + 2 * perSecond)),
+  };
+}
+
+/** One token bucket: refills `perSecond` up to `capacity`; a request spends one token or is rejected. */
+export function tokenBucket(capacity: number, perSecond: number) {
+  let tokens = capacity;
+  let last = 0;
+  return (atSeconds: number) => {
+    tokens = Math.min(capacity, tokens + (atSeconds - last) * perSecond);
+    last = atSeconds;
+    if (tokens < 1) return false;
+    tokens -= 1;
+    return true;
+  };
+}

@@ -6,12 +6,15 @@ type CodeBlockProps = {
   code: string;
   language?: string;
   filename?: string;
+  /** Inside CodeTabs: no outer frame or margin, which the tabs provide. */
+  embedded?: boolean;
 };
 
 export function CodeBlock({
   code,
   language = "bash",
   filename,
+  embedded = false,
 }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
@@ -34,7 +37,7 @@ export function CodeBlock({
   }
 
   return (
-    <div className="my-5 rounded-xl border border-slate-800 bg-slate-950 shadow-xs overflow-hidden text-sm">
+    <div className={embedded ? "bg-slate-950 overflow-hidden text-sm" : "my-5 rounded-xl border border-slate-800 bg-slate-950 shadow-xs overflow-hidden text-sm"}>
       {/* Header bar */}
       <div className="flex items-center justify-between px-3.5 py-2 bg-slate-900/90 border-b border-slate-800 select-none">
         <div className="flex items-center gap-2">

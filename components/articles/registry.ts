@@ -14,4 +14,6 @@ export const articleComponents: Record<TopicId, ComponentType> = {
   "database-migration": () => createElement(MdxBlueprintArticle, { topicId: "database-migration" }),
   "flash-sale": () => createElement(MdxBlueprintArticle, { topicId: "flash-sale" }),
   "transactional-outbox": () => createElement(MdxBlueprintArticle, { topicId: "transactional-outbox" }),
+  "cache-stampede": () => createElement(MdxBlueprintArticle, { topicId: "cache-stampede" }),
+  "rate-limiting": () => createElement(MdxBlueprintArticle, { topicId: "rate-limiting" }),
 };

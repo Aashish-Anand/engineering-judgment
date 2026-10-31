@@ -1,0 +1,284 @@
+---
+topic: rate-limiting
+sections:
+  problem: One customer's script is eating everyone's capacity
+  naive: Why the first three limiters leak
+  mental-model: A limit is a promise about rate and burst
+  architecture: An atomic token bucket at the gateway
+  worked-example: Test the limiters at the window boundary
+  scale: What breaks at ten times the tenants?
+brief:
+  bottleneck: "One tenant's runaway script sends 5,000 req/s against a 10 req/s plan. A fixed window still lets 2× the limit through at every minute boundary, and counting on each of 30 gateways lets through 30×."
+  solution: "Token bucket per API key ➔ refilled and spent atomically in one Redis script ➔ 429 with Retry-After and RateLimit headers ➔ bounded local fallback when Redis is unreachable."
+  goldenRule: State every limit as a rate and a burst, enforce it in one atomic step, and tell the client exactly when to come back.
+  keyMetrics:
+    - { label: "Plan limit", value: "600/min, burst 100" }
+    - { label: "Decision cost", value: "1 Redis round trip" }
+    - { label: "Sliding window error (Cloudflare)", value: "0.003% of 400M requests" }
+sources:
+  - { label: "Stripe: Scaling your API with rate limiters", href: "https://stripe.com/blog/rate-limiters" }
+  - { label: "Cloudflare: How we built rate limiting capable of scaling to millions of domains", href: "https://blog.cloudflare.com/counting-things-a-lot-of-different-things/" }
+  - { label: "RFC 6585: 429 Too Many Requests", href: "https://www.rfc-editor.org/rfc/rfc6585#section-4" }
+  - { label: "IETF draft: RateLimit header fields for HTTP", href: "https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/" }
+  - { label: "Envoy: Global and local rate limiting", href: "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/other_features/global_rate_limiting" }
+  - { label: "Redis: Scripting with Lua", href: "https://redis.io/docs/latest/develop/programmability/eval-intro/" }
+---
+
+<Section id="problem">
+
+<ProblemStatement>
+
+A public API serves 2,000 tenants through **30 gateway instances**. The standard plan allows **600 requests per minute** per API key. On Monday morning one customer deploys a sync script with a bug: it retries in a tight loop and sends **5,000 requests per second**. The search service behind the gateway slows for everyone, and 1,999 well-behaved customers start seeing timeouts.
+
+<Pullquote>Without a limit, your capacity belongs to whoever sends the most requests, not to whoever pays for it.</Pullquote>
+
+</ProblemStatement>
+
+<ScenarioMetrics sideNote="Numbers are illustrative." />
+
+A **rate limiter** decides, for each request, whether this caller is still within its allowance. It is a fairness and cost policy: it keeps one client from spending capacity that belongs to others. That makes it different from **load shedding**, which protects the server from its own overload whoever is calling. Stripe runs both: a per-user request rate limiter and a concurrent-request limiter for fairness, and two load shedders for overload. This article is about the first kind, and a good one has to do three things at once: count correctly across 30 gateways, allow normal bursts, and stay fast and available when its own storage has trouble.
+
+</Section>
+
+<Section id="naive">
+
+Most teams arrive at one of three first designs. Each enforces *something*, but not the limit written in the plan:
+
+<Diagram><NaiveLimiterLanes /></Diagram>
+
+### The fixed window leaks at its edges
+
+Counting requests per calendar minute is simple: `INCR rate:key:12:07`, reject above 600, let the key expire. But the counter resets at :00. A client that sends 600 requests at 12:07:59 and 600 more at 12:08:00 stays within both windows while sending 1,200 requests in about two seconds, twice the limit, and far more than the 20 per two seconds that 600 per minute implies.
+
+### Local counters multiply by the fleet
+
+Keeping the counter in each gateway's memory avoids a network call. But the load balancer spreads one client across all 30 gateways, and each grants the full 600. The real limit becomes 18,000 per minute, and it changes whenever the fleet scales.
+
+### Read-then-write loses updates
+
+Moving the counter to Redis as `GET`, compare, then `SET` puts it in one place but not in one step. Two gateways read 599 at the same time, both decide the request is allowed, and both write 600. Under heavy concurrency, many requests slip through on the same stale count. The check and the update must be one atomic operation.
+
+<InlineCheck
+  question="The team switches the counter to Redis INCR, which is atomic, keeping a fixed one-minute window. Which problem is still left?"
+  options={[
+    { label: "Lost updates between gateways.", isCorrect: false, explanation: "INCR is atomic in Redis, so concurrent gateways cannot overwrite each other's increments. That one is fixed." },
+    { label: "The boundary burst: up to twice the limit around each minute boundary.", isCorrect: true, explanation: "Right. Atomic counting fixes the race, but the window still resets at :00, so the old and new allowance can be spent back to back." },
+    { label: "Counts multiplied by the number of gateways.", isCorrect: false, explanation: "With one shared counter in Redis, every gateway sees the same count." },
+  ]}
+/>
+
+</Section>
+
+<Section id="mental-model">
+
+<ScrollReveal>
+  <InsightCard title="The invariant">A limit has two numbers, not one: a **rate** the client can sustain, and a **burst** it may spend at once. Over any interval of length *t*, the client gets at most burst + rate × *t*.</InsightCard>
+</ScrollReveal>
+
+"600 per minute" is ambiguous. It could mean ten per second, steadily. It could mean all 600 in the first second, then nothing. Real clients need something in between: a page load fires a dozen calls at once, then goes quiet. The **token bucket** expresses exactly that:
+
+- The bucket holds up to **burst** tokens and starts full.
+- It refills at **rate** tokens per second, never above the burst.
+- Each request spends one token. With no token left, the request is rejected, and the time until the next token is the honest `Retry-After`.
+
+For the standard plan: rate 10 per second, burst 100. A client can fire 100 requests at once, then sustain ten per second indefinitely. Over any minute it gets at most 100 + 600, and around a window boundary it gets 100 plus two seconds of refill, never 1,200, because there is no window to reset.
+
+The bucket also needs very little state: two numbers per key, the token count and the time it was last updated. You do not need a timer to refill it. Whenever a request arrives, compute how many tokens the elapsed time has added.
+
+The common algorithms differ in how much state they keep and how much they leak at a boundary:
+
+- **Fixed window:** one counter per key. Simplest, but lets up to twice the limit through around each reset.
+- **Sliding window log:** every request's timestamp. Exact, but memory grows with the limit.
+- **Sliding window counter:** two counters, with the previous window weighted by how much of it still overlaps. Almost exact, and cheap.
+- **Token bucket:** a token count and a timestamp. Its burst is explicit and chosen, not an accident of where the window starts.
+
+</Section>
+
+<Section id="architecture">
+
+The gateway makes one decision per request, in one round trip, and always tells the client the outcome:
+
+<Diagram><RateLimitDecisionFlow /></Diagram>
+
+### Refill and spend in one atomic step
+
+Redis runs a Lua script atomically: no other command runs between its read and its write. So the refill calculation, the check, and the spend happen as one step, and 30 gateways calling at once cannot race.
+
+```lua filename="token_bucket.lua"
+-- KEYS[1] = bucket key; ARGV = capacity, refill per second, now (ms)
+local capacity = tonumber(ARGV[1])
+local rate     = tonumber(ARGV[2])
+local now      = tonumber(ARGV[3])
+
+local state  = redis.call("HMGET", KEYS[1], "tokens", "at")
+local tokens = tonumber(state[1]) or capacity
+local at     = tonumber(state[2]) or now
+
+tokens = math.min(capacity, tokens + (now - at) / 1000 * rate)
+
+local allowed = 0
+if tokens >= 1 then
+  tokens = tokens - 1
+  allowed = 1
+end
+
+redis.call("HSET", KEYS[1], "tokens", tokens, "at", now)
+redis.call("PEXPIRE", KEYS[1], math.ceil(capacity / rate * 1000))  -- idle buckets disappear when full
+
+local retry_ms = allowed == 1 and 0 or math.ceil((1 - tokens) / rate * 1000)
+return { allowed, math.floor(tokens), retry_ms }
+```
+
+The script runs inside Redis, so it is the same whatever language the gateway is written in; only the call that runs it changes, as the examples below show. Pass `now` from the gateway with a single clock source, or read it inside the script with `redis.call("TIME")`, so gateways with drifting clocks cannot hand each other free tokens. The expiry deletes a bucket once it would be full anyway, so 2,000 tenants with mostly idle keys cost almost nothing.
+
+### Reject clearly, so clients can behave
+
+A rejected request gets `429 Too Many Requests` (RFC 6585) with a `Retry-After` header computed from the script's `retry_ms`. Successful responses carry the remaining allowance too; the IETF's RateLimit header fields draft standardises this, so well-written clients can slow down *before* they are rejected. A 429 must cost almost nothing: decide before authenticating expensive sessions or touching the service, or the rejections themselves become the load.
+
+<CodeTabs>
+
+```typescript filename="gateway.ts"
+const [allowed, remaining, retryMs] = await redis.evalSha(BUCKET_SHA, {
+  keys: [`bucket:${apiKey}`],
+  arguments: [String(plan.burst), String(plan.perSecond), String(Date.now())],
+});
+
+// IETF draft syntax: q = quota, w = window (s), r = remaining, t = seconds until it resets
+res.setHeader("RateLimit-Policy", `"standard";q=${plan.perMinute};w=60`);
+res.setHeader("RateLimit", `"standard";r=${remaining};t=${Math.ceil(retryMs / 1000)}`);
+if (!allowed) {
+  res.setHeader("Retry-After", String(Math.ceil(retryMs / 1000)));
+  return res.status(429).json({ error: "rate_limited", retryAfterMs: retryMs });
+}
+```
+
+```python filename="gateway.py"
+@app.before_request
+def rate_limit():
+    plan = plan_for(request)
+    allowed, remaining, retry_ms = redis.evalsha(
+        BUCKET_SHA, 1, f"bucket:{plan.api_key}", plan.burst, plan.per_second, int(time.time() * 1000))
+    retry_s = math.ceil(retry_ms / 1000)
+
+    # IETF draft syntax: q = quota, w = window (s), r = remaining, t = seconds until it resets
+    g.rate_limit_headers = {
+        "RateLimit-Policy": f'"standard";q={plan.per_minute};w=60',
+        "RateLimit": f'"standard";r={remaining};t={retry_s}',
+    }
+    if not allowed:
+        body = jsonify(error="rate_limited", retryAfterMs=retry_ms)
+        return body, 429, {"Retry-After": str(retry_s)}
+
+@app.after_request
+def add_rate_limit_headers(response):
+    response.headers.update(g.get("rate_limit_headers", {}))
+    return response
+```
+
+```go filename="gateway.go"
+func RateLimit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		plan := planFor(r)
+		res, err := rdb.EvalSha(r.Context(), bucketSHA, []string{"bucket:" + plan.APIKey},
+			plan.Burst, plan.PerSecond, time.Now().UnixMilli()).Int64Slice()
+		if err != nil {
+			localFallback(next).ServeHTTP(w, r) // Redis unreachable: fail open, but bounded
+			return
+		}
+		allowed, remaining, retryMs := res[0] == 1, res[1], res[2]
+		retryS := (retryMs + 999) / 1000
+
+		// IETF draft syntax: q = quota, w = window (s), r = remaining, t = seconds until it resets
+		w.Header().Set("RateLimit-Policy", fmt.Sprintf(`"standard";q=%d;w=60`, plan.PerMinute))
+		w.Header().Set("RateLimit", fmt.Sprintf(`"standard";r=%d;t=%d`, remaining, retryS))
+		if !allowed {
+			w.Header().Set("Retry-After", strconv.FormatInt(retryS, 10))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+			fmt.Fprintf(w, `{"error":"rate_limited","retryAfterMs":%d}`, retryMs)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+```
+
+```java filename="RateLimitFilter.java"
+@Override
+public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
+    var request = (HttpServletRequest) req;
+    var response = (HttpServletResponse) resp;
+    Plan plan = planFor(request);
+
+    @SuppressWarnings("unchecked")
+    var result = (List<Long>) redis.evalsha(BUCKET_SHA, List.of("bucket:" + plan.apiKey()), List.of(
+        String.valueOf(plan.burst()), String.valueOf(plan.perSecond()), String.valueOf(System.currentTimeMillis())));
+    boolean allowed = result.get(0) == 1;
+    long remaining = result.get(1), retryMs = result.get(2);
+    long retryS = (retryMs + 999) / 1000;
+
+    // IETF draft syntax: q = quota, w = window (s), r = remaining, t = seconds until it resets
+    response.setHeader("RateLimit-Policy", "\"standard\";q=%d;w=60".formatted(plan.perMinute()));
+    response.setHeader("RateLimit", "\"standard\";r=%d;t=%d".formatted(remaining, retryS));
+    if (!allowed) {
+        response.setHeader("Retry-After", String.valueOf(retryS));
+        response.setStatus(429);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\":\"rate_limited\",\"retryAfterMs\":%d}".formatted(retryMs));
+        return;
+    }
+    chain.doFilter(req, resp);
+}
+```
+
+```cpp filename="gateway.cpp"
+// A cpp-httplib pre-routing handler: returning true means the response is already written.
+bool rate_limited(const Plan& plan, httplib::Response& res) {
+    const auto key = "bucket:" + plan.api_key;
+    const auto burst = std::to_string(plan.burst), rate = std::to_string(plan.per_second), now = std::to_string(now_ms());
+    const auto r = redis.evalsha<std::vector<long long>>(kBucketSha, {key}, {burst, rate, now});
+    const bool allowed = r[0] == 1;
+    const long long remaining = r[1], retry_ms = r[2];
+    const long long retry_s = (retry_ms + 999) / 1000;
+
+    // IETF draft syntax: q = quota, w = window (s), r = remaining, t = seconds until it resets
+    res.set_header("RateLimit-Policy", std::format(R"("standard";q={};w=60)", plan.per_minute));
+    res.set_header("RateLimit", std::format(R"("standard";r={};t={})", remaining, retry_s));
+    if (allowed) return false;
+
+    res.set_header("Retry-After", std::to_string(retry_s));
+    res.status = 429;
+    res.set_content(std::format(R"({{"error":"rate_limited","retryAfterMs":{}}})", retry_ms), "application/json");
+    return true;
+}
+```
+
+</CodeTabs>
+
+### Decide what happens when Redis is unavailable
+
+The limiter is now on every request's path, so its failure mode is a product decision:
+
+- **Fail closed** (reject everything) turns a Redis blip into a full API outage. Almost never right for a fairness limit.
+- **Fail open** (allow everything) keeps the API up but removes protection at the moment something is already wrong.
+- **Fail open, but bounded**: give each gateway a local token bucket with the plan's limit divided by the gateway count. It is approximate, since load is not perfectly even, but it keeps a runaway client within a small multiple of its plan, and it needs no network.
+
+Give the Redis call a tight timeout, a few milliseconds, so a slow limiter does not add latency to every request, and alert whenever the fallback is in use.
+
+<InPractice title="How Stripe, Cloudflare, and Envoy run limiters" sources={["Stripe: Scaling your API with rate limiters", "Cloudflare: How we built rate limiting capable of scaling to millions of domains", "Envoy: Global and local rate limiting"]}>
+
+- Stripe's request rate limiter is a token bucket per user, stored in Redis, alongside a concurrent-requests limiter and two load shedders. Their advice is to catch errors at every level so that a limiter bug or a Redis outage fails open and the API keeps working.
+- Cloudflare uses a sliding window counter: the previous window's count, weighted by how much of it still overlaps, plus the current count. Across 400 million requests from 270,000 sources, 0.003% were wrongly allowed or limited.
+- Envoy offers both styles: a global limit enforced by an external rate limit service, and a local token bucket in each proxy. Its docs suggest using local limits to absorb large bursts in front of the global service.
+
+</InPractice>
+
+</Section>
+
+<Section id="worked-example">
+
+The client saves up its allowance and then sends as fast as it can from 0:59 to 1:01. Compare what each limiter lets through in those two seconds. Lower the gateway count to 1 to see that local counting is only safe on a single node, and raise the burst capacity to the full limit to see the token bucket lose its advantage.
+
+<Workbench><RateLimitWorkbench /></Workbench>
+
+</Section>

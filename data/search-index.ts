@@ -8,6 +8,8 @@ import * as hotPartition from "@/data/topics/fix-hot-partition";
 import * as outbox from "@/data/topics/transactional-outbox";
 import * as flashSale from "@/data/topics/survive-flash-sale";
 import * as migration from "@/data/topics/safely-migrate-production-database";
+import * as cacheStampede from "@/data/topics/cache-stampede";
+import * as rateLimiting from "@/data/topics/rate-limiting";
 
 /*
  * Builds the ⌘K search index from the same sources the articles render from:
@@ -22,6 +24,8 @@ const mdxTails: Partial<Record<TopicId, BlueprintTail>> = {
   "transactional-outbox": outbox.blueprint,
   "flash-sale": flashSale.blueprint,
   "database-migration": migration.blueprint,
+  "cache-stampede": cacheStampede.blueprint,
+  "rate-limiting": rateLimiting.blueprint,
 };
 
 /** The heading InterviewSection renders above the wrong answers. */

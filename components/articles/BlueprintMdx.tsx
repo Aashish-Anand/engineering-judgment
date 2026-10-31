@@ -1,4 +1,4 @@
-import { Fragment, type ComponentType, type ReactNode } from "react";
+import { Children, Fragment, isValidElement, type ComponentType, type ReactNode } from "react";
 import * as runtime from "react/jsx-runtime";
 import { blueprints, type Blueprint } from "#site/content";
 import { BlueprintArticleFrame, BlueprintPanel } from "./BlueprintArticleFrame";
@@ -10,6 +10,7 @@ import { MetricTable } from "@/components/MetricTable";
 import { InsightCard } from "@/components/InsightCard";
 import { ProblemStatement } from "@/components/ProblemStatement";
 import { CodeBlock } from "@/components/CodeBlock";
+import { CodeTabs, type CodeSample } from "@/components/CodeTabs";
 import { InPractice } from "@/components/InPractice";
 import { IncidentBox } from "@/components/IncidentBox";
 import { ExecutiveBlueprint } from "@/components/ExecutiveBlueprint";
@@ -32,12 +33,16 @@ import { ReservationFlowDiagram } from "@/components/diagrams/ReservationFlowDia
 import { FlashSaleFunnelMotion, MigrationLsnTimeline } from "@/components/diagrams/MotionDiagrams";
 import { NaiveMigrationDiagram } from "@/components/diagrams/NaiveMigrationDiagram";
 import { FencedCutoverSequence, MigrationOwnershipLanes } from "@/components/diagrams/MigrationPhaseDiagrams";
+import { CacheStampedeWorkbench, StampedeProtectionFlow, StampedeSequence } from "@/components/diagrams/CacheStampedeDiagrams";
+import { NaiveLimiterLanes, RateLimitDecisionFlow, RateLimitWorkbench } from "@/components/diagrams/RateLimitDiagrams";
 import { articleToc, sectionNumber, type TopicSectionId } from "@/data/topics/article-format";
 import type { TopicId } from "@/data/topics/catalog";
 import * as hotPartition from "@/data/topics/fix-hot-partition";
 import * as outbox from "@/data/topics/transactional-outbox";
 import * as flashSale from "@/data/topics/survive-flash-sale";
 import * as migration from "@/data/topics/safely-migrate-production-database";
+import * as cacheStampede from "@/data/topics/cache-stampede";
+import * as rateLimiting from "@/data/topics/rate-limiting";
 
 /*
  * Renders a blueprint whose sections 01–05 are MDX (content/blueprints/*.mdx,
@@ -59,6 +64,8 @@ export const mdxBlueprintData = {
   "transactional-outbox": { tail: outbox.blueprint, scenarioMetrics: outbox.scenarioMetrics },
   "flash-sale": { tail: flashSale.blueprint, scenarioMetrics: flashSale.scenarioMetrics, strategies: flashSale.saleStrategies },
   "database-migration": { tail: migration.blueprint },
+  "cache-stampede": { tail: cacheStampede.blueprint, scenarioMetrics: cacheStampede.scenarioMetrics },
+  "rate-limiting": { tail: rateLimiting.blueprint, scenarioMetrics: rateLimiting.scenarioMetrics },
 } satisfies Partial<Record<TopicId, BlueprintData>>;
 
 export type MdxTopicId = keyof typeof mdxBlueprintData;
@@ -70,6 +77,8 @@ const diagrams = {
   OutboxDiagram, OutboxRelayFlow, DualWriteCrashTimeline, IdempotentConsumerExample, OutboxRowLifecycle, OutboxSchemaExample,
   NaiveFlashSaleDiagram, FlashSaleArchitectureDiagram, InventoryRaceDiagram, ReservationFlowDiagram, FlashSaleFunnelMotion,
   MigrationLsnTimeline, NaiveMigrationDiagram, FencedCutoverSequence, MigrationOwnershipLanes,
+  StampedeSequence, StampedeProtectionFlow, CacheStampedeWorkbench,
+  NaiveLimiterLanes, RateLimitDecisionFlow, RateLimitWorkbench,
 };
 
 type MdxComponents = Record<string, ComponentType<never>>;
@@ -83,6 +92,10 @@ function mdxComponents(doc: Blueprint, data: BlueprintData): MdxComponents {
     /** A topic-specific section, 01–05. Its number and heading come from the frontmatter. */
     Section: ({ id, children }: { id: Exclude<TopicSectionId, "scale">; children: ReactNode }) => (
       <section id={id}><SectionHeader number={sectionNumber(id)} id={id} title={doc.sections[id]} />{children}</section>
+    ),
+    /** Consecutive fenced code blocks shown as language tabs; each fence has already become a <CodeBlock>. */
+    CodeTabs: ({ children }: { children: ReactNode }) => (
+      <CodeTabs samples={Children.toArray(children).filter(isValidElement).map(child => child.props as CodeSample)} />
     ),
     /** The bold closing quote inside a <ProblemStatement>. */
     Pullquote: ({ children }: { children: ReactNode }) => <p className="font-sans text-base text-slate-900 font-semibold mb-0">“{children}”</p>,

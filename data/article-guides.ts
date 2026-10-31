@@ -128,4 +128,30 @@ export const articleGuides: Record<TopicId, ArticleGuide> = {
       failure: "Snapshotting first and starting capture later silently loses every write in between.",
     },
   },
+  "cache-stampede": {
+    signals: [
+      "Database load spikes right after a TTL boundary, a deploy, or a cache restart, then settles.",
+      "Cache hit ratio looks excellent on average while p99 latency jumps once a minute.",
+      "One expensive value is read thousands of times per second.",
+    ],
+    quick: {
+      invariant: "Rebuilds depend on the number of keys, never on the number of readers.",
+      decision: "Store a soft expiry inside the value; past it, serve the stale value while one caller holding a short SET NX PX lock refreshes in the background. Jitter TTLs.",
+      remember: ["Stampede size = request rate × rebuild time: 12,000/s × 300 ms ≈ 3,600 queries.", "Single-flight coalesces per instance, so it grows with the fleet.", "A longer TTL makes stampedes rarer, not smaller."],
+      failure: "The extra queries slow the rebuild, which lengthens the window and lets in more misses.",
+    },
+  },
+  "rate-limiting": {
+    signals: [
+      "One client's traffic slows the API for everyone else.",
+      "Several gateway instances must agree on one client's usage.",
+      "Clients need bursts for page loads but should not sustain them.",
+    ],
+    quick: {
+      invariant: "Over any interval t, a client gets at most burst + rate × t.",
+      decision: "A token bucket per API key, refilled and spent atomically in one Redis script; cheap 429s with Retry-After; a bounded local fallback when Redis is unavailable.",
+      remember: ["A fixed window lets up to 2× the limit through around each reset.", "Local counters multiply the limit by the number of gateways.", "Rate limiting is fairness; load shedding is overload protection."],
+      failure: "Failing closed turns a limiter outage into a full API outage.",
+    },
+  },
 };

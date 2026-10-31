@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { littlesLaw, paymentTrace, poolPressure, retryLevels, retryPressure, rollingSurgeReplicas, simulateQueue } from "@/data/pressure-models";
+import { boundaryBurst, littlesLaw, paymentTrace, poolPressure, retryLevels, retryPressure, rollingSurgeReplicas, simulateQueue, stampedeLoad, tokenBucket } from "@/data/pressure-models";
 import { productionBlueprints } from "@/data/topics/production-blueprints";
 import { topicCatalog } from "@/data/topics/catalog";
 
@@ -87,5 +87,29 @@ describe("queueing simulator", () => {
     const { samples, totals } = simulateQueue({ ...base, serviceMs: 1000, attempts: 3 });
     const end = samples.at(-1)!;
     expect(totals.served + end.inFlight + end.queued + totals.failed).toBeCloseTo(totals.arrived, 6);
+  });
+});
+
+describe("cache stampede and rate limit models", () => {
+  it("counts rebuild queries for one expiring hot key under each protection", () => {
+    const load = stampedeLoad(12_000, 300, 40);
+    expect(load.misses).toBe(3600);
+    expect(load.unprotected.queries).toBe(3600);
+    expect(load.singleFlight.queries).toBe(40);
+    expect(load.lock.queries).toBe(1);
+    expect(load.serveStale).toEqual({ queries: 1, waiting: 0 });
+    expect(stampedeLoad(10, 50, 40).singleFlight.queries).toBe(1);
+  });
+  it("shows the fixed-window boundary burst and its multiplication across gateways", () => {
+    expect(boundaryBurst(600, 100, 30)).toEqual({ fixedWindow: 1200, localCounters: 36_000, slidingWindow: 600, tokenBucket: 120 });
+    expect(boundaryBurst(600, 1000, 1).tokenBucket).toBe(600);
+  });
+  it("lets a token bucket spend its burst, then only its refill rate", () => {
+    const allow = tokenBucket(5, 1);
+    expect(Array.from({ length: 8 }, () => allow(0)).filter(Boolean)).toHaveLength(5);
+    expect(allow(0.5)).toBe(false);
+    expect(allow(1)).toBe(true);
+    expect(allow(1)).toBe(false);
+    expect(Array.from({ length: 10 }, () => allow(100)).filter(Boolean)).toHaveLength(5);
   });
 });

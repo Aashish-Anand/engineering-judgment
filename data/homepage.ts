@@ -85,7 +85,7 @@ export const exploreCategories: ExploreCategory[] = [
     problems: [
       { name: "Flash sales", href: flashSaleTopic.href, available: true },
       { name: "Hot partitions", href: hotPartitionTopic.href, available: true },
-      { name: "Load shedding" },
+      { name: "Rate limiting", href: "/topics/traffic/rate-limit-api", available: true },
       { name: "Graceful degradation" },
     ],
   },
@@ -95,7 +95,7 @@ export const exploreCategories: ExploreCategory[] = [
     icon: "⏱️",
     pastel: "lavender",
     problems: [
-      { name: "Caching" },
+      { name: "Cache stampedes", href: "/topics/performance/prevent-cache-stampede", available: true },
       { name: "Batching" },
       { name: "Connection pools", href: "/topics/performance/database-connection-pool-exhaustion", available: true },
       { name: "Async processing" },

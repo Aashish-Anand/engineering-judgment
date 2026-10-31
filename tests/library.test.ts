@@ -25,7 +25,7 @@ describe("library discovery", () => {
   });
   it("sorts deterministically without mutating the catalog", () => {
     const ids=topicCatalog.map(t=>t.id);
-    expect(getLibraryResults("","","newest").topics[0].id).toBe("schema-evolution");
+    expect(getLibraryResults("","","newest").topics[0].id).toBe("rate-limiting");
     getLibraryResults("","","title");
     expect(topicCatalog.map(t=>t.id)).toEqual(ids);
   });

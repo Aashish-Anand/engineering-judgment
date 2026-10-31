@@ -23,6 +23,8 @@ export const topicLearning: Record<TopicId, { depth: Depth; buildsOn: TopicId[] 
   "hot-partition": { depth: 2, buildsOn: [] },
   "flash-sale": { depth: 3, buildsOn: ["hot-partition", "idempotent-api"] },
   "database-migration": { depth: 3, buildsOn: ["schema-evolution"] },
+  "rate-limiting": { depth: 2, buildsOn: ["retry-storm"] },
+  "cache-stampede": { depth: 2, buildsOn: ["hot-partition"] },
 };
 
 export type LearningPath = { slug: string; title: string; outcome: string; steps: TopicId[] };
@@ -38,7 +40,7 @@ export const learningPaths: LearningPath[] = [
     slug: "load-and-hot-spots",
     title: "Load, overload, and hot spots",
     outcome: "Keep one slow dependency, one busy key, or one sales spike from taking everything else down with it.",
-    steps: ["retry-storm", "connection-pool", "hot-partition", "flash-sale"],
+    steps: ["retry-storm", "connection-pool", "rate-limiting", "hot-partition", "cache-stampede", "flash-sale"],
   },
   {
     slug: "changing-live-systems",

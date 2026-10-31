@@ -78,4 +78,18 @@ export const articlePresentations = {
     journey: ["Expand the schema", "Bridge and backfill", "Validate readers", "Contract safely"],
     flow: { nodes: ["EXPAND", "MOVE", "CONTRACT"], note: "Let old and new coexist." },
   },
+  "cache-stampede": {
+    number: "010", shortTitle: "Cache stampede", startId: "problem",
+    overview: "When a hot key expires, every request in the rebuild window misses and runs the same expensive query. Make rebuilds depend on keys, not readers: one caller refreshes behind a short lock while everyone else gets the stale value, and jittered TTLs keep keys from expiring together.",
+    scenario: [{ label: "Hot key", value: "12,000 req/s" }, { label: "Rebuild", value: "300 ms" }, { label: "Invariant", value: "One rebuild per key" }, { label: "Approach", value: "Serve stale + lock" }],
+    journey: ["Size the stampede", "Pick one rebuilder", "Serve stale meanwhile", "Spread the expiries"],
+    flow: { nodes: ["EXPIRE", "ONE REBUILD", "STALE"], note: "One key, one rebuild." },
+  },
+  "rate-limiting": {
+    number: "011", shortTitle: "Rate limiting", startId: "problem",
+    overview: "A limit is a promise about rate and burst. Enforce it with a token bucket per API key, refilled and spent atomically in a shared store, reject with a cheap 429 that says when to retry, and fall back to bounded local limits when the store is unavailable.",
+    scenario: [{ label: "Plan", value: "600 req/min" }, { label: "Runaway client", value: "5,000 req/s" }, { label: "Gateways", value: "30" }, { label: "Approach", value: "Atomic token bucket" }],
+    journey: ["State rate and burst", "Count atomically", "Reject clearly", "Fail open, bounded"],
+    flow: { nodes: ["KEY", "BUCKET", "429"], note: "Rate plus burst, decided once." },
+  },
 } satisfies Record<TopicId, ArticlePresentation>;

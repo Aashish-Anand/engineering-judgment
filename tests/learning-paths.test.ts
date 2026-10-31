@@ -54,7 +54,7 @@ describe("learning paths", () => {
 
   it("prefers the reader's path and finds the next unread step", () => {
     expect(choosePath("idempotent-api")?.path.slug).toBe("correctness-under-failure");
-    expect(choosePath("hot-partition", "load-and-hot-spots")?.index).toBe(2);
+    expect(choosePath("hot-partition", "load-and-hot-spots")?.index).toBe(3);
     const path = learningPaths[0];
     expect(nextUnread(path, id => id === path.steps[0])).toBe(path.steps[1]);
     expect(nextUnread(path, () => true)).toBeUndefined();

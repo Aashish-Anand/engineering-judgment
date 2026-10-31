@@ -81,6 +81,8 @@ const bucket = stableHash(userId) % BUCKET_COUNT;
 ```
 ````
 
+To show one example in several languages, put consecutive fences inside `<CodeTabs>` (blank lines around each fence). Each fence becomes a language tab, labelled from its language (`typescript`, `python`, `go`, `java`, `cpp`). The reader's choice is remembered and switches every tab group on every page. Keep the samples behaviourally identical, and use each language's usual Redis or HTTP client.
+
 Components every MDX article can use (defined in `components/articles/BlueprintMdx.tsx`):
 
 | Component | Use |

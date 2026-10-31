@@ -10,6 +10,8 @@ export const libraryDetails: Record<TopicId, { title: string; aliases: string[];
   "retry-storm": { title: "When retries become the outage", aliases: ["retry storm", "slow dependency", "cascading failure"], addedOrder: 7 },
   "connection-pool": { title: "More servers. The same connection budget.", aliases: ["database connections exhausted", "too many connections", "pool timeout"], addedOrder: 8 },
   "schema-evolution": { title: "New schema. Old code. Safe deployment.", aliases: ["rename column", "schema migration", "expand contract", "backfill"], addedOrder: 9 },
+  "cache-stampede": { title: "One key expires. The database falls over.", aliases: ["thundering herd", "dog pile", "cache miss storm", "ttl expiry", "cache warming"], addedOrder: 10 },
+  "rate-limiting": { title: "One client, everyone's capacity", aliases: ["rate limiter", "throttling", "429", "token bucket", "api quota", "noisy neighbor"], addedOrder: 11 },
 };
 export const featuredIds: TopicId[] = ["database-migration", "idempotent-api", "hot-partition", "poison-messages", "retry-storm", "schema-evolution"];
 export const libraryCategories = Array.from(new Set(topicCatalog.map(t => t.meta.category))).map(label => ({
