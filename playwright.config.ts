@@ -10,11 +10,8 @@ export default defineConfig({
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: `http://localhost:${PORT}`,
-    // Screenshots compare the settled page, not a frame of a transition.
+    // Measure the settled page, not a frame of a transition.
     reducedMotion: "reduce",
-  },
-  expect: {
-    toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: "disabled" },
   },
   projects: [
     { name: "mobile", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } } },

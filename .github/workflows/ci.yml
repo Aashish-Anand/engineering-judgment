@@ -4,8 +4,6 @@ on:
   pull_request:
   push:
     branches: [main]
-  # Regenerates the Linux screenshot baselines and uploads them as an artifact.
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,7 +18,6 @@ env:
 jobs:
   checks:
     name: Types, lint, unit tests
-    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -37,10 +34,9 @@ jobs:
       - run: npx eslint .
       - run: npx vitest run
 
-  # The screenshot baselines must come from the same browser build and fonts the
-  # comparison runs on, so the e2e jobs run inside the official Playwright image
-  # whose tag matches the @playwright/test version in package-lock.json. The image
-  # ships the browsers, so there is no browser download to cache.
+  # The e2e job runs inside the official Playwright image whose tag matches the
+  # @playwright/test version in package-lock.json. The image ships the browsers,
+  # so there is no browser download to cache.
   playwright-version:
     name: Resolve Playwright image
     runs-on: ubuntu-latest
@@ -59,7 +55,6 @@ jobs:
 
   e2e:
     name: Playwright
-    if: github.event_name != 'workflow_dispatch'
     needs: playwright-version
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -79,23 +74,7 @@ jobs:
           key: next-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**', 'components/**', 'content/**', 'data/**') }}
           restore-keys: next-${{ hashFiles('package-lock.json') }}-
       - run: npm ci
-      - name: Record committed Linux baselines
-        run: find e2e -name '*-linux.png' | sort > "$RUNNER_TEMP/baselines-before.txt"
       - run: npx playwright test
-      # A missing baseline is written by the run. With a retry it can then pass
-      # against itself, so fail explicitly whenever the run created baselines.
-      - name: Check for new Linux baselines
-        id: new-baselines
-        if: success() || failure()
-        run: |
-          find e2e -name '*-linux.png' | sort > "$RUNNER_TEMP/baselines-after.txt"
-          comm -13 "$RUNNER_TEMP/baselines-before.txt" "$RUNNER_TEMP/baselines-after.txt" > "$RUNNER_TEMP/new-baselines.txt"
-          if [ -s "$RUNNER_TEMP/new-baselines.txt" ]; then
-            echo "::error::This run created Linux screenshot baselines that are not committed. Download the linux-snapshots artifact and commit it to e2e/layout.spec.ts-snapshots/."
-            cat "$RUNNER_TEMP/new-baselines.txt"
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            exit 1
-          fi
       - name: Upload HTML report
         if: failure()
         uses: actions/upload-artifact@v6
@@ -103,43 +82,10 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
-      - name: Upload diffs and traces
+      - name: Upload traces
         if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: test-results
           path: test-results/
-          retention-days: 14
-      - name: Upload new Linux baselines
-        if: failure() && steps.new-baselines.outputs.found == 'true'
-        uses: actions/upload-artifact@v6
-        with:
-          name: linux-snapshots
-          path: e2e/**/*-linux.png
-          retention-days: 14
-
-  update-linux-snapshots:
-    name: Regenerate Linux baselines
-    if: github.event_name == 'workflow_dispatch'
-    needs: playwright-version
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    container:
-      image: ${{ needs.playwright-version.outputs.image }}
-    env:
-      HOME: /root
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
-      - run: npx playwright test e2e/layout.spec.ts --update-snapshots=all
-      # Upload even when a layout check fails, so the screenshots can be inspected.
-      - if: success() || failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: linux-snapshots
-          path: e2e/**/*-linux.png
           retention-days: 14

@@ -101,17 +101,11 @@ npx vitest run
 npx playwright test
 ```
 
-`npx next typegen` generates the route types (`LayoutProps`, `PageProps`) that a fresh checkout lacks; `next dev` and `next build` also create them. Playwright builds the site and serves it on port 3200. It checks layout overflow, full-page screenshots at 390, 768 and 1440 px, and axe accessibility in light and dark themes.
+`npx next typegen` generates the route types (`LayoutProps`, `PageProps`) that a fresh checkout lacks; `next dev` and `next build` also create them. Playwright builds the site and serves it on port 3200. At 390, 768 and 1440 px it checks every page for horizontal overflow and content that never becomes visible, and runs axe accessibility checks in light and dark themes. There are no screenshot comparisons: on a content site almost every edit changes a full-page screenshot, so they mostly flagged intended changes.
 
-The layout and axe specs wait for `html[data-hydrated]`, which `components/HydrationMarker.tsx` sets once React has hydrated the page. A component that renders a static fallback on the server and swaps in an interactive version (such as `StepScrubber`) would otherwise change the page height between screenshots on slower CI machines. Keep `HydrationMarker` last in the root layout.
+The layout and axe specs wait for `html[data-hydrated]`, which `components/HydrationMarker.tsx` sets once React has hydrated the page. A component that renders a static fallback on the server and swaps in an interactive version (such as `StepScrubber`) would otherwise be measured before it settles on slower CI machines. Keep `HydrationMarker` last in the root layout.
 
-Screenshot baselines are per platform: `*-darwin.png` for macOS and `*-linux.png` for CI. Update the macOS set with `npm run test:e2e:update`. CI runs Playwright inside the official `mcr.microsoft.com/playwright` image whose tag matches the `@playwright/test` version in `package-lock.json`, so the Linux set must come from that image:
-
-- **Changed screenshots:** run the CI workflow manually (Actions → CI → Run workflow, or `gh workflow run ci.yml --ref <branch>`). Its *Regenerate Linux baselines* job uploads a `linux-snapshots` artifact. Unzip it into `e2e/layout.spec.ts-snapshots/` and commit it. Manual runs need the workflow on `main`.
-- **New pages:** a CI run that creates baselines fails and uploads the new files as a `linux-snapshots` artifact. Commit them the same way. This is also how the first Linux set is created.
-- **With Docker:** `docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v<version>-noble sh -c "npm ci && npx playwright test e2e/layout.spec.ts --update-snapshots=all"` produces the same files. Run it from a separate clone, because `npm ci` replaces `node_modules` with Linux binaries.
-
-When a CI run fails, the `playwright-report` (HTML report) and `test-results` (diff images and traces) artifacts hold the details.
+CI runs Playwright inside the official `mcr.microsoft.com/playwright` image whose tag matches the `@playwright/test` version in `package-lock.json`, so the browsers come preinstalled. When a CI run fails, the `playwright-report` (HTML report) and `test-results` (traces) artifacts hold the details.
 
 ### Site URL
 

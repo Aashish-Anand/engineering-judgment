@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { pages, snapshotName } from "./pages";
+import { pages } from "./pages";
 
 for (const path of pages) {
   test.describe(path, () => {
@@ -36,10 +36,6 @@ for (const path of pages) {
         els.filter((el) => Number(getComputedStyle(el).opacity) < 1).length,
       );
       expect(hidden, "reveal blocks still invisible").toBe(0);
-    });
-
-    test("matches the screenshot", async ({ page }) => {
-      await expect(page).toHaveScreenshot(snapshotName(path), { fullPage: true });
     });
   });
 }
